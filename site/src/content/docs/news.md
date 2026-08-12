@@ -8,14 +8,18 @@ Releases and what is being worked on. The full record is
 
 ## v1.0.0
 
-The first release. The API is stable, and breaking changes wait for a major
-version.
+**Released.** The API is stable, and breaking changes wait for a major version.
 
-Twill ships as two folders, with a documentation page per module carrying
-signatures taken from the source, and a test suite that runs on every playtest
-in Studio.
+[Download the model](https://github.com/andrian-syh/rblx-twill/releases/tag/v1.0.0)
+from the release, or copy the folders in by hand. Either way the install is the
+same two folders, and both are required. See
+[Installing Twill](/getting-started/installation/).
 
-`Twill.Version` reports what an installed copy carries.
+Twill ships with a documentation page per module carrying signatures taken from
+the source, and a test suite that runs on every playtest in Studio.
+
+`Twill.Version` reports what an installed copy carries, which is the quickest
+way to tell what a place is actually running.
 
 ### What went into it
 
@@ -32,6 +36,19 @@ redeem code can be checked without a DataStore lookup.
 
 **`Data` bound to `Replication`.** Naming fields in `Replicate` sends them to
 their owner's client, following direct mutation, with no mirroring by hand.
+
+**Server modules typed from their own source.** The root table used to carry
+hand-written types for the six server-only modules, because a client's type
+checker cannot require them. They are now taken from the server half directly,
+so a signature cannot drift between the two without the source moving. Nothing
+changes at runtime: those types are resolved by the type solver and never
+executed.
+
+**Every bundled component is traced and licensed.** The `Cryptography` package
+is recorded as MIT by daily3014 and Xoifaii, and the notices file no longer
+claims that every bundled component is vendored unmodified, since that one
+carries three fixes to its random number generator. See
+[Bundled packages](/reference/bundled-packages/).
 
 ### Defects found and fixed before release
 
@@ -65,3 +82,6 @@ in the vendored copy.
 - Independent verification of the `Cryptography` primitives Twill does not use
   itself. Four are checked against test vectors; the rest are not. See
   [Bundled packages](/reference/bundled-packages/).
+- A published source tree, so working from files does not mean lifting the two
+  folders out of a place by hand. The framework already runs unchanged under any
+  workflow that assembles a place; what is missing is the packaging.
