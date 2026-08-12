@@ -1,0 +1,132 @@
+---
+// Keeps Starlight's own footer (pagination, and edit/last-updated when those are
+// switched on) and adds a site footer beneath it on every page.
+//
+// design.md's Footer: #101010 ground, generous vertical padding, Geist Mono 12px
+// uppercase headings in bone, 14px links in warm granite, and no dividers between
+// columns, the column gap does the separating.
+import Default from '@astrojs/starlight/components/Footer.astro';
+
+// Landing page only. While someone is reading the docs the footer is noise
+// between them and the next page, so those keep Starlight's pagination alone.
+const isLanding = Astro.locals.starlightRoute.entry.data.template === 'splash';
+
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
+const year = new Date().getFullYear();
+
+const columns = [
+	{
+		heading: 'Docs',
+		links: [
+			{ label: 'Installing Twill', href: '/getting-started/installation/' },
+			{ label: 'Quick start', href: '/getting-started/quick-start/' },
+			{ label: 'Write a service', href: '/core-guides/services/' },
+			{ label: 'Write a controller', href: '/core-guides/controllers/' },
+		],
+	},
+	{
+		heading: 'Reference',
+		links: [
+			{ label: 'Module reference', href: '/reference/' },
+			{ label: 'Platform limits', href: '/reference/platform-limits/' },
+			{ label: 'Troubleshooting', href: '/reference/troubleshooting/' },
+			{ label: 'Glossary', href: '/reference/glossary/' },
+		],
+	},
+	{
+		heading: 'Project',
+		links: [
+			{ label: 'An introduction to Twill', href: '/getting-started/introduction/' },
+			{ label: 'Design principles', href: '/explanation/design-principles/' },
+			{ label: 'Bundled packages', href: '/reference/bundled-packages/' },
+			{ label: 'News', href: '/news/' },
+		],
+	},
+];
+---
+
+<Default><slot /></Default>
+
+{
+	isLanding && (
+		<div class="site-footer not-content">
+			<div class="columns">
+				{columns.map((column) => (
+					<nav aria-label={column.heading}>
+						<h2>{column.heading}</h2>
+						<ul>
+							{column.links.map((link) => (
+								<li>
+									<a href={base + link.href}>{link.label}</a>
+								</li>
+							))}
+						</ul>
+					</nav>
+				))}
+			</div>
+
+			<div class="colophon">
+				<p>&copy; {year} Twill. Released under the MIT licence.</p>
+				<p>
+					Bundled components keep their own licences. Twill is not affiliated with
+					or endorsed by Roblox Corporation.
+				</p>
+			</div>
+		</div>
+	)
+}
+
+<style>
+	.site-footer {
+		margin-top: var(--spacing-80);
+		padding-block: var(--spacing-56) var(--spacing-40);
+		border-top: 1px solid var(--color-carbon-lift);
+	}
+
+	.columns {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--spacing-40) var(--spacing-56);
+		margin-bottom: var(--spacing-40);
+	}
+
+	h2 {
+		font-family: var(--sl-font-mono);
+		font-size: 12px;
+		font-weight: 400;
+		text-transform: uppercase;
+		letter-spacing: -0.02em;
+		color: var(--color-bone);
+		margin: 0 0 var(--spacing-16);
+	}
+
+	ul {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-8);
+	}
+
+	a {
+		font-size: 14px;
+		color: var(--color-warm-granite);
+		text-decoration: none;
+		transition: color var(--motion);
+	}
+
+	a:hover {
+		color: var(--color-chalk);
+		text-decoration: underline;
+		text-underline-offset: 0.2em;
+	}
+
+	.colophon p {
+		font-size: 14px;
+		line-height: 1.5;
+		color: var(--color-warm-granite);
+		margin: 0 0 var(--spacing-8);
+		max-width: 60ch;
+	}
+</style>

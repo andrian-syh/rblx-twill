@@ -1,0 +1,71 @@
+---
+// Starlight has no breadcrumbs, built in or as a community plugin. This override
+// adds them above the page title, reading the trail out of the sidebar so the
+// labels match the navigation exactly instead of being guessed from the slug.
+// Starlight's own PAGE_TITLE_ID, which it does not export. '#_top' is part of
+// its public URL contract, so inlining it is safe.
+const PAGE_TITLE_ID = '_top';
+
+const { sidebar, entry } = Astro.locals.starlightRoute;
+
+/** @returns the group labels leading to the current page, outermost first */
+function trailTo(items, seen = []) {
+	for (const item of items) {
+		if (item.type === 'link' && item.isCurrent) return seen;
+		if (item.type === 'group') {
+			const found = trailTo(item.entries, [...seen, item.label]);
+			if (found) return found;
+		}
+	}
+	return null;
+}
+
+const trail = trailTo(sidebar) ?? [];
+---
+
+{
+	trail.length > 0 && (
+		<nav aria-label="Breadcrumb">
+			<ol>
+				{trail.map((label) => (
+					<li>{label}</li>
+				))}
+			</ol>
+		</nav>
+	)
+}
+<h1 id={PAGE_TITLE_ID}>{entry.data.title}</h1>
+
+<style>
+	nav {
+		margin-top: 1rem;
+	}
+	ol {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem 0.5rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-3);
+	}
+	li + li::before {
+		content: '/';
+		margin-inline-end: 0.5rem;
+		color: var(--sl-color-gray-4);
+	}
+	h1 {
+		margin-top: 0.25rem;
+		font-size: var(--sl-text-h1);
+		line-height: var(--sl-line-height-headings);
+		font-weight: 600;
+		color: var(--sl-color-white);
+	}
+	nav + h1 {
+		margin-top: 0.25rem;
+	}
+	h1:first-child {
+		margin-top: 1rem;
+	}
+</style>

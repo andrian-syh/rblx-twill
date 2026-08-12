@@ -1,0 +1,111 @@
+---
+title: Installing Twill
+description: Put both folders in place, then prove both of them answer.
+---
+
+Twill installs by dropping two folders into a place. There is no package manager,
+no build step, and no external toolchain.
+
+The steps below describe doing that in Studio. If you keep your source as files
+and assemble a place from them, keep doing so: Twill is indifferent to how the
+place was built, as long as the two folders land where they belong. See
+[It follows the place, not the
+folder](/getting-started/introduction/#it-follows-the-place-not-the-folder).
+
+## Prerequisites
+
+- Roblox Studio, and a place you can edit.
+- **Studio Access to API Services** enabled, under **Game Settings → Security**.
+  Studio cannot reach a DataStore without it, and player data is the first thing
+  most of Twill touches.
+
+That is the whole list. Every dependency Twill uses is bundled inside the folders
+you are about to install.
+
+## 1. Put both folders in place
+
+**Both folders are required.**
+
+| Folder | Goes in |
+| --- | --- |
+| `Twill` | `ReplicatedStorage` |
+| `TwillServer` | `ServerScriptService` |
+
+The names matter. Twill finds its own server half by name, and a renamed folder
+fails at the require with:
+
+```text
+[Twill] TwillServer.Net is missing; the server half of Twill was not installed.
+```
+
+:::caution[The split is not a packaging detail]
+`TwillServer` is never replicated. Rate ceilings, the metering algorithm, each
+player's current allowance, and all data handling stay somewhere a client cannot
+read. Moving any of it into `ReplicatedStorage` hands that to every player.
+:::
+
+## 2. Create a folder for your own services
+
+Add a `Folder` named `Services` inside `ServerScriptService`. Your own code goes
+there, separate from Twill's.
+
+```text
+ServerScriptService
+├── TwillServer          (Twill's server half)
+├── Services             (yours, empty for now)
+└── Main                 (a Script, added in the quick start)
+```
+
+## 3. Check the install
+
+Add a `Script` anywhere in `ServerScriptService` and press **Play**.
+
+```luau
+local Twill = require("@game/ReplicatedStorage/Twill")
+
+print(`Twill {Twill.Version} is installed`)
+
+-- Naming a server-only module is what proves the second folder is present.
+-- Reading the version alone would pass with TwillServer missing entirely.
+local _ = Twill.Data
+
+print("Both halves answered")
+```
+
+Two lines in the output means both folders are where they should be.
+
+| Instead you see | Cause |
+| --- | --- |
+| Nothing, and an error naming `Twill` | `Twill` is missing from `ReplicatedStorage`, or renamed. |
+| The version, then an error naming `TwillServer` | The server half is missing from `ServerScriptService`, or renamed. |
+
+## Requiring modules
+
+The root table resolves modules lazily, so one require reaches everything, and a
+module you never name costs nothing.
+
+```luau
+local Twill = require("@game/ReplicatedStorage/Twill")
+
+Twill.Log        -- shared
+Twill.Data       -- resolved from TwillServer, server only
+```
+
+Requiring a module directly works too, and is the better choice inside a client
+module that must not wait.
+
+```luau
+local Log = require("@game/ReplicatedStorage/Twill/Log")
+```
+
+Naming a server-only module from a client fails at the require rather than
+handing back a `nil` that surfaces somewhere else much later:
+
+```text
+[Twill] 'Data' is not a Twill module. It may be a server-only module.
+```
+
+## Next
+
+[Quick start](/getting-started/quick-start/) boots a server, saves a player's
+data, and prints a line when a player is ready.

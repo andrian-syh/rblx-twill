@@ -1,0 +1,48 @@
+MIT License
+
+Copyright (c) 2026 AnS_Dev
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+--------------------------------------------------------------------------------
+THIRD PARTY COMPONENTS
+--------------------------------------------------------------------------------
+
+The MIT licence above covers Twill's own code, including the BytePress and
+WeightedRandom modules. Twill also redistributes the components below, each
+under its own licence. Those licences continue to apply to those components and
+are not superseded by the above.
+
+See THIRD-PARTY-NOTICES.md for the full terms.
+
+  AptInt         Unlicense     fosterchild1
+  Packet         0BSD          5uphi
+  Trove          MIT           Sleitnick (RbxUtil)
+  NamedSignal    MIT           Averlyst
+  Cmdr           MIT           evaera
+  Cryptography   MIT           daily3014, Xoifaii
+  ProfileStore   Apache-2.0    loleris (MAD STUDIO)
+
+All are redistributed unmodified except Cryptography, which carries three fixes
+to its random number generator.
+
+ProfileStore carries the strictest terms of the seven. Redistributing Twill in
+any form that includes it means shipping the Apache-2.0 licence text, keeping
+its notices intact, and stating any modifications made to it. Twill makes none.

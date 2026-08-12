@@ -1,0 +1,272 @@
+﻿/* Factory. See DESIGN.md for the spec this implements.
+ *
+ * Dark only, by decision. Starlight is dark-first (bare :root is dark), so the
+ * light block below is defined to the same values rather than removed: a
+ * data-theme="light" left in a visitor's localStorage from an earlier build
+ * would otherwise render an unstyled half-light page. The selector itself is
+ * overridden away in src/components/ThemeSelect.astro.
+ */
+
+@import '@fontsource/geist-sans/400.css';
+@import '@fontsource/geist-sans/500.css';
+@import '@fontsource/geist-mono/400.css';
+
+:root,
+:root[data-theme='light'] {
+	/* Factory tokens, verbatim from design.md */
+	--color-obsidian-canvas: #101010;
+	--color-carbon-lift: #1d1a18;
+	--color-ash-stroke: #3d3a39;
+	--color-graphite-mid: #4d4947;
+	--color-warm-granite: #8a8380;
+	--color-pale-stone: #b8b3b0;
+	--color-bone: #eeeeee;
+	--color-chalk: #fafafa;
+	--color-signal-orange: #ee6018;
+	--color-metric-green: #a0ca92;
+
+	--spacing-8: 8px;
+	--spacing-16: 16px;
+	--spacing-24: 24px;
+	--spacing-32: 32px;
+	--spacing-40: 40px;
+	--spacing-56: 56px;
+	--spacing-80: 80px;
+	--spacing-96: 96px;
+	--spacing-120: 120px;
+
+	--radius-buttons: 3px;
+	--radius-nav: 3px;
+	--radius-cards: 10px;
+	--radius-largepanels: 20px;
+
+	--motion: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+
+	/* Starlight's scale, mapped onto those tokens.
+	   Contrast against the #101010 canvas, measured:
+	   chalk 17.2:1, bone 16.4:1, pale-stone 9.2:1, warm-granite 5.1:1,
+	   metric-green 10.3:1, signal-orange 5.7:1. All clear WCAG AA for body text.
+	   ash-stroke is 1.7:1, which is why it is only ever a decorative hairline
+	   and never a focus ring or a meaningful border. */
+	--sl-color-white: var(--color-chalk);
+	--sl-color-gray-1: var(--color-bone);
+	--sl-color-gray-2: var(--color-pale-stone);
+	--sl-color-gray-3: var(--color-warm-granite);
+	--sl-color-gray-4: var(--color-graphite-mid);
+	--sl-color-gray-5: var(--color-ash-stroke);
+	--sl-color-gray-6: var(--color-carbon-lift);
+	--sl-color-gray-7: #171514;
+	--sl-color-black: var(--color-obsidian-canvas);
+
+	--sl-color-text: var(--color-bone);
+	--sl-color-text-invert: var(--color-obsidian-canvas);
+	--sl-color-bg: var(--color-obsidian-canvas);
+	--sl-color-bg-nav: var(--color-obsidian-canvas);
+	--sl-color-bg-sidebar: var(--color-obsidian-canvas);
+	--sl-color-bg-inline-code: var(--color-carbon-lift);
+	--sl-color-bg-accent: var(--color-carbon-lift);
+
+	--sl-color-hairline: var(--color-carbon-lift);
+	--sl-color-hairline-light: var(--color-ash-stroke);
+	--sl-color-hairline-shade: var(--color-carbon-lift);
+
+	/* Chrome stays monochrome. design.md: the accents are "data-voice colours,
+	   not chrome colours", so links and the active nav item carry no hue and
+	   are distinguished by weight, an underline, and a rule. */
+	--sl-color-accent-low: var(--color-carbon-lift);
+	--sl-color-accent: var(--color-bone);
+	--sl-color-accent-high: var(--color-chalk);
+	--sl-color-text-accent: var(--color-chalk);
+
+	/* "The design earns its depth through contrast and spacing rhythm, not blur
+	   or glow." */
+	--sl-shadow-sm: none;
+	--sl-shadow-md: none;
+	--sl-shadow-lg: none;
+
+	--sl-font: 'Geist Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+	--sl-font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+	--sl-text-h1: 36px;
+	--sl-text-h2: 24px;
+	--sl-text-h3: 20px;
+	--sl-text-h4: 17px;
+	--sl-text-h5: 15px;
+	--sl-line-height: 1.5;
+	--sl-line-height-headings: 1.15;
+
+	--sl-nav-height: 64px;
+}
+
+/* Weight 400 carries the chrome: nav, sidebar, labels. DESIGN.md's rule is that
+   authority comes from size and tracking, not weight. */
+:where(h1, h2, h3, h4, h5, h6) {
+	font-weight: 400;
+	letter-spacing: -0.03em;
+}
+
+h1 {
+	letter-spacing: -0.031em;
+}
+
+/* Headings inside a page are the exception, by request: bold, so a section
+   break is obvious while scrolling a long reference page. This departs from
+   DESIGN.md ("do not use weight 600+ or bold for headings"), and it also settles
+   an inconsistency, since the page title in PageTitle.astro was already 600
+   while every heading under it sat at 400. */
+.sl-markdown-content :is(h1, h2, h3, h4, h5, h6) {
+	font-weight: 600;
+}
+
+.sl-markdown-content :is(strong, b) {
+	font-weight: 500;
+	color: var(--color-chalk);
+}
+
+/* Geist Mono, uppercase, tight. design.md: "when a user sees Mono, they know
+   they are looking at a system surface, not a page surface." */
+.site-title,
+.sl-markdown-content kbd {
+	font-family: var(--sl-font-mono);
+	text-transform: uppercase;
+	letter-spacing: -0.02em;
+	font-size: 12px;
+}
+
+/* Links carry an underline rather than a hue, so they stay legible without
+   relying on colour alone (WCAG 1.4.1). */
+.sl-markdown-content a:not(:where(.not-content *)) {
+	color: var(--color-bone);
+	text-decoration: underline;
+	text-underline-offset: 0.2em;
+	text-decoration-color: var(--color-graphite-mid);
+	transition: color var(--motion), text-decoration-color var(--motion);
+}
+
+.sl-markdown-content a:hover:not(:where(.not-content *)) {
+	color: var(--color-chalk);
+	text-decoration-color: var(--color-chalk);
+}
+
+/* The current page in the sidebar is a bone card on dark ground: design.md's
+   signature figure/ground move, and the same inversion as its Light Filled
+   Button. #101010 on #eeeeee is 16.4:1. */
+nav.sidebar a[aria-current='page'] {
+	background-color: var(--color-bone);
+	color: var(--color-obsidian-canvas);
+	font-weight: 500;
+	border-radius: var(--radius-buttons);
+	border-inline-start-color: transparent;
+}
+
+nav.sidebar a[aria-current='page']:hover {
+	background-color: var(--color-chalk);
+	color: var(--color-obsidian-canvas);
+}
+
+nav.sidebar a:hover:not([aria-current='page']) {
+	color: var(--color-chalk);
+	background-color: var(--color-carbon-lift);
+}
+
+/* "On this page" marks the current heading with contrast alone: no fill, no
+   rule. Chalk against warm-granite siblings is a 3.4:1 step, which reads at a
+   glance without putting a second bright block on the page. */
+starlight-toc a {
+	border-inline-start-color: transparent;
+	border-radius: var(--radius-buttons);
+	color: var(--color-warm-granite);
+}
+
+starlight-toc a[aria-current='true'] {
+	background-color: transparent;
+	color: var(--color-chalk);
+	font-weight: 500;
+}
+
+starlight-toc a:hover:not([aria-current='true']) {
+	color: var(--color-pale-stone);
+	background-color: transparent;
+}
+
+/* Inline code sits tight against the punctuation that follows it. */
+.sl-markdown-content :not(pre) > code {
+	padding: 0.15em 0.35em;
+	border-radius: var(--radius-buttons);
+	border: 1px solid var(--color-ash-stroke);
+	font-size: 0.9em;
+	color: var(--color-chalk);
+}
+
+/* Flat surfaces, minimal radii. `pre` is left out on purpose: Expressive Code
+   owns the whole code frame, and reaching into it from here is what broke the
+   copy button and the file-name tab. */
+.card,
+.sl-markdown-content blockquote,
+.starlight-aside {
+	border-radius: var(--radius-cards);
+}
+
+.starlight-aside {
+	border-inline-start-width: 2px;
+	background-color: var(--color-carbon-lift);
+}
+
+/* The two functional accents live here and nowhere else in the chrome:
+   caution and danger take signal orange, tip takes metric green, and note
+   stays monochrome. */
+.starlight-aside--note {
+	--sl-color-asides-text-accent: var(--color-pale-stone);
+	--sl-color-asides-border: var(--color-graphite-mid);
+}
+
+.starlight-aside--tip {
+	--sl-color-asides-text-accent: var(--color-metric-green);
+	--sl-color-asides-border: var(--color-metric-green);
+}
+
+.starlight-aside--caution,
+.starlight-aside--danger {
+	--sl-color-asides-text-accent: var(--color-signal-orange);
+	--sl-color-asides-border: var(--color-signal-orange);
+}
+
+/* Keyboard users get a ring; mouse users do not. WCAG 2.2 SC 2.4.11 wants a
+   2px perimeter at 3:1 against the unfocused state, so this is bone (16.4:1)
+   rather than ash-stroke (1.7:1). */
+:where(a, button, input, select, summary, [tabindex]):focus-visible {
+	outline: 2px solid var(--color-bone);
+	outline-offset: 2px;
+	border-radius: var(--radius-buttons);
+}
+
+/* "Transitions are short and mechanical, the feel of a CLI tool." */
+:where(a, button, summary) {
+	transition:
+		color var(--motion),
+		background-color var(--motion),
+		border-color var(--motion);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+}
+
+/* API pages carry wide signature tables. They scroll inside their own box so
+   the page itself never scrolls sideways on a phone. */
+.sl-markdown-content :is(table) {
+	display: block;
+	overflow-x: auto;
+	max-width: 100%;
+}
+
+.sl-markdown-content :is(th, td) {
+	border-color: var(--color-carbon-lift);
+}

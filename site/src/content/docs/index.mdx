@@ -1,0 +1,114 @@
+---
+title: Twill
+description: A modular framework for Roblox, built for people who develop directly in Studio.
+template: splash
+hero:
+  tagline: |
+    A modular framework for Roblox, built for people who develop directly in Studio.
+    Every module works on its own. Take the one you need and ignore the rest.
+  image:
+    file: ../../assets/hero.svg
+  actions:
+    - text: Get started
+      link: /getting-started/quick-start/
+      icon: right-arrow
+      variant: primary
+    - text: News
+      link: /news/
+      variant: secondary
+    - text: What is Twill
+      link: /getting-started/introduction/
+      variant: minimal
+      icon: right-caret
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+{/* Action links are root-relative and get Astro's `base` from the Hero override
+    in src/components/Hero.astro. Starlight does not prefix them itself. */}
+
+## Why Twill
+
+<CardGrid>
+	<Card title="Guarded by default" icon="padlock">
+		Every remote served through `Net.Handle` is metered from its first line,
+		whether or not you asked for it. Rank, schema, and your own checks stack on
+		top, cheapest first, so a caller flooding one packet is turned away before
+		anything expensive runs for them.
+	</Card>
+
+	<Card title="There is no request path" icon="server">
+		A client cannot ask the server for state. It holds what the server decided
+		to send and nothing else. The metering algorithm, each player's current
+		allowance, and every line that touches saved data live where no client can
+		read them.
+	</Card>
+
+	<Card title="Failures are loud" icon="warning">
+		A critical service that fails to boot refuses players instead of serving a
+		game quietly missing a system. Data that will not load kicks rather than
+		opening a session that would overwrite progress. Text that cannot be
+		filtered comes back as `nil`, never as the original.
+	</Card>
+
+	<Card title="Player data, carried through" icon="database">
+		Sessions, templates, versioned migrations, and branches. A write reaches a
+		player on any server and never overwrites a session it does not own, and
+		naming a field is all it takes to send it to its owner's client.
+	</Card>
+
+	<Card title="Every lifetime has an owner" icon="clock">
+		Nothing here starts a connection nobody owns. Bags close when a player
+		leaves, when a character is removed, or the instant that character dies, so
+		work stops with the thing it belonged to instead of outliving it.
+	</Card>
+
+	<Card title="Adopt as little as you like" icon="puzzle">
+		Only `Lifecycle` calls your code. Everything else is a library you call, so
+		reaching for `Twill.Log` and nothing else is a legitimate way to use this.
+	</Card>
+</CardGrid>
+
+## In one screen
+
+```luau
+local Twill = require("@game/ReplicatedStorage/Twill")
+
+Twill.Data.Configure({
+	Store = "PlayerData",
+	Version = 1,
+	Template = { Coins = 0 },
+})
+
+Twill.Lifecycle.SetPlayerGate(Twill.Data.Gate)
+Twill.Lifecycle.Start(script.Parent.Services)
+```
+
+That is a server which loads player data, boots your services in a defined order,
+and announces each player once their data exists.
+
+## Where to go next
+
+<CardGrid>
+	<Card title="Install and boot" icon="rocket">
+		Put both folders in place, configure player data, and watch a service boot.
+		[Start here](/getting-started/installation/).
+	</Card>
+
+	<Card title="Learn the shape" icon="seti:plan">
+		Services on the server, controllers on the client, then data, remotes,
+		replication, and cleanup. [Core Guides](/core-guides/services/).
+	</Card>
+
+	<Card title="Solve one thing" icon="list-format">
+		Practical recipes for the systems most games end up needing, each starting
+		from the problem and naming the trap. Begin with
+		[Gate actions by rank](/guides/ranks-and-permissions/).
+	</Card>
+
+	<Card title="Read the API" icon="open-book">
+		One page per module, with every signature taken from the source and the
+		side it runs on marked on every member.
+		[Module reference](/reference/).
+	</Card>
+</CardGrid>

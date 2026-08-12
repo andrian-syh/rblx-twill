@@ -1,0 +1,24 @@
+---
+// Starlight passes `hero.actions[].link` straight to LinkButton without
+// prefixing Astro's `base`, so a root-relative action 404s under a project-page
+// sub-path. This is the frontmatter counterpart to plugins/rehype-base-links.mjs,
+// which only ever sees links written in Markdown.
+//
+// Rewriting the route data before delegating keeps the default hero layout,
+// which already places the copy left and the image right above 50rem.
+import Default from '@astrojs/starlight/components/Hero.astro';
+
+const prefix = import.meta.env.BASE_URL.replace(/\/+$/, '');
+const hero = Astro.locals.starlightRoute.entry.data.hero;
+
+if (prefix && hero?.actions) {
+	for (const action of hero.actions) {
+		const { link } = action;
+		if (link.startsWith('/') && !link.startsWith('//') && !link.startsWith(`${prefix}/`)) {
+			action.link = prefix + link;
+		}
+	}
+}
+---
+
+<Default><slot /></Default>

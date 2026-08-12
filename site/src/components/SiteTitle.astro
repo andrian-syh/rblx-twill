@@ -1,0 +1,59 @@
+---
+// Starlight has no top navigation. The header is a three-column grid, and only
+// column one sits left of the search box, so nav links have to travel with the
+// site title to land there.
+//
+// The links are hidden below 50rem. That column is `minmax(sidebar-width, auto)`
+// and clips its overflow, so on a phone the title would eat them; everything
+// here is reachable from the sidebar and the hero anyway.
+import Default from '@astrojs/starlight/components/SiteTitle.astro';
+
+// BASE_URL is only guaranteed to end in a slash when `base` was written with
+// one, so the trailing slash is stripped and re-added rather than assumed.
+// Concatenating onto a bare BASE_URL produces hrefs like `/Twillnews/`.
+const prefix = import.meta.env.BASE_URL.replace(/\/+$/, '');
+
+const links = [
+	{ label: 'Docs', href: `${prefix}/getting-started/introduction/` },
+	{ label: 'Reference', href: `${prefix}/reference/` },
+	{ label: 'News', href: `${prefix}/news/` },
+];
+
+const current = Astro.url.pathname;
+---
+
+<Default><slot /></Default>
+
+<nav class="site-nav sl-hidden md:sl-flex" aria-label="Main">
+	{
+		links.map(({ label, href }) => (
+			<a href={href} aria-current={current.startsWith(href) ? 'page' : undefined}>
+				{label}
+			</a>
+		))
+	}
+</nav>
+
+<style>
+	.site-nav {
+		gap: 1.25rem;
+		align-items: center;
+		margin-inline-start: 1.5rem;
+		font-size: var(--sl-text-sm);
+		white-space: nowrap;
+	}
+
+	.site-nav a {
+		color: var(--sl-color-gray-2);
+		text-decoration: none;
+	}
+
+	.site-nav a:hover {
+		color: var(--sl-color-white);
+	}
+
+	.site-nav a[aria-current='page'] {
+		color: var(--sl-color-white);
+		font-weight: 600;
+	}
+</style>

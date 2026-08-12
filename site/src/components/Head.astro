@@ -1,0 +1,35 @@
+---
+// Starlight's own head, plus font preloading.
+//
+// The @fontsource stylesheets declare @font-face, so a browser only discovers
+// the woff2 files after it has parsed the CSS. That late discovery is what makes
+// text reflow as a page settles. Preloading the latin subsets moves the request
+// to the start of the document.
+//
+// Only the three faces custom.css actually imports are preloaded, and only their
+// latin subset. Preloading a file the page never uses costs a request and warns
+// in the console, so this list has to stay in step with the @import lines in
+// src/styles/custom.css.
+//
+// NO CLIENT-SIDE ROUTER HERE, deliberately. Astro's <ClientRouter /> was tried
+// and reverted: it swaps the document without re-running Starlight's search
+// script, so after the first client-side navigation the search dialog opens with
+// no input in it and the site cannot be searched at all. Search matters more on
+// a documentation site than a smoother transition does. Verified by navigating
+// and then searching, not assumed.
+import Default from '@astrojs/starlight/components/Head.astro';
+
+import geistSans400 from '@fontsource/geist-sans/files/geist-sans-latin-400-normal.woff2?url';
+import geistSans500 from '@fontsource/geist-sans/files/geist-sans-latin-500-normal.woff2?url';
+import geistMono400 from '@fontsource/geist-mono/files/geist-mono-latin-400-normal.woff2?url';
+
+const preloadedFonts = [geistSans400, geistSans500, geistMono400];
+---
+
+<Default><slot /></Default>
+
+{
+	preloadedFonts.map((href) => (
+		<link rel="preload" href={href} as="font" type="font/woff2" crossorigin />
+	))
+}
