@@ -182,6 +182,7 @@ function Random.Commit(): Round
 export type Round = {
 	Commitment: string,
 	Int: (self: Round, min: number, max: number) -> number,
+	NextNumber: (self: Round) -> number,
 	Pick: <T>(self: Round, list: { T }) -> T,
 	Reveal: (self: Round) -> string,
 }
@@ -243,6 +244,29 @@ function round:Int(min: number, max: number): number
 
 Throws on the same bounds `Random.Int` refuses.
 
+### `Round:NextNumber`
+
+`[Server]`
+
+Returns a fraction of one, taken from this round's stream.
+
+```luau
+function round:NextNumber(): number
+```
+
+**Returns**
+
+`number` - A value from zero, up to but never reaching one.
+
+Named to match the method an ordinary `Random` carries, so anything that draws
+from one draws from a round without knowing which it was handed.
+[`Chance`](/reference/chance/) is what this exists for.
+
+Two words of the stream are taken per call rather than one, so the fraction is as
+fine as an ordinary generator's. That matters when replaying: a round drawing
+fractions consumes its stream twice as fast as one drawing whole numbers, which
+is invisible unless you interleave the two and expect a particular sequence.
+
 ### `Round:Pick`
 
 `[Server]`
@@ -280,6 +304,7 @@ by the seed.
 
 ## Weighted draws
 
-For a loot table with weights rather than equal odds, `Packages.WeightedRandom`
-is bundled. It uses `math.random`, so use it for cosmetic variety and use this
-module for anything a player would want to contest.
+`Pick` and `Shuffle` treat every entry as equally likely. For a table where some
+entries should come up more often than others, use
+[`Chance`](/reference/chance/), which takes a round from here and draws from its
+stream, so a weighted outcome is as auditable as an even one.

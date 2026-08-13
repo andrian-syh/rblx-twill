@@ -47,6 +47,8 @@ Available on the server and the client.
 | [Tree](/reference/tree/) | Instances described as data and built in one pass. |
 | [Error](/reference/error/) | One listener for every unhandled script error. |
 | [BigNumber](/reference/bignumber/) | Exact whole numbers with no ceiling. |
+| [Chance](/reference/chance/) | Weighted draws, and the odds behind them. |
+| [Navigation](/reference/navigation/) | Agents that walk somewhere, and one loop driving all of them. |
 | [Authorization](/reference/authorization/) | Ranks, and the questions that depend on them. |
 | [Admin](/reference/admin/) | An in-game command console built on Cmdr. |
 

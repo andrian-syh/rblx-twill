@@ -126,21 +126,26 @@ keeps the draw unbiased, which a wider span could not be from a single word.
 
 ## Weighted odds
 
-`Packages.WeightedRandom` is bundled for tables with weights rather than equal
-odds. It uses `math.random`, so use it where the distribution matters and the
-unpredictability does not.
-
-For a weighted draw that also has to be unpredictable, build the selection on top
-of `Random.Number`:
+[`Chance`](/reference/chance/) holds tables where some entries are likelier than
+others, and it takes a round directly, so a weighted draw is audited exactly the
+way an even one is.
 
 ```luau
-local roll = Twill.Random.Number(0, totalWeight)
-local seen = 0
+local round = Twill.Random.Commit()
+announce(round.Commitment)
 
-for _, entry in lootTable do
-	seen += entry.Weight
-	if roll <= seen then
-		return entry
-	end
-end
+local pool = Twill.Chance.new(round)
+pool:AddItem("common", 100)
+pool:AddItem("legendary", 1, 2)
+
+local prize = pool:Next(playerLuck)
+
+announce(round:Reveal())
 ```
+
+`Random.Replay(seed)` then reproduces that prize, as long as the draws are taken
+in the same order.
+
+Where the draw is sold, the odds have to be disclosed before the purchase, and so
+does the effect of anything sold that improves them. `Pool:GetProbabilities`
+answers both, at any luck.

@@ -6,6 +6,44 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 Twill adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Breaking changes wait for a major version.
 
+## [1.1.0] - 2026-08-13
+
+Two built-in utilities, and the module they both lean on gains one method.
+
+### Added
+
+- `Chance`, weighted draws where luck is an exponent per entry rather than a
+  multiplier over the table, so one number shifts a whole table and the odds a
+  player is shown are computed from the table instead of kept beside it. It
+  accepts a `Random` round directly, which makes a weighted draw as auditable as
+  an even one.
+- `Round:NextNumber`, the fraction a round draws from its own stream. Named to
+  match the method an ordinary `Random` carries, so anything drawing from one
+  draws from a round unchanged.
+- `Navigation`, pathfinding agents driven by a single loop rather than one timer
+  each, with a budget bounding how many routes are worked out at once, routes
+  asked for again when something blocks the part still ahead, and giving up
+  measured as a lack of progress rather than as a clock against an assumed
+  speed. Movement is a function the agent calls, so a humanoid, a drone, and
+  anything else share one code path.
+
+### Changed
+
+- `WeightedRandom` is no longer a bundled package. It became `Chance`, which is
+  what lets it reach `Random`; a package cannot depend on a Twill module. Three
+  defects were fixed on the way: a negative weight reported odds above one for
+  every other entry, a luck factor at or below `-1` produced a weight that was
+  infinite or not a number and quietly returned the same entry forever, and the
+  luck formula existed in two places that were free to disagree.
+
+### Removed
+
+- `Pool:GetItems` and the pool's public `Random` field, both of which had no
+  callers and neither of which appeared in the exported type. `GetWeights` and
+  `GetProbabilities` already enumerate a pool.
+- The warning about mixing key types in one pool. Mixed keys are legal and
+  harmless in a table keyed by anything, and the warning named no actual fault.
+
 ## [1.0.0] - 2026-08-12
 
 First release.
@@ -63,4 +101,5 @@ First release.
 - An automated test suite that runs on every playtest in Studio and never in
   production.
 
+[1.1.0]: https://github.com/andrian-syh/rblx-twill/releases/tag/v1.1.0
 [1.0.0]: https://github.com/andrian-syh/rblx-twill/releases/tag/v1.0.0

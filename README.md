@@ -8,7 +8,7 @@ module works on its own. Take the one you need and ignore the rest.
 
 **[Read the documentation →](https://andrian-syh.github.io/rblx-twill/)**
 
-> **v1.0.0.** The API is stable. Breaking changes wait for a major version, and
+> **v1.1.0.** The API is stable. Breaking changes wait for a major version, and
 > everything documented is taken from the source.
 
 ## Why this exists
@@ -83,8 +83,8 @@ The full walkthrough is the
 | Group | Modules |
 | --- | --- |
 | **Core** | `Lifecycle`, `Net`, `Replication`, `Data`, `Scope`, `Log` |
-| **Utilities** | `Schema`, `Limit`, `Loop`, `Watch`, `Format`, `Serialize`, `Compress`, `Tree`, `Error`, `BigNumber` |
-| **Game systems** | `Authorization`, `Admin`, `Monetization`, `Leaderstats`, `Filter`, `Random`, `Token` |
+| **Utilities** | `Schema`, `Limit`, `Loop`, `Watch`, `Format`, `Serialize`, `Compress`, `Tree`, `Error`, `BigNumber`, `Chance` |
+| **Game systems** | `Authorization`, `Admin`, `Monetization`, `Leaderstats`, `Filter`, `Random`, `Token`, `Navigation` |
 
 Each has a reference page carrying every signature taken from the source, and the side it
 runs on marked on every member. See the

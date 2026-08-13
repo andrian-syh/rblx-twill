@@ -22,11 +22,9 @@ can read at runtime. This page summarises it.
 | Signal (NamedSignal) | MIT | Averlyst |
 | AptInt | Unlicense | fosterchild1 |
 | BytePress | MIT | Twill |
-| WeightedRandom | MIT | Twill |
 
-`BytePress` and `WeightedRandom` are Twill's own, kept beside the third-party
-packages because they are reached the same way. They carry Twill's licence, not
-somebody else's.
+`BytePress` is Twill's own, kept beside the third-party packages because it is
+reached the same way. It carries Twill's licence, not somebody else's.
 
 ## Server
 

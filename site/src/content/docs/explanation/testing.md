@@ -26,8 +26,8 @@ and there are no fixtures.
 
 It covers `Limit`, `Schema`, `Delta`, `Data` migrations, `Net`, server
 `Replication`, the `Lifecycle` surface, `Compress`, `Serialize`, `Random`,
-`Token`, and known-answer tests for the cryptographic primitives against official
-RFC vectors.
+`Token`, `Chance`, `Navigation`, and known-answer tests for the cryptographic
+primitives against official RFC vectors.
 
 ## The shape it uses
 
@@ -57,10 +57,13 @@ rather than after the claim they make.
 | `drain` in `Replication` | It needs a real client receiving. |
 | The `Lifecycle` core | `Start` runs once. Testing it means hijacking the boot. |
 | The `Data` binding | It needs a `Configure` that would clash with the real game. |
+| `Path.Blocked` in `Navigation` | It needs the world to change under an agent that is already walking. |
 
-What these four have in common is that they are the parts that only exist when
-two sides are running at once. They are not skipped because they are unimportant;
-they are skipped because a single-process assertion cannot reach them.
+What these have in common is that none of them exists inside a single process
+running on its own: they need a second side of the game, or a world that moves
+while the assertion is watching. They are not skipped because they are
+unimportant; they are skipped because a single-process assertion cannot reach
+them.
 
 Closing them needs an **integration harness**: a Studio-only `Script` and
 `LocalScript` pair that runs real remotes round-trip and waits for replication to

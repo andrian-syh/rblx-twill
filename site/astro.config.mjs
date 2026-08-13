@@ -169,6 +169,7 @@ export default defineConfig({
 							collapsed: true,
 							items: [
 								{ label: 'Bind behaviour to tagged instances', slug: 'guides/tagged-instances' },
+								{ label: 'Walk NPCs around the world', slug: 'guides/npc-navigation' },
 								{ label: 'Spread work across frames', slug: 'guides/frame-budget' },
 							],
 						},
@@ -214,12 +215,14 @@ export default defineConfig({
 								{ label: 'Tree', slug: 'reference/tree' },
 								{ label: 'Error', slug: 'reference/error' },
 								{ label: 'BigNumber', slug: 'reference/bignumber' },
+								{ label: 'Chance', slug: 'reference/chance' },
 							],
 						},
 						{
 							label: 'Game systems',
 							collapsed: true,
 							items: [
+								{ label: 'Navigation', slug: 'reference/navigation' },
 								{ label: 'Authorization', slug: 'reference/authorization' },
 								{ label: 'Admin', slug: 'reference/admin' },
 								{ label: 'Monetization', slug: 'reference/monetization' },
