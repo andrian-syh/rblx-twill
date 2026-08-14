@@ -25,9 +25,10 @@ line that touches player data.
 
 ## The root table
 
-`ReplicatedStorage.Twill` returns a frozen empty table with a metatable. Indexing
-it resolves the module by name, checking the shared folder first and the server
-folder second.
+`ReplicatedStorage.Twill` returns a table carrying `Version` and a metatable.
+Indexing it for anything else resolves the module by name, checking the shared
+folder first and the server folder second, then writes the result back into the
+table so every later lookup is an ordinary field read.
 
 ```luau
 local Twill = require("@game/ReplicatedStorage/Twill")

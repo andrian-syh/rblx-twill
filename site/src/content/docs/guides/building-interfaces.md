@@ -70,6 +70,39 @@ return HudController
 Nothing publishes coins here. A field named in `Data.Configure` does it, and the
 label follows the server's own write.
 
+## Bind a whole panel
+
+One subscription per field reads fine for two fields and repeats badly for ten.
+The repetition is always the same shape — a path, a ref, a property, a formatter
+— so write it down once, in your own controller:
+
+```luau
+local function bind(path: string, instance: Instance, property: string, show: ((any) -> any)?)
+	Twill.Replication.Subscribe(path, function(value)
+		(instance :: any)[property] = if show then show(value) else value
+	end, trove)
+end
+
+bind("Data.Coins", refs.Coins, "Text", Twill.Format.Comma)
+bind("Data.Level", refs.Level, "Text", tostring)
+bind("Data.Boost", refs.BoostIcon, "Visible")
+```
+
+Six lines buy you one line per binding, and the shape stays yours: a panel that
+wants a colour rule or a tween instead of a plain write changes `bind` rather
+than arguing with a framework about it.
+
+Twill does not ship that helper on purpose. It is six lines, every game wants it
+slightly differently, and a `Bind` in the framework would have to guess about
+transforms, defaults, and what a `nil` means on a property that cannot hold one.
+
+:::caution[Give a per-player binding a bag]
+The `trove` above is doing real work. A subscription with no bag lives until the
+session ends, and its callback holds the instance it writes into. That is fine
+for a HUD that lives as long as the session, and a leak for anything built per
+player or per character.
+:::
+
 ## Handle input
 
 `Events` connects signals by name, after the properties are written.

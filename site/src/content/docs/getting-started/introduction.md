@@ -130,7 +130,7 @@ against.
 
 ## Status
 
-**v1.1.0.** The API is stable. Breaking changes wait for a major version, so
+**v1.2.0.** The API is stable. Breaking changes wait for a major version, so
 anything documented here can be built on.
 
 `Twill.Version` reports the version the installed copy carries, which is the

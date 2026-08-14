@@ -58,6 +58,7 @@ rather than after the claim they make.
 | The `Lifecycle` core | `Start` runs once. Testing it means hijacking the boot. |
 | The `Data` binding | It needs a `Configure` that would clash with the real game. |
 | `Path.Blocked` in `Navigation` | It needs the world to change under an agent that is already walking. |
+| `owner` on `Replication.Subscribe` | It only exists on the client, and the suite runs on the server. |
 
 What these have in common is that none of them exists inside a single process
 running on its own: they need a second side of the game, or a world that moves

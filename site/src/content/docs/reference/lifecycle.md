@@ -50,6 +50,9 @@ Lower boots first. Services with the same priority break the tie by name, so the
 order is stable across runs rather than dependent on how Roblox happened to
 enumerate the folder.
 
+A service that does not set one boots at **100**. That is the number to measure
+against: below it runs before everything that never asked, above it runs after.
+
 ### Critical
 
 A `Critical` service whose `Init` or `Start` throws locks the server and refuses

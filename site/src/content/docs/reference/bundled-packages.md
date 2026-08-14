@@ -7,9 +7,11 @@ Twill bundles every dependency, so installing it needs no package manager and no
 build step. That is about what is required, not about how you work: bundled code
 travels with the place, whatever assembled it.
 
-The authoritative record inside the place is
-`ReplicatedStorage.Twill.Packages.ATTRIBUTION`, which also returns a table you
-can read at runtime. This page summarises it.
+The authoritative record is
+[THIRD-PARTY-NOTICES.md](https://github.com/andrian-syh/rblx-twill/blob/main/THIRD-PARTY-NOTICES.md)
+in the repository, which carries the licence texts in full. This page summarises
+it. Nothing inside the place records this, because a notice a licence obliges you
+to redistribute belongs with the thing you redistribute.
 
 ## Shared
 

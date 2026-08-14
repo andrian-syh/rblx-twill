@@ -101,6 +101,45 @@ in which they finish. Do not write a `Start` that assumes another service's
 for what it needs rather than assume it exists.
 :::
 
+## Two services that need each other
+
+`InventoryService` needs `EconomyService`, and `EconomyService` needs
+`InventoryService`. In most modular frameworks that is a problem to solve. Here
+it is not one, and the reason is worth knowing.
+
+**Services never `require` each other.** `Lifecycle.Get` reads a registry filled
+when the folder was collected, before any `Init` ran. Nothing about reaching
+another service is a Luau `require`, so there is no require cycle to form:
+
+```luau
+function InventoryService.Start()
+	Twill.Lifecycle.Get("EconomyService").RegisterSink(InventoryService)
+end
+
+function EconomyService.Start()
+	Twill.Lifecycle.Get("InventoryService").RegisterSource(EconomyService)
+end
+```
+
+Both work. By the time any `Start` runs, every `Init` has finished, so neither
+service is reaching for something half built.
+
+Boot cannot deadlock either. `Init` runs straight through without waiting on
+anybody, and each `Start` runs on its own thread, so no phase is ever blocked on
+another service reaching a phase.
+
+There are two ways to build a cycle anyway, and both mean leaving the pattern:
+
+- **`require` a sibling service directly** instead of asking `Lifecycle`. That is
+  a real Luau cycle and it will fail exactly as it would anywhere else.
+- **Wait inside `Start` for something another `Start` sets.** Two services each
+  waiting on the other wait forever. Ask for what you need when you need it
+  rather than blocking until it appears.
+
+Where two services should not know about each other at all,
+[`Replication.OnChanged`](/reference/replication/) lets one react to another's
+published state without either naming the other.
+
 ## Configuration comes before `Start`
 
 `Start` is what begins letting players through, so anything the framework itself

@@ -93,7 +93,7 @@ announce(round:Reveal())
 ```
 
 See [Run a draw a player can audit](/guides/provably-fair-draws/) for the full
-flow, and note that replaying requires the draws to be taken in the same order.
+flow. Replaying requires the draws to be taken in the same order.
 
 ## API
 

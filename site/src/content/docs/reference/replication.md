@@ -7,8 +7,12 @@ One require path, two very different jobs. On the server `Twill.Replication` is
 the publisher. On the client it is the local view.
 
 The server half lives outside `ReplicatedStorage`, so its source never reaches a
-player. **A client has no way to ask the server for anything.** Everything a
-client holds arrived because the server decided to send it.
+player. **A client has no way to ask for replicated state.** Everything a client
+holds here arrived because the server decided to send it.
+
+Asking the server a question is a different job, and [`Net`](/reference/net/)
+does it: declare a remote with reply types and the client gets an answer, metered
+and screened like every other call.
 
 ## Keys and paths
 
@@ -266,6 +270,10 @@ belongs to one.
 Fires on the **server**, as the write happens, ahead of anything leaving for a
 client. `player` is set for a player key and `nil` for a shared one.
 
+This is how one system reacts to another's state without the two naming each
+other. The publisher does not know who is listening, and a listener needs only
+the key.
+
 This reports publishes, not differences. A key republished on an interval fires
 on that interval even when nothing moved. To hear real changes, subscribe from
 the client.
@@ -319,7 +327,11 @@ is the reading that matches what actually reached them.
 Calls back whenever a key, or one field inside it, moves.
 
 ```luau
-function Replication.Subscribe<T>(full: string, callback: (value: T?) -> ()): Subscription
+function Replication.Subscribe<T>(
+	full: string,
+	callback: (value: T?) -> (),
+	owner: Scope.Trove?
+): Subscription
 ```
 
 **Parameters**
@@ -328,6 +340,7 @@ function Replication.Subscribe<T>(full: string, callback: (value: T?) -> ()): Su
 | :--- | :--- | :--- |
 | `full` | `string` | A key, optionally followed by a dot separated path. |
 | `callback` | `(value: T?) -> ()` | Receives the new value, or `nil` when it is cleared. |
+| `owner` | `Scope.Trove?` | A bag to put the subscription in. The caller keeps it when left out. |
 
 **Returns**
 
@@ -340,12 +353,18 @@ write. The current value is delivered once if there already is one, so the
 callback may run before anything changes.
 
 ```luau
-local subscription = Replication.Subscribe("Data.Stats.Coins", function(coins)
+Replication.Subscribe("Data.Stats.Coins", function(coins)
 	label.Text = Format.Comma(coins or 0)
-end)
-
-trove:Add(subscription)
+end, trove)
 ```
+
+Pass `owner` **or** bag the return value, never both: two bags holding one
+subscription is two things trying to close it.
+
+A subscription with no bag at all lives until the session ends. That is right for
+a controller's own HUD, which lives just as long, and wrong for anything built
+per player or per character — those close a closure that holds the whole tree it
+was drawing into.
 
 ### `Replication.WaitFor`
 

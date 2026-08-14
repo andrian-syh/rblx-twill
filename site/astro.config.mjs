@@ -33,7 +33,7 @@ export default defineConfig({
 		starlight({
 			title: 'Twill',
 			description:
-				'A modular framework for Roblox, built for people who develop directly in Studio.',
+				'A modular framework for Roblox. Two folders, no build step, no package manager, and every module works on its own.',
 			customCss: ['./src/styles/custom.css'],
 			// One mark, one file. Starlight only reads a favicon out of public/, so
 			// the header logo points at that same file rather than a second copy in

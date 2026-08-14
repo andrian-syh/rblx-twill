@@ -82,7 +82,7 @@ function Limit.PerPlayer(rate: number, burst: number?): Allowance
 | Name | Type | Description |
 | :--- | :--- | :--- |
 | `rate` | `number` | Units earned back per second, per player. Must be above zero. |
-| `burst` | `number?` | The most one player's allowance will hold. The rate itself when left out. |
+| `burst` | `number?` | The most one player's allowance will hold. The rate itself when left out, and never less than one. |
 
 **Returns**
 

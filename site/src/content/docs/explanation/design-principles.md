@@ -37,8 +37,10 @@ That is not only about secrets. Rate ceilings, the metering algorithm, each
 player's current allowance, and all data handling live there, because an opponent
 who can read the limiter can find its edge.
 
-A client cannot request anything from `Replication`. There is no request path at
-all. Everything a client holds arrived because the server decided to send it.
+A client cannot request anything from `Replication`. Everything a client holds
+there arrived because the server decided to send it. Where a client genuinely has
+a question, `Net` answers it: a remote with reply types, metered and screened
+like every other call. What is refused is the pull, not the question.
 
 **The cost:** several modules have two halves, and one of them, `Admin`, has to
 be required directly on the client rather than through the root table.

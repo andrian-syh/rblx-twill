@@ -150,3 +150,10 @@ The record of granted purchases lives in the player's profile under a name
 beginning `__twill`, alongside Twill's other bookkeeping. Do not use that prefix
 for your own fields, and do not clear it: it is what stops a redelivered receipt
 from paying twice.
+
+It holds the **last fifty** purchase ids and drops the oldest past that, so a
+profile does not grow without limit. That is a bound on the guarantee: a receipt
+redelivered after the same player has made fifty further purchases would be
+granted a second time. Roblox retries an unanswered receipt within minutes
+rather than across fifty purchases, so the bound sits far outside where redelivery
+actually happens.
