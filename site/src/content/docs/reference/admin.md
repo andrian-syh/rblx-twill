@@ -60,6 +60,7 @@ export type Config = {
 	MinimumRank: number,
 	Commands: { [string]: number }?,
 	DefaultCommands: (boolean | { string })?,
+	TwillCommands: (boolean | { string })?,
 }
 ```
 
@@ -68,6 +69,19 @@ export type Config = {
 | `MinimumRank` | The floor for opening the console at all. Required, with no default. |
 | `Commands` | Per-command overrides, above or below the floor. |
 | `DefaultCommands` | `true` for all of Cmdr's built-ins, `false` for none, or a list of names. |
+| `TwillCommands` | The same three shapes, for Twill's own commands. Defaults to `true`. |
+
+A command left out of `TwillCommands` is not registered, and a command that is
+not registered is never moved into `ReplicatedStorage`. Turning one off removes
+it from the client rather than hiding it there.
+
+```luau
+TwillCommands = { "twill", "loglevel" },
+```
+
+**Twill's commands register when `Configure` runs**, not when the module loads.
+A game that never calls `Configure` has no console, so it has none of them
+either.
 
 **The gate refuses everything until `Configure` is called.** A console that
 defaults to open is a console that ships open.
@@ -143,6 +157,34 @@ A command is written as a pair of module scripts named `X` and `XServer`: the
 definition, which reaches clients so they can be offered it, and the server half
 that does the work and never leaves the server.
 
+#### One command, several shapes of argument
+
+A command whose first argument is an action usually needs different arguments
+after each one. `Twill.Admin.Arguments` builds them, and is what Twill's own
+`moderation`, `playerdata`, `repl`, `rank`, and `pass` are written with.
+
+```luau
+local Arguments = require("@game/ReplicatedStorage/Twill/Admin/Arguments")
+
+local FOLLOWING = {
+	kick = { REASON },
+	ban = { REASON, DURATION },
+}
+
+local following = Arguments.Following(FOLLOWING)
+
+-- in the definition
+Args = { action, target, following(1), following(2) }
+```
+
+Cmdr allows an argument to be a function of the command so far, and reads `nil`
+from one as the end of the list, so an action offers only the arguments it can
+use.
+
+It lives in `ReplicatedStorage` rather than beside the commands because Cmdr
+moves a command's definition next to its own before running it, on the client as
+well as the server. A path under `TwillServer` would not survive that move.
+
 ### `Admin.RegisterTypes`
 
 `[Server]`
@@ -198,18 +240,103 @@ change that with `Cmdr:SetActivationKeys`.
 
 ## Built-in commands
 
-Twill adds two command families of its own on top of Cmdr's built-ins, and both
-respect the rank gate.
+Twill adds nine commands of its own on top of Cmdr's built-ins, and all of them
+respect the rank gate. Some act on players; the rest report on the framework
+itself, and exist because that state is private to Twill: a game cannot write
+them without reaching into internals.
+
+None of them are gameplay commands. There is no `fly`, no `speed`, no `godmode`.
+Those depend on your own character rules and are a few lines each in Cmdr, so
+they stay yours.
 
 **`moderation`** kicks, bans, and unbans, in this place or across the whole
 experience. Roblox keeps the ban record itself, enforces the duration, and answers
 rejoin attempts, so nothing is stored here to fall out of step. What Twill adds is
 the part the platform will not do: refusing to let a moderator act on themselves
-or on anyone ranking as high as they do, and naming exactly who was acted on.
+or on anyone present who ranks as high as they do, and naming exactly who was
+acted on. Lifting a ban answers to the same check as applying one.
 
 **`playerdata`** reads and writes through
 [`Data.Edit`](/reference/data/#writing-to-anybody), so it reaches players who are
 not on this server. It works one user at a time on purpose.
+
+Reading prints one aligned row per stored value. Past forty values it switches to
+an indented JSON block instead, which keeps a deep tree readable rather than
+flattening it into hundreds of dotted paths. Past two hundred it asks for a path
+instead of answering.
+
+**`twill`** reports what this server is running. It changes nothing.
+
+| Topic | What it shows |
+| --- | --- |
+| `version` | The installed version, from `Twill.Version`. |
+| `services` | Every service that booted, in boot order, and the failure if boot failed. |
+| `net` | Every declared remote, its signature, and whether the server serves it. |
+| `data` | Whether a store is configured, and the branches it knows. |
+| `replication` | How many keys replication holds and how many messages it has sent. |
+| `all` | Each of the above in turn. This is the default. |
+
+The `net` topic is the one that earns its place. A remote marked `UNSERVED` was
+declared and never handed to [`Net.Handle`](/reference/net/), which is a bug that
+otherwise shows up as a client firing into silence.
+
+**`loglevel`** reports the [log level](/reference/log/) this server is running
+at, or sets it for the rest of the session. Named with no level, it reads.
+
+:::caution[This can silence the audit trail]
+The console records who ran what at `Info`. Raising the level above that stops
+those records along with everything else, so give `loglevel` a rank you would
+trust with the log itself.
+:::
+
+**`repl`** reads [replicated state](/reference/replication/) and paces it.
+
+| Action | What it does |
+| --- | --- |
+| `get <key>` | Shows what everybody sees at that key, with a dot path allowed inside it. |
+| `getfor <user> <key>` | Shows one player's copy, for keys written with `SetFor`. |
+| `freeze <key>` | Stops anything more about that key being sent. |
+| `unfreeze <key>` | Lets it send again, starting from what it holds now. |
+| `throttle <key> [interval]` | Paces it, or sends on every change when the interval is left out. |
+
+`freeze` is the incident tool. A key changing faster than anyone needs can be
+held from the console without shutting the server down.
+
+`freeze`, `unfreeze`, and `throttle` name a whole key, so a dotted path is
+refused rather than quietly acting on a key nobody set.
+
+**`rank`** reads a player's [rank](/reference/authorization/), or overrides it
+for the rest of their session on this server. The override is an attribute, so
+it is not remembered and no other server sees it. It is for seeing what a rank
+sees, not for granting one.
+
+:::caution[This is the command that can hand out authority]
+The console decides who may run what by rank, so `rank set` is the shortest path
+from moderator to owner if it is not guarded. It refuses three things, and the
+refusals are asserted in the test suite:
+
+- Changing your own rank, at all.
+- Changing the rank of anyone who already ranks as high as you.
+- Granting a rank at or above your own.
+
+The most a moderator can do is create someone strictly below themselves.
+:::
+
+**`pass`** asks whether a player owns a game pass, or forgets what was
+remembered about one so [`Monetization`](/reference/monetization/) asks the
+platform again. A pass bought during the session is already remembered as owned,
+so `forget` is for ownership that changed where this server could not see it.
+
+**`saveall`** asks every open [data](/reference/data/) session on this server to
+write now. It returns before any of the writes land, which is what makes it
+usable on a full server. `playerdata save` waits, for one player.
+
+**`verifyroll`** checks a revealed seed against the commitment published before
+a draw, using [`Random.Verify`](/reference/random/#randomverify).
+
+A moderator can run it in front of the player disputing the roll. Nothing about
+the answer depends on trusting whoever ran it — but it proves the seed was fixed
+before the draw, not what the draw was then used for.
 
 :::note[`moderation` reads durations exactly]
 It uses a duration type of its own, so `7d` is seven days and `1h30m` is ninety

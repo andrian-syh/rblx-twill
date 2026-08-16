@@ -26,8 +26,9 @@ and there are no fixtures.
 
 It covers `Limit`, `Schema`, `Delta`, `Data` migrations, `Net`, server
 `Replication`, the `Lifecycle` surface, `Compress`, `Serialize`, `Random`,
-`Token`, `Chance`, `Navigation`, and known-answer tests for the cryptographic
-primitives against official RFC vectors.
+`Token`, `Chance`, `Navigation`, the console's rank gate, its value rendering,
+and every refusal the `rank` command makes, plus known-answer tests for the
+cryptographic primitives against official RFC vectors.
 
 ## The shape it uses
 

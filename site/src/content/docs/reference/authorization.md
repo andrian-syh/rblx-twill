@@ -161,6 +161,10 @@ Nothing is remembered: they rejoin at whatever the usual decision gives them. To
 make a promotion permanent, write it to [`Data`](/reference/data/) and read it
 back in `Resolve`.
 
+The [`rank` command](/reference/admin/#built-in-commands) reaches this from the
+console, under guards this function does not impose on its own. Calling `SetRank`
+in your own code has no such guards, so do not route a player's request into it.
+
 ### `Authorization.GetGroupStanding`
 
 `[Server]`

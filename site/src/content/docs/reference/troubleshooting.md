@@ -401,6 +401,43 @@ Not from Twill's own `moderation` command, which reads durations exactly. This i
 Cmdr's built-in `duration` type, which resolves units by fuzzy match. Check which
 type your own command declares.
 
+**`You cannot grant rank N; your own is M`**
+
+From `rank set`. The console decides who may run what by rank, so granting one at
+or above your own would hand out your own authority. The most anyone can create
+is somebody strictly below themselves. `rank` also refuses to change your own
+rank and to touch anybody already at your rank or above.
+
+**`No store is configured, so there is nothing to save`**
+
+From `saveall`, in a game that never calls [`Data.Configure`](/reference/data/).
+Not a fault; a game without saved data has nothing for this command to do.
+
+**`That is not a seed a round could have revealed`**
+
+From `verifyroll`. The seed is not thirty-two bytes of hexadecimal, so it cannot
+be one [`Random.Commit`](/reference/random/) produced. Check it was pasted whole.
+A seed that is well formed but wrong reports a mismatch instead, which is a
+different answer.
+
+**`'X.Y' names a path. This action takes a whole key`**
+
+From `repl freeze`, `unfreeze`, or `throttle`. Those name a whole replicated key,
+and a dotted path is refused rather than acted on as if it were one. `repl get`
+reads inside a key, and takes the path.
+
+**`Nothing is held at 'X' for everybody`**
+
+From `repl get`. Either nothing has written that key yet, or it was written with
+`Replication.SetFor`, which gives each player their own copy. Read those with
+`repl getfor <user> <key>`.
+
+**`twill net` marks a remote `UNSERVED`**
+
+It was declared and never handed to [`Net.Handle`](/reference/net/). A client
+firing it reaches nothing, silently. This is the diagnosis, not a fault in the
+console.
+
 **A moderation command refuses with `X ranks as high as you do`**
 
 Deliberate. Nobody may act on themselves or on anyone standing as high as they

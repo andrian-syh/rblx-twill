@@ -6,6 +6,67 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 Twill adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Breaking changes wait for a major version.
 
+## [1.3.0] - 2026-08-16
+
+Seven console commands, and the switch to turn them off.
+
+### Added
+
+- Seven console commands. Three report on state only Twill can see: `twill`
+  names the services that booted and in what order, every declared remote and
+  whether anything serves it, whether player data is configured, and what
+  replication holds and has sent; `loglevel` reads or raises the log level on a
+  running server, which previously meant republishing the place; and `repl` reads
+  replicated state and can freeze, unfreeze, or throttle a key that is sending
+  more than anybody needs.
+- Four more act on a player. `rank` reads a rank or overrides it for the session,
+  refusing to change the caller's own, to touch anybody at their rank or above,
+  or to grant a rank at or above it. `pass` asks whether a player owns a game
+  pass, and forgets what was remembered when ownership changed unseen. `saveall`
+  asks every open data session here to write. `verifyroll` checks a revealed seed
+  against the commitment published before a draw, which settles a disputed roll
+  without either side trusting the other.
+- None of them are gameplay commands. `fly`, `speed`, and the rest depend on a
+  game's own character rules and are a few lines each in Cmdr, so they stay with
+  the game.
+- `TwillCommands` on `Admin.Configure`, taking the same three shapes as
+  `DefaultCommands`. A command left out is never registered, and a command that
+  is never registered is never moved into `ReplicatedStorage`, so turning one off
+  removes it from the client rather than hiding it there.
+- `Twill.Admin.Arguments`, which builds the arguments a command offers once its
+  action is chosen. Twill's own five action-style commands are written with it,
+  and a game writing one of its own can be too. It sits in `ReplicatedStorage`
+  because Cmdr moves a command's definition next to its own before running it,
+  on the client as well as the server.
+- `Log.GetLevel`, and `Data.IsConfigured`. Both are readers for state the modules
+  already kept and could not answer for.
+
+### Changed
+
+- `moderation` now runs its rank check before `unban` as well as before `kick`
+  and `ban`. Lifting a ban was the one action that answered only to the command's
+  rank gate, so anyone who could reach the console could undo a ban placed by
+  somebody above them.
+- `playerdata get` prints an indented JSON block once a scope holds more than
+  forty values, instead of truncating a flat list of dotted paths at forty rows.
+  A deep tree now reads as a tree. Past two hundred values it asks for a path
+  rather than answering.
+- Twill's own commands now register when `Admin.Configure` runs rather than when
+  the module loads. A game that never configures the console previously had them
+  registered but unreachable, since the gate refuses everything until a rank is
+  set; now they are not registered either, and the refusal a caller sees is
+  unchanged.
+
+### Fixed
+
+- A console field whose label was longer than nine characters ran straight into
+  its value with no gap. The label now always gets one.
+- The header on `moderationServer` claimed it refused a moderator acting on an
+  equal. It can only compare ranks for a target on this server, since a rank is
+  read from a `Player`. The documentation site
+  [already said so](https://andrian-syh.github.io/rblx-twill/reference/troubleshooting/);
+  the module's own header did not.
+
 ## [1.2.0] - 2026-08-14
 
 One added argument, two defects, and a documentation pass over every module.

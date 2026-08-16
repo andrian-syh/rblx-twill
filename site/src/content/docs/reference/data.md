@@ -198,6 +198,24 @@ A session can be lost mid play, so this answers more than whether they have
 finished loading. Check it after any yield, because a player can leave while you
 were waiting.
 
+### `Data.IsConfigured`
+
+`[Server]`
+
+Reports whether a store has been configured, which everything else here needs.
+
+```luau
+function Data.IsConfigured(): boolean
+```
+
+**Returns**
+
+`boolean` - True once `Configure` has run.
+
+A game that never calls `Configure` is a normal game, not a broken one, so this
+answers rather than raising. It exists because an empty branch list reads the
+same whether the store has no branches or no store was ever opened.
+
 ### `Data.GetOffline`
 
 `[Server]`
@@ -304,6 +322,10 @@ function Data.SaveAll()
 
 `()` - Nothing. Returns before the writes land, so this is a nudge and not a
 flush.
+
+The [`saveall` command](/reference/admin/#built-in-commands) calls it from the
+console, for the moment before something risky. Shutdown already flushes on its
+own, so this does not belong in `BindToClose`.
 
 ## Branches
 

@@ -228,6 +228,10 @@ function Random.Verify(commitment: string, seed: string): boolean
 Anything malformed answers `false` rather than raising, because this reads
 untrusted input: the whole point is that a player can hand you a seed to check.
 
+The [`verifyroll` command](/reference/admin/#built-in-commands) puts this in the
+admin console, so a moderator can settle a dispute in front of the player without
+either of them having to trust the other.
+
 ### `Round:Int`
 
 `[Server]`

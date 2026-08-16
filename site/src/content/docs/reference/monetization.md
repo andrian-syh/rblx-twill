@@ -136,6 +136,9 @@ function Monetization.ForgetPasses(player: Player, passId: number?)
 
 The next `OwnsPass` puts the question to the platform again.
 
+The [`pass` command](/reference/admin/#built-in-commands) reaches both this and
+`OwnsPass` from the console, which is usually how a support case gets resolved.
+
 ## Passes bought mid-session
 
 Nothing to write. This module listens for the purchase prompt closing and updates

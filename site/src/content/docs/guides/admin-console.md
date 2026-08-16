@@ -138,18 +138,63 @@ keeps your privileged logic off every player's machine.
 
 ## Built-in Twill commands
 
-Twill adds two families on top of Cmdr's own, and both respect the rank gate.
+Twill adds nine commands on top of Cmdr's own, and all of them respect the rank
+gate. Some act on players; the rest report on the framework. What you will not
+find is a gameplay kit — no `fly`, no `speed`, no `godmode`. Those depend on your
+own character rules, so they stay yours.
+
+Set `TwillCommands` in `Configure` to choose which of them this game gets. A
+command left out is never registered, and never reaches a client at all.
+
+```luau
+Twill.Admin.Configure({
+	MinimumRank = Ranks.Moderator,
+	TwillCommands = { "twill", "loglevel" },
+})
+```
 
 **`moderation`** kicks, bans, and unbans, in this place or across the whole
 experience. Roblox keeps the ban record itself, so nothing is stored here to fall
 out of step. What Twill adds is the part the platform will not do for you:
-refusing to let a moderator remove themselves or anyone ranking as high as they
-do, and reporting exactly who was acted on.
+refusing to let a moderator remove themselves or anyone present who ranks as high
+as they do, and reporting exactly who was acted on. Lifting a ban answers to the
+same check as applying one.
 
 **`playerdata`** reads and writes through
 [`Data.Edit`](/reference/data/#writing-to-anybody), so it reaches players who are
 not on this server. A write aimed elsewhere reports back as queued rather than
-applied, because that is the truth.
+applied, because that is the truth. Reading prints aligned rows, or an indented
+JSON block once there are more than forty values to show.
+
+**`twill`** reports what this server is running: the services that booted and in
+what order, every declared remote and whether anything serves it, whether player
+data is configured, and what replication is holding and sending. It changes
+nothing, and `twill all` is the whole picture on one screen.
+
+**`loglevel`** reads or sets the [log level](/reference/log/) on this server.
+Turning `Debug` on in a live server used to mean republishing the place. Note
+that a level above `Info` also silences the record of who ran what, so give this
+one a rank you would trust with the audit trail.
+
+**`repl`** reads [replicated state](/reference/replication/) and paces it:
+`repl get <key>`, `repl getfor <user> <key>`, and `freeze`, `unfreeze`, and
+`throttle` for a key that is sending more than anybody needs.
+
+**`rank`** reads a player's rank or overrides it for their session here. It
+refuses to change your own rank, to touch anyone at your rank or above, or to
+grant a rank at or above your own — so the most a moderator can create is
+somebody strictly below themselves.
+
+**`pass`** asks the platform whether a player owns a pass, and `pass forget`
+clears what was remembered when ownership changed somewhere this server could
+not see.
+
+**`saveall`** asks every open data session here to write now, without waiting for
+any of them. Use it before something risky; shutdown already flushes on its own.
+
+**`verifyroll`** checks a revealed seed against the commitment a
+[round](/reference/random/) published. This is the one to reach for when a player
+says the game cheated them, because the answer does not depend on trusting you.
 
 :::note[Durations are read exactly]
 `moderation` uses its own duration type, so `7d` is seven days and `1h30m` is

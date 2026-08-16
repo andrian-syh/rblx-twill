@@ -136,6 +136,24 @@ local RunService = game:GetService("RunService")
 Log.SetLevel(if RunService:IsStudio() then "Debug" else "Info")
 ```
 
+### `Log.GetLevel`
+
+`[Server]` | `[Client]`
+
+Reports the level in force on this side, which every logger is answering to.
+
+```luau
+function Log.GetLevel(): Level
+```
+
+**Returns**
+
+`Level` - The lowest severity still reaching the output.
+
+Each side keeps its own threshold, so the answer on a client says nothing about
+the server. The [`loglevel` command](/reference/admin/#built-in-commands) reads
+and sets the server's without republishing the place.
+
 ### `Log.SetErrorHandler`
 
 `[Server]` | `[Client]`

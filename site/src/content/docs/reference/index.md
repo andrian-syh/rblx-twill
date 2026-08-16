@@ -50,7 +50,7 @@ Available on the server and the client.
 | [Chance](/reference/chance/) | Weighted draws, and the odds behind them. |
 | [Navigation](/reference/navigation/) | Agents that walk somewhere, and one loop driving all of them. |
 | [Authorization](/reference/authorization/) | Ranks, and the questions that depend on them. |
-| [Admin](/reference/admin/) | An in-game command console built on Cmdr. |
+| [Admin](/reference/admin/) | An in-game command console built on Cmdr, with nine commands of its own. |
 
 ## Server-only modules
 

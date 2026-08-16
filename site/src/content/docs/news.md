@@ -6,6 +6,83 @@ description: Releases, changes, and what is being worked on.
 Releases and what is being worked on. The full record is
 [CHANGELOG.md](https://github.com/andrian-syh/rblx-twill/blob/main/CHANGELOG.md).
 
+## v1.3.0
+
+**Released.** Seven console commands, and the switch to turn them off.
+
+### Commands for the state a game cannot see
+
+The console could reach players and their data. It could not reach Twill. Which
+services booted, which remotes nobody serves, what a replicated key holds, what
+log level a live server is running at — all of it private to the framework, and
+none of it reachable without going through internals.
+
+That is the line these commands draw. **Twill ships commands for state only Twill
+can see, and no gameplay commands at all.** There is no `fly`, no `speed`, no
+`godmode`. Those depend on your own character rules and are a few lines each in
+Cmdr, so they stay yours.
+
+**`twill`** reports the whole picture on one screen: boot order, declared remotes
+and whether anything serves them, the data store, replication counts.
+
+The `net` topic is the one that earns its place. A remote marked `UNSERVED` was
+declared and never handed to [`Net.Handle`](/reference/net/), which otherwise
+shows up as a client firing into silence.
+
+**`loglevel`** reads or sets the [log level](/reference/log/) on a running
+server. Turning `Debug` on used to mean republishing the place.
+
+**`repl`** reads [replicated state](/reference/replication/), and can freeze a
+key that is flooding every client without shutting the server down.
+
+**`rank`**, **`pass`**, **`saveall`**, and **`verifyroll`** cover the rest: a
+player's rank, game pass ownership and its cache, an early write for every open
+session, and checking a revealed seed against the commitment
+[a round](/reference/random/) published before the draw.
+
+That last one is worth naming. When a player says the game cheated them, a
+moderator can settle it in front of them, and nothing about the answer depends on
+either of them trusting the other.
+
+### The command that can hand out authority
+
+The console decides who may run what by rank, so `rank set` is the shortest path
+from moderator to owner if it is not guarded. It refuses three things:
+
+- Changing your own rank, at all.
+- Changing the rank of anyone already at your rank or above.
+- Granting a rank at or above your own.
+
+The most a moderator can create is somebody strictly below themselves. All three
+refusals are asserted in the test suite rather than left to reading.
+
+### Choosing which of them you get
+
+`Admin.Configure` takes `TwillCommands`, in the same three shapes
+`DefaultCommands` already took.
+
+```luau
+Twill.Admin.Configure({
+	MinimumRank = Ranks.Moderator,
+	TwillCommands = { "twill", "loglevel" },
+})
+```
+
+A command left out is not registered, and a command that is not registered is
+never moved into `ReplicatedStorage`. Turning one off removes it from the client
+rather than hiding it there.
+
+### Lifting a ban now answers to the same check as applying one
+
+`moderation` ran its rank check before `kick` and `ban` and not before `unban`,
+so anyone who could reach the console could undo a ban placed by somebody above
+them. It was the one action the command let through on its own gate alone.
+
+The module's header also claimed it refused a moderator acting on an equal. It
+can only compare ranks for a target on this server, since a rank is read from a
+`Player`. The documentation site
+[already said so](/reference/troubleshooting/); the module's own header did not.
+
 ## v1.2.0
 
 **Released.** One added argument, two defects, and a documentation pass over
