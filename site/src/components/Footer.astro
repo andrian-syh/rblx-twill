@@ -78,25 +78,25 @@ const columns = [
 
 <style>
 	.site-footer {
-		margin-top: var(--spacing-80);
-		padding-block: var(--spacing-56) var(--spacing-40);
-		border-top: 1px solid var(--color-carbon-lift);
+		margin-top: var(--spacing-56, 56px);
+		padding-block: var(--spacing-48, 48px) var(--spacing-16, 16px);
+		border-top: 1px solid var(--sl-color-hairline);
 	}
 
 	.columns {
 		display: flex;
 		flex-wrap: wrap;
-		gap: var(--spacing-40) var(--spacing-56);
-		margin-bottom: var(--spacing-40);
+		gap: var(--spacing-32, 32px) var(--spacing-56, 56px);
+		margin-bottom: var(--spacing-32, 32px);
 	}
 
 	h2 {
 		font-family: var(--sl-font-mono);
 		font-size: 12px;
-		font-weight: 400;
+		font-weight: 500;
 		text-transform: uppercase;
 		letter-spacing: -0.02em;
-		color: var(--color-bone);
+		color: var(--sl-color-text);
 		margin: 0 0 var(--spacing-16);
 	}
 
@@ -111,13 +111,13 @@ const columns = [
 
 	a {
 		font-size: 14px;
-		color: var(--color-warm-granite);
+		color: var(--sl-color-gray-3);
 		text-decoration: none;
 		transition: color var(--motion);
 	}
 
 	a:hover {
-		color: var(--color-chalk);
+		color: var(--sl-color-text-accent);
 		text-decoration: underline;
 		text-underline-offset: 0.2em;
 	}
@@ -125,8 +125,12 @@ const columns = [
 	.colophon p {
 		font-size: 14px;
 		line-height: 1.5;
-		color: var(--color-warm-granite);
+		color: var(--sl-color-gray-3);
 		margin: 0 0 var(--spacing-8);
 		max-width: 60ch;
+	}
+
+	.colophon p:last-child {
+		margin-bottom: 0;
 	}
 </style>

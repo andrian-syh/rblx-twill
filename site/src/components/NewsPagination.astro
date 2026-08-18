@@ -1,0 +1,95 @@
+---
+import { Icon } from '@astrojs/starlight/components';
+
+interface PageLink {
+	label: string;
+	href: string;
+}
+
+interface Props {
+	prev?: PageLink;
+	next?: PageLink;
+}
+
+const { prev, next } = Astro.props;
+const prefix = import.meta.env.BASE_URL.replace(/\/+$/, '');
+---
+
+<div class="pagination-links print:hidden not-content" dir="ltr">
+	{
+		prev && (
+			<a href={prefix + prev.href} rel="prev">
+				<Icon name="left-arrow" size="1.5rem" />
+				<span>
+					Previous
+					<br />
+					<span class="link-title">{prev.label}</span>
+				</span>
+			</a>
+		)
+	}
+	{
+		next && (
+			<a href={prefix + next.href} rel="next">
+				<Icon name="right-arrow" size="1.5rem" />
+				<span>
+					Next
+					<br />
+					<span class="link-title">{next.label}</span>
+				</span>
+			</a>
+		)
+	}
+</div>
+
+<style>
+	.pagination-links {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
+		gap: 1rem;
+		margin-top: 3.5rem;
+	}
+
+	a {
+		display: flex;
+		align-items: center;
+		justify-content: flex-start;
+		gap: 0.5rem;
+		width: 100%;
+		flex-basis: calc(50% - 0.5rem);
+		flex-grow: 1;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.5rem;
+		padding: 1rem;
+		text-decoration: none !important;
+		color: var(--sl-color-gray-2) !important;
+		box-shadow: var(--sl-shadow-md);
+		overflow-wrap: anywhere;
+		transition: border-color var(--motion, 0.18s);
+	}
+
+	a :global(*) {
+		text-decoration: none !important;
+	}
+
+	[rel='next'] {
+		justify-content: end;
+		text-align: end;
+		flex-direction: row-reverse;
+	}
+
+	a:hover {
+		border-color: var(--sl-color-gray-2) !important;
+	}
+
+	.link-title {
+		color: var(--sl-color-white);
+		font-size: var(--sl-text-2xl);
+		line-height: var(--sl-line-height-headings);
+		text-decoration: none !important;
+	}
+
+	svg {
+		flex-shrink: 0;
+	}
+</style>

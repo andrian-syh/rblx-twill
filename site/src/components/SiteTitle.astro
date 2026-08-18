@@ -44,16 +44,17 @@ const current = Astro.url.pathname;
 	}
 
 	.site-nav a {
-		color: var(--sl-color-gray-2);
+		color: var(--sl-color-gray-3);
 		text-decoration: none;
+		transition: color var(--motion, 0.18s);
 	}
 
 	.site-nav a:hover {
-		color: var(--sl-color-white);
+		color: var(--sl-color-text);
 	}
 
 	.site-nav a[aria-current='page'] {
-		color: var(--sl-color-white);
+		color: var(--sl-color-text);
 		font-weight: 600;
 	}
 </style>

@@ -1,0 +1,94 @@
+---
+title: v1.0.0 — Initial Stable Release
+description: Released August 12, 2026. First release of the modular pure-Luau game framework.
+template: splash
+---
+
+import NewsPagination from '../../../components/NewsPagination.astro';
+
+<div class="news-article-container">
+
+<a href="/news/" class="news-back-link">
+	<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+	<span class="news-back-text">Back to all updates</span>
+</a>
+
+<header class="news-article-header">
+	<div class="news-article-badges">
+		<span class="news-badge-version">v1.0.0</span>
+		<span class="news-badge-date">August 12, 2026</span>
+	</div>
+	<p class="news-article-lead">
+		The API is stable, and breaking changes wait for a major version.
+	</p>
+</header>
+
+[Download the model](https://github.com/andrian-syh/rblx-twill/releases/tag/v1.0.0)
+from the release, or copy the folders in by hand. Either way the install is the
+same two folders, and both are required. See
+[Installing Twill](/getting-started/installation/).
+
+Twill ships with a documentation page per module carrying signatures taken from
+the source, and a test suite that runs on every playtest in Studio.
+
+`Twill.Version` reports what an installed copy carries, which is the quickest
+way to tell what a place is actually running.
+
+## What went into it
+
+* **`Compress`.** Large values made small and safe to send as text. `Encode`
+computes both a JSON form and a compressed form and returns the smaller, so the
+result is never longer than the JSON it replaced, while a few thousand
+repetitive rows land near a fifth of it. The byte count travels with the
+payload, so a truncated payload is refused rather than read as a smaller value.
+
+* **`Random` and `Token`.** Draws come from a cryptographic generator rather than
+`math.random`, and a round can publish a commitment before drawing so the
+outcome can be audited afterwards. `Token` signs a payload with HMAC-SHA256 so a
+redeem code can be checked without a DataStore lookup.
+
+* **`Data` bound to `Replication`.** Naming fields in `Replicate` sends them to
+their owner's client, following direct mutation, with no mirroring by hand.
+
+* **Server modules typed from their own source.** The root table used to carry
+hand-written types for the six server-only modules, because a client's type
+checker cannot require them. They are now taken from the server half directly,
+so a signature cannot drift between the two without the source moving. Nothing
+changes at runtime: those types are resolved by the type solver and never
+executed.
+
+* **Every bundled component is traced and licensed.** The `Cryptography` package
+is recorded as MIT by daily3014 and Xoifaii, and the notices file no longer
+claims that every bundled component is vendored unmodified, since that one
+carries three fixes to its random number generator. See
+[Bundled packages](/reference/bundled-packages/).
+
+## Defects found and fixed before release
+
+* **`Schema` accepted NaN and infinity.** Both comparisons against a range are
+false for NaN, so it passed every number rule, including an unbounded one.
+Neither survives a DataStore, so both are now refused at the type check rather
+than at the range check.
+
+* **`Schema` accepted a dictionary as an array.** `{ a = 1 }` has a length of zero,
+so it passed every array rule as though it were empty. An array rule now
+requires the keys to be exactly `1..n`.
+
+* **`Replication` ignored numeric path segments on two of three paths.** Resolving
+a path fell back to a numeric key, but writing and waking subscribers did not, so
+`Subscribe("Data.Items.2")` never fired. All three now share one lookup.
+
+* **`Serialize.FindUnstorable` did not inspect keys.** A table mixing named and
+numbered keys encodes to an array with the named keys silently dropped. It is now
+refused, along with gaps in a numbering and text that is not valid UTF-8.
+
+* **The bundled CSPRNG could be left permanently broken.** A failed entropy gather
+was not checked, and reseeding cleared the key before gathering. Both are fixed
+in the vendored copy.
+
+<NewsPagination
+	prev={{ label: 'All releases', href: '/news/' }}
+	next={{ label: 'v1.1.0 — Weighted Draws', href: '/news/v1-1-0/' }}
+/>
+
+</div>

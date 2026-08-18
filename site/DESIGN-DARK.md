@@ -1,4 +1,4 @@
-# Factory — Style Reference
+# Style Reference — Dark (Factory)
 > Terminal war room at midnight. Factory is a stark black control surface where a single white card lands like a flashlit dispatch — the only object in the room is the work itself.
 
 **Theme:** dark

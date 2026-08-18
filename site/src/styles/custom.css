@@ -1,19 +1,19 @@
-﻿/* Factory. See DESIGN.md for the spec this implements.
- *
- * Dark only, by decision. Starlight is dark-first (bare :root is dark), so the
- * light block below is defined to the same values rather than removed: a
- * data-theme="light" left in a visitor's localStorage from an earlier build
- * would otherwise render an unstyled half-light page. The selector itself is
- * overridden away in src/components/ThemeSelect.astro.
- */
+/* ==========================================================================
+   Twill Documentation Style System
+   - Dark Theme: Factory Specification (DESIGN-DARK.md)
+   - Light Theme: Ui / Monochromatic Specification (DESIGN-LIGHT.md)
+   ========================================================================== */
 
 @import '@fontsource/geist-sans/400.css';
 @import '@fontsource/geist-sans/500.css';
 @import '@fontsource/geist-mono/400.css';
 
+/* ==========================================================================
+   1. DARK THEME TOKENS (Factory - Default)
+   ========================================================================== */
 :root,
-:root[data-theme='light'] {
-	/* Factory tokens, verbatim from design.md */
+:root[data-theme='dark'] {
+	/* Factory Palette (DESIGN-DARK.md) */
 	--color-obsidian-canvas: #101010;
 	--color-carbon-lift: #1d1a18;
 	--color-ash-stroke: #3d3a39;
@@ -25,6 +25,7 @@
 	--color-signal-orange: #ee6018;
 	--color-metric-green: #a0ca92;
 
+	/* Spacing Scale */
 	--spacing-8: 8px;
 	--spacing-16: 16px;
 	--spacing-24: 24px;
@@ -35,19 +36,14 @@
 	--spacing-96: 96px;
 	--spacing-120: 120px;
 
+	/* Shapes & Motion */
 	--radius-buttons: 3px;
 	--radius-nav: 3px;
 	--radius-cards: 10px;
 	--radius-largepanels: 20px;
-
 	--motion: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 
-	/* Starlight's scale, mapped onto those tokens.
-	   Contrast against the #101010 canvas, measured:
-	   chalk 17.2:1, bone 16.4:1, pale-stone 9.2:1, warm-granite 5.1:1,
-	   metric-green 10.3:1, signal-orange 5.7:1. All clear WCAG AA for body text.
-	   ash-stroke is 1.7:1, which is why it is only ever a decorative hairline
-	   and never a focus ring or a meaningful border. */
+	/* Starlight Scale Mappings */
 	--sl-color-white: var(--color-chalk);
 	--sl-color-gray-1: var(--color-bone);
 	--sl-color-gray-2: var(--color-pale-stone);
@@ -70,16 +66,11 @@
 	--sl-color-hairline-light: var(--color-ash-stroke);
 	--sl-color-hairline-shade: var(--color-carbon-lift);
 
-	/* Chrome stays monochrome. design.md: the accents are "data-voice colours,
-	   not chrome colours", so links and the active nav item carry no hue and
-	   are distinguished by weight, an underline, and a rule. */
 	--sl-color-accent-low: var(--color-carbon-lift);
 	--sl-color-accent: var(--color-bone);
 	--sl-color-accent-high: var(--color-chalk);
 	--sl-color-text-accent: var(--color-chalk);
 
-	/* "The design earns its depth through contrast and spacing rhythm, not blur
-	   or glow." */
 	--sl-shadow-sm: none;
 	--sl-shadow-md: none;
 	--sl-shadow-lg: none;
@@ -96,10 +87,163 @@
 	--sl-line-height-headings: 1.15;
 
 	--sl-nav-height: 64px;
+
+	/* Component Specific Colors */
+	--header-border-color: var(--color-carbon-lift);
+	--card-bg-color: var(--color-obsidian-canvas);
+	--card-border-color: var(--color-ash-stroke);
+	--card-hover-border-color: var(--color-warm-granite);
+	--card-hover-bg: var(--color-carbon-lift);
+	--card-shadow: none;
+	--btn-primary-bg: #1f1d1c;
+	--btn-primary-text: var(--color-chalk);
+	--btn-primary-hover-bg: #2a2725;
+	--btn-secondary-bg: var(--color-carbon-lift);
+	--btn-secondary-text: var(--color-bone);
+	--btn-secondary-hover-bg: var(--color-ash-stroke);
+	--sidebar-hover-bg: var(--color-carbon-lift);
+	--sidebar-hover-text: var(--color-chalk);
+
+	/* Aside / Callout Colors (Dark) */
+	--aside-note-bg: var(--color-carbon-lift);
+	--aside-note-border: var(--color-ash-stroke);
+	--aside-note-accent: var(--color-pale-stone);
+	--aside-note-title: var(--color-chalk);
+
+	--aside-tip-bg: rgba(160, 202, 146, 0.08);
+	--aside-tip-border: rgba(160, 202, 146, 0.25);
+	--aside-tip-accent: var(--color-metric-green);
+	--aside-tip-title: var(--color-metric-green);
+
+	--aside-caution-bg: rgba(238, 96, 24, 0.08);
+	--aside-caution-border: rgba(238, 96, 24, 0.25);
+	--aside-caution-accent: var(--color-signal-orange);
+	--aside-caution-title: var(--color-signal-orange);
+
+	--aside-danger-bg: rgba(238, 96, 24, 0.12);
+	--aside-danger-border: rgba(238, 96, 24, 0.35);
+	--aside-danger-accent: var(--color-signal-orange);
+	--aside-danger-title: var(--color-signal-orange);
 }
 
-/* Weight 400 carries the chrome: nav, sidebar, labels. DESIGN.md's rule is that
-   authority comes from size and tracking, not weight. */
+/* ==========================================================================
+   2. LIGHT THEME TOKENS (Ui / Monochromatic - DESIGN-LIGHT.md)
+   ========================================================================== */
+:root[data-theme='light'] {
+	/* Ui Palette (DESIGN-LIGHT.md) */
+	--color-canvas: #f5f5f5;
+	--color-paper: #ffffff;
+	--color-surface-alt: #fafafa;
+	--color-ink: #0a0a0a;
+	--color-ink-soft: #171717;
+	--color-mid-gray: #737373;
+	--color-hairline: #e5e5e5;
+	--color-ember: #e7000b;
+
+	/* Spacing Scale (4px Base Unit) */
+	--spacing-8: 8px;
+	--spacing-16: 16px;
+	--spacing-24: 24px;
+	--spacing-32: 32px;
+	--spacing-40: 40px;
+	--spacing-56: 48px;
+	--spacing-80: 64px;
+	--spacing-96: 80px;
+	--spacing-120: 96px;
+
+	/* Shapes (Retaining crisp rounded values from DESIGN-DARK.md) */
+	--radius-buttons: 3px;
+	--radius-nav: 3px;
+	--radius-cards: 10px;
+	--radius-largepanels: 20px;
+	--motion: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+
+	/* Starlight Scale Mappings */
+	--sl-color-white: var(--color-ink);
+	--sl-color-gray-1: var(--color-ink-soft);
+	--sl-color-gray-2: #404040;
+	--sl-color-gray-3: var(--color-mid-gray);
+	--sl-color-gray-4: #a3a3a3;
+	--sl-color-gray-5: var(--color-hairline);
+	--sl-color-gray-6: var(--color-canvas);
+	--sl-color-gray-7: var(--color-surface-alt);
+	--sl-color-black: var(--color-paper);
+
+	--sl-color-text: var(--color-ink);
+	--sl-color-text-invert: var(--color-paper);
+	--sl-color-bg: var(--color-paper);
+	--sl-color-bg-nav: var(--color-paper);
+	--sl-color-bg-sidebar: var(--color-surface-alt);
+	--sl-color-bg-inline-code: var(--color-canvas);
+	--sl-color-bg-accent: var(--color-canvas);
+
+	--sl-color-hairline: var(--color-hairline);
+	--sl-color-hairline-light: var(--color-hairline);
+	--sl-color-hairline-shade: var(--color-hairline);
+
+	--sl-color-accent-low: var(--color-canvas);
+	--sl-color-accent: var(--color-ink);
+	--sl-color-accent-high: var(--color-ink-soft);
+	--sl-color-text-accent: var(--color-ink);
+
+	--sl-shadow-sm: oklab(0.145 0 0 / 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.04) 0px 1px 2px 0px;
+	--sl-shadow-md: oklab(0.145 0 0 / 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.06) 0px 1px 3px 0px;
+	--sl-shadow-lg: oklab(0.145 0 0 / 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.08) 0px 1px 3px 0px, rgba(0, 0, 0, 0.08) 0px 1px 2px -1px;
+
+	--sl-font: 'Geist Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+	--sl-font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+	--sl-text-h1: 36px;
+	--sl-text-h2: 24px;
+	--sl-text-h3: 20px;
+	--sl-text-h4: 17px;
+	--sl-text-h5: 15px;
+	--sl-line-height: 1.5;
+	--sl-line-height-headings: 1.15;
+
+	--sl-nav-height: 64px;
+
+	/* Component Specific Colors */
+	--header-border-color: var(--color-hairline);
+	--card-bg-color: var(--color-paper);
+	--card-border-color: var(--color-hairline);
+	--card-hover-border-color: var(--color-mid-gray);
+	--card-hover-bg: var(--color-surface-alt);
+	--card-shadow: oklab(0.145 0 0 / 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.05) 0px 1px 3px 0px, rgba(0, 0, 0, 0.05) 0px 1px 2px -1px;
+	--btn-primary-bg: #0a0a0a;
+	--btn-primary-text: #fafafa;
+	--btn-primary-hover-bg: #262626;
+	--btn-secondary-bg: var(--color-canvas);
+	--btn-secondary-text: var(--color-ink);
+	--btn-secondary-hover-bg: #eaeaea;
+	--sidebar-hover-bg: #e5e5e5;
+	--sidebar-hover-text: #0a0a0a;
+
+	/* Aside / Callout Colors (Light) */
+	--aside-note-bg: #f8fafc;
+	--aside-note-border: #cbd5e1;
+	--aside-note-accent: #334155;
+	--aside-note-title: #0f172a;
+
+	--aside-tip-bg: #f0fdf4;
+	--aside-tip-border: #bbf7d0;
+	--aside-tip-accent: #16a34a;
+	--aside-tip-title: #15803d;
+
+	--aside-caution-bg: #fffbeb;
+	--aside-caution-border: #fde68a;
+	--aside-caution-accent: #d97706;
+	--aside-caution-title: #b45309;
+
+	--aside-danger-bg: #fef2f2;
+	--aside-danger-border: #fecaca;
+	--aside-danger-accent: #dc2626;
+	--aside-danger-title: #b91c1c;
+}
+
+/* ==========================================================================
+   3. GLOBAL TYPOGRAPHY & CHROME
+   ========================================================================== */
 :where(h1, h2, h3, h4, h5, h6) {
 	font-weight: 400;
 	letter-spacing: -0.03em;
@@ -109,22 +253,15 @@ h1 {
 	letter-spacing: -0.031em;
 }
 
-/* Headings inside a page are the exception, by request: bold, so a section
-   break is obvious while scrolling a long reference page. This departs from
-   DESIGN.md ("do not use weight 600+ or bold for headings"), and it also settles
-   an inconsistency, since the page title in PageTitle.astro was already 600
-   while every heading under it sat at 400. */
 .sl-markdown-content :is(h1, h2, h3, h4, h5, h6) {
 	font-weight: 600;
 }
 
 .sl-markdown-content :is(strong, b) {
 	font-weight: 500;
-	color: var(--color-chalk);
+	color: var(--sl-color-text);
 }
 
-/* Geist Mono, uppercase, tight. design.md: "when a user sees Mono, they know
-   they are looking at a system surface, not a page surface." */
 .site-title,
 .sl-markdown-content kbd {
 	font-family: var(--sl-font-mono);
@@ -133,114 +270,267 @@ h1 {
 	font-size: 12px;
 }
 
-/* Links carry an underline rather than a hue, so they stay legible without
-   relying on colour alone (WCAG 1.4.1). */
+/* Links */
 .sl-markdown-content a:not(:where(.not-content *)) {
-	color: var(--color-bone);
+	color: var(--sl-color-text);
 	text-decoration: underline;
 	text-underline-offset: 0.2em;
-	text-decoration-color: var(--color-graphite-mid);
+	text-decoration-color: var(--sl-color-gray-4);
 	transition: color var(--motion), text-decoration-color var(--motion);
 }
 
 .sl-markdown-content a:hover:not(:where(.not-content *)) {
-	color: var(--color-chalk);
-	text-decoration-color: var(--color-chalk);
+	color: var(--sl-color-text-accent);
+	text-decoration-color: var(--sl-color-text-accent);
 }
 
-/* The current page in the sidebar is a bone card on dark ground: design.md's
-   signature figure/ground move, and the same inversion as its Light Filled
-   Button. #101010 on #eeeeee is 16.4:1. */
-nav.sidebar a[aria-current='page'] {
-	background-color: var(--color-bone);
-	color: var(--color-obsidian-canvas);
+/* ==========================================================================
+   4. NAVIGATION & HEADER
+   ========================================================================== */
+header.header {
+	border-bottom: 1px solid var(--header-border-color);
+	background-color: var(--sl-color-bg-nav);
+}
+
+.site-title {
+	color: var(--sl-color-text);
 	font-weight: 500;
+}
+
+.social-icons a {
+	color: var(--sl-color-gray-3);
+	transition: color var(--motion);
+}
+
+.social-icons a:hover {
+	color: var(--sl-color-text);
+}
+
+/* Search Box / Button */
+button[data-open-modal],
+.search-input {
+	border-radius: var(--radius-buttons) !important;
+	border: 1px solid var(--sl-color-hairline) !important;
+	background-color: var(--sl-color-bg-inline-code) !important;
+	color: var(--sl-color-gray-3) !important;
+	transition: color var(--motion), background-color var(--motion), border-color var(--motion);
+}
+
+button[data-open-modal]:hover,
+.search-input:hover {
+	color: var(--sl-color-text) !important;
+	border-color: var(--sl-color-gray-4) !important;
+}
+
+/* ==========================================================================
+   5. SIDEBAR & TABLE OF CONTENTS
+   ========================================================================== */
+nav.sidebar {
+	border-inline-end: 1px solid var(--sl-color-hairline);
+	background-color: var(--sl-color-bg-sidebar);
+}
+
+nav.sidebar a {
 	border-radius: var(--radius-buttons);
+	transition: color var(--motion), background-color var(--motion);
+}
+
+nav.sidebar a[aria-current='page'] {
+	background-color: var(--sl-color-text);
+	color: var(--sl-color-text-invert);
+	font-weight: 500;
 	border-inline-start-color: transparent;
 }
 
 nav.sidebar a[aria-current='page']:hover {
-	background-color: var(--color-chalk);
-	color: var(--color-obsidian-canvas);
+	background-color: var(--sl-color-accent-high);
+	color: var(--sl-color-text-invert);
 }
 
 nav.sidebar a:hover:not([aria-current='page']) {
-	color: var(--color-chalk);
-	background-color: var(--color-carbon-lift);
+	color: var(--sidebar-hover-text);
+	background-color: var(--sidebar-hover-bg);
+	font-weight: 500;
 }
 
-/* "On this page" marks the current heading with contrast alone: no fill, no
-   rule. Chalk against warm-granite siblings is a 3.4:1 step, which reads at a
-   glance without putting a second bright block on the page. */
+/* Table of Contents */
 starlight-toc a {
 	border-inline-start-color: transparent;
 	border-radius: var(--radius-buttons);
-	color: var(--color-warm-granite);
+	color: var(--sl-color-gray-3);
+	transition: color var(--motion);
 }
 
 starlight-toc a[aria-current='true'] {
 	background-color: transparent;
-	color: var(--color-chalk);
+	color: var(--sl-color-text);
 	font-weight: 500;
 }
 
 starlight-toc a:hover:not([aria-current='true']) {
-	color: var(--color-pale-stone);
+	color: var(--sl-color-text);
 	background-color: transparent;
 }
 
-/* Inline code sits tight against the punctuation that follows it. */
+/* ==========================================================================
+   6. CARDS & HERO BUTTONS
+   ========================================================================== */
+.card {
+	background-color: var(--card-bg-color) !important;
+	border: 1px solid var(--card-border-color) !important;
+	border-radius: var(--radius-cards) !important;
+	box-shadow: var(--card-shadow) !important;
+	padding: var(--spacing-24) !important;
+	transition: border-color var(--motion), box-shadow var(--motion);
+}
+
+.card .title {
+	color: var(--sl-color-text) !important;
+	font-weight: 600 !important;
+	letter-spacing: -0.02em !important;
+}
+
+.card .body {
+	color: var(--sl-color-gray-2) !important;
+}
+
+/* Hero Action Buttons */
+.hero .actions .action.primary {
+	background-color: var(--btn-primary-bg) !important;
+	color: var(--btn-primary-text) !important;
+	border-radius: var(--radius-buttons) !important;
+	border: none !important;
+	font-weight: 500 !important;
+	transition: background-color var(--motion), color var(--motion);
+}
+
+.hero .actions .action.primary:hover {
+	background-color: var(--btn-primary-hover-bg) !important;
+}
+
+.hero .actions .action.secondary {
+	background-color: var(--btn-secondary-bg) !important;
+	color: var(--btn-secondary-text) !important;
+	border: 1px solid var(--sl-color-hairline) !important;
+	border-radius: var(--radius-buttons) !important;
+	font-weight: 500 !important;
+	transition: background-color var(--motion), color var(--motion), border-color var(--motion);
+}
+
+.hero .actions .action.secondary:hover {
+	background-color: var(--btn-secondary-hover-bg) !important;
+}
+
+.hero .actions .action.minimal {
+	background-color: transparent !important;
+	color: var(--sl-color-text) !important;
+	border: 1px solid var(--sl-color-hairline) !important;
+	border-radius: var(--radius-buttons) !important;
+	font-weight: 500 !important;
+	transition: background-color var(--motion), color var(--motion), border-color var(--motion);
+}
+
+.hero .actions .action.minimal:hover {
+	background-color: var(--sl-color-gray-6) !important;
+}
+
+/* ==========================================================================
+   7. INLINE CODE & ASIDES
+   ========================================================================== */
 .sl-markdown-content :not(pre) > code {
 	padding: 0.15em 0.35em;
-	border-radius: var(--radius-buttons);
-	border: 1px solid var(--color-ash-stroke);
+	border-radius: 4px;
+	border: 1px solid var(--sl-color-hairline-light);
+	background-color: var(--sl-color-bg-inline-code);
 	font-size: 0.9em;
-	color: var(--color-chalk);
-}
-
-/* Flat surfaces, minimal radii. `pre` is left out on purpose: Expressive Code
-   owns the whole code frame, and reaching into it from here is what broke the
-   copy button and the file-name tab. */
-.card,
-.sl-markdown-content blockquote,
-.starlight-aside {
-	border-radius: var(--radius-cards);
+	color: var(--sl-color-text);
 }
 
 .starlight-aside {
-	border-inline-start-width: 2px;
-	background-color: var(--color-carbon-lift);
+	border-radius: var(--radius-cards) !important;
+	padding: 1rem 1.25rem !important;
+	margin: 1.5rem 0 !important;
+	border-style: solid !important;
+	border-width: 1px !important;
+	border-inline-start-width: 4px !important;
+	box-shadow: none !important;
 }
 
-/* The two functional accents live here and nowhere else in the chrome:
-   caution and danger take signal orange, tip takes metric green, and note
-   stays monochrome. */
+.starlight-aside__title {
+	font-weight: 600 !important;
+	font-size: 0.95rem !important;
+	line-height: 1.3 !important;
+	margin-bottom: 0.5rem !important;
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+}
+
+.starlight-aside__title svg {
+	width: 1.15em !important;
+	height: 1.15em !important;
+	flex-shrink: 0 !important;
+}
+
+.starlight-aside__content {
+	color: var(--sl-color-text) !important;
+	font-size: 0.925rem !important;
+	line-height: 1.55 !important;
+}
+
+.starlight-aside__content > :first-child {
+	margin-top: 0 !important;
+}
+
+.starlight-aside__content > :last-child {
+	margin-bottom: 0 !important;
+}
+
 .starlight-aside--note {
-	--sl-color-asides-text-accent: var(--color-pale-stone);
-	--sl-color-asides-border: var(--color-graphite-mid);
+	background-color: var(--aside-note-bg) !important;
+	border-color: var(--aside-note-border) !important;
+	border-inline-start-color: var(--aside-note-accent) !important;
+}
+.starlight-aside--note .starlight-aside__title {
+	color: var(--aside-note-title) !important;
 }
 
 .starlight-aside--tip {
-	--sl-color-asides-text-accent: var(--color-metric-green);
-	--sl-color-asides-border: var(--color-metric-green);
+	background-color: var(--aside-tip-bg) !important;
+	border-color: var(--aside-tip-border) !important;
+	border-inline-start-color: var(--aside-tip-accent) !important;
+}
+.starlight-aside--tip .starlight-aside__title {
+	color: var(--aside-tip-title) !important;
 }
 
-.starlight-aside--caution,
+.starlight-aside--caution {
+	background-color: var(--aside-caution-bg) !important;
+	border-color: var(--aside-caution-border) !important;
+	border-inline-start-color: var(--aside-caution-accent) !important;
+}
+.starlight-aside--caution .starlight-aside__title {
+	color: var(--aside-caution-title) !important;
+}
+
 .starlight-aside--danger {
-	--sl-color-asides-text-accent: var(--color-signal-orange);
-	--sl-color-asides-border: var(--color-signal-orange);
+	background-color: var(--aside-danger-bg) !important;
+	border-color: var(--aside-danger-border) !important;
+	border-inline-start-color: var(--aside-danger-accent) !important;
+}
+.starlight-aside--danger .starlight-aside__title {
+	color: var(--aside-danger-title) !important;
 }
 
-/* Keyboard users get a ring; mouse users do not. WCAG 2.2 SC 2.4.11 wants a
-   2px perimeter at 3:1 against the unfocused state, so this is bone (16.4:1)
-   rather than ash-stroke (1.7:1). */
+/* ==========================================================================
+   8. FOCUS & ACCESSIBILITY
+   ========================================================================== */
 :where(a, button, input, select, summary, [tabindex]):focus-visible {
-	outline: 2px solid var(--color-bone);
+	outline: 2px solid var(--sl-color-text);
 	outline-offset: 2px;
 	border-radius: var(--radius-buttons);
 }
 
-/* "Transitions are short and mechanical, the feel of a CLI tool." */
 :where(a, button, summary) {
 	transition:
 		color var(--motion),
@@ -259,8 +549,9 @@ starlight-toc a:hover:not([aria-current='true']) {
 	}
 }
 
-/* API pages carry wide signature tables. They scroll inside their own box so
-   the page itself never scrolls sideways on a phone. */
+/* ==========================================================================
+   9. TABLES
+   ========================================================================== */
 .sl-markdown-content :is(table) {
 	display: block;
 	overflow-x: auto;
@@ -268,5 +559,154 @@ starlight-toc a:hover:not([aria-current='true']) {
 }
 
 .sl-markdown-content :is(th, td) {
-	border-color: var(--color-carbon-lift);
+	border-color: var(--sl-color-hairline);
 }
+
+/* ==========================================================================
+   10. NEWS & RELEASES STYLES
+   ========================================================================== */
+.news-page-wrapper {
+	max-width: 1040px;
+	margin: 0 auto;
+	padding: 0.5rem 0 1rem 0;
+}
+
+.news-hero-lead {
+	font-size: 1.125rem;
+	line-height: 1.6;
+	color: var(--sl-color-gray-3);
+	margin: 0.5rem 0 2rem 0;
+	max-width: 65ch;
+}
+
+.news-hero-lead a {
+	color: var(--sl-color-text);
+	text-decoration: underline;
+	text-underline-offset: 0.2em;
+}
+
+/* Single News Article Layout */
+.news-article-container {
+	max-width: 800px;
+	margin: 0 auto;
+	padding: 1rem 0 1rem 0;
+}
+
+.news-back-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	font-size: 0.875rem;
+	font-weight: 500;
+	color: var(--sl-color-gray-3) !important;
+	background: transparent !important;
+	border: none !important;
+	padding: 0 !important;
+	text-decoration: none !important;
+	margin-bottom: 2rem;
+	line-height: 1;
+	cursor: pointer;
+	transition: color var(--motion, 0.18s);
+}
+
+.news-back-link svg {
+	width: 14px;
+	height: 14px;
+	flex-shrink: 0;
+	display: inline-block;
+	color: inherit;
+}
+
+.news-back-text {
+	text-decoration: underline;
+	text-underline-offset: 0.25em;
+	text-decoration-color: var(--sl-color-gray-4);
+	transition: color var(--motion, 0.18s), text-decoration-color var(--motion, 0.18s);
+}
+
+.news-back-link:hover {
+	color: var(--sl-color-text) !important;
+}
+
+.news-back-link:hover .news-back-text {
+	color: var(--sl-color-text) !important;
+	text-decoration-color: var(--sl-color-text) !important;
+}
+
+.news-article-header {
+	margin-bottom: 2.5rem;
+	padding-bottom: 1.5rem;
+	border-bottom: 1px solid var(--sl-color-hairline);
+}
+
+.news-article-header h1 {
+	font-size: 2rem !important;
+	font-weight: 600 !important;
+	letter-spacing: -0.03em !important;
+	color: var(--sl-color-text) !important;
+	margin: 0.5rem 0 !important;
+	line-height: 1.25 !important;
+}
+
+.news-article-badges {
+	display: flex;
+	gap: 0.6rem;
+	align-items: center;
+	margin-bottom: 0.75rem;
+}
+
+.news-badge-version {
+	font-family: var(--sl-font-mono);
+	font-size: 0.85rem;
+	font-weight: 600;
+	padding: 0.2rem 0.6rem;
+	border-radius: 4px;
+	background-color: var(--sl-color-text);
+	color: var(--sl-color-text-invert);
+	text-transform: uppercase;
+}
+
+.news-badge-date {
+	font-size: 0.875rem;
+	color: var(--sl-color-gray-3);
+}
+
+.news-article-lead {
+	font-size: 1.15rem;
+	line-height: 1.5;
+	color: var(--sl-color-gray-3);
+	margin: 0;
+}
+
+.news-nav-footer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-top: 3.5rem;
+	padding-top: 1.5rem;
+	border-top: 1px solid var(--sl-color-hairline);
+	flex-wrap: wrap;
+	gap: 1rem;
+}
+
+.news-next-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.45rem 1rem;
+	font-size: 0.875rem;
+	font-weight: 500;
+	color: var(--sl-color-text) !important;
+	background-color: var(--sl-color-bg-inline-code);
+	border: 1px solid var(--sl-color-hairline);
+	border-radius: var(--radius-buttons);
+	text-decoration: none !important;
+	transition: color var(--motion), background-color var(--motion), border-color var(--motion);
+}
+
+.news-next-btn:hover {
+	color: var(--sl-color-text) !important;
+	border-color: var(--sl-color-gray-4);
+	background-color: var(--sl-color-gray-6);
+}
+

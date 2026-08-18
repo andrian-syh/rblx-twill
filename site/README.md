@@ -34,7 +34,7 @@ every link has to be root-relative.
 
 ## Before changing how it looks
 
-Read [DESIGN.md](./DESIGN.md), the Factory specification this site implements.
+Read [DESIGN-DARK.md](./DESIGN-DARK.md) (the Factory specification for dark theme) and [DESIGN-LIGHT.md](./DESIGN-LIGHT.md) (the clean monochromatic specification for light theme).
 `src/styles/custom.css` maps its tokens onto Starlight's, and the site is dark
 only by decision, so there is no theme selector.
 
