@@ -1,119 +1,111 @@
-# Twill
+<div align="center">
+  <img src="site/public/favicon.svg" width="100" height="100" alt="Twill Logo" />
+  <h1>Twill</h1>
+  <p><b>A modular, zero-setup infrastructure framework for Roblox Luau.</b></p>
 
-A modular framework for Roblox. Two folders, no build step, no package manager.
+  <p>
+    <a href="https://github.com/andrian-syh/rblx-twill/releases"><img src="https://img.shields.io/badge/version-1.3.0-2563eb?style=flat-square" alt="Version" /></a>
+    <a href="https://luau.org/"><img src="https://img.shields.io/badge/language-Luau-00A2FF?style=flat-square&logo=lua&logoColor=white" alt="Luau" /></a>
+    <a href="https://roblox.com/"><img src="https://img.shields.io/badge/platform-Roblox-000000?style=flat-square&logo=roblox&logoColor=white" alt="Roblox" /></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-10b981?style=flat-square" alt="License" /></a>
+    <a href="https://andrian-syh.github.io/rblx-twill/"><img src="https://img.shields.io/badge/docs-online-6366f1?style=flat-square&logo=readthedocs&logoColor=white" alt="Documentation" /></a>
+  </p>
 
-Twill gives you the parts most games rewrite from scratch, a boot sequence, player data,
-guarded networking, and state replication, without asking you to adopt all of it. Every
-module works on its own. Take the one you need and ignore the rest.
+  <p>
+    <a href="https://andrian-syh.github.io/rblx-twill/"><b>Documentation</b></a> •
+    <a href="https://andrian-syh.github.io/rblx-twill/getting-started/quick-start/"><b>Quick Start</b></a> •
+    <a href="https://andrian-syh.github.io/rblx-twill/reference/"><b>API Reference</b></a> •
+    <a href="CHANGELOG.md"><b>Changelog</b></a>
+  </p>
+</div>
 
-**[Read the documentation →](https://andrian-syh.github.io/rblx-twill/)**
+---
 
-> **v1.3.0.** The API is stable. Breaking changes wait for a major version, and
-> everything documented is taken from the source.
+## Overview
 
-## Why this exists
+Twill handles the foundational infrastructure that nearly every Roblox game rewrites from scratch: a deterministic boot sequence, player data lifecycle, guarded networking, state replication, and automatic resource cleanup—without forcing you to adopt an all-or-nothing monolith.
 
-As of mid-2026 there is no maintained, monolithic framework for plain Luau.
-[Knit](https://github.com/Sleitnick/Knit) was the standard and is now archived.
-[Flamework](https://github.com/rbxts-flamework/core) is roblox-ts only. What the community
-actually uses is a set of sharp, single-purpose libraries assembled by hand.
-
-Twill does not try to reverse that. It supplies the one thing a pile of libraries cannot, a
-boot order and a player pipeline, and otherwise stays out of the way. **Only `Lifecycle` is
-a framework in the strict sense**, because it calls your code. Everything else is a library
-you call.
-
-That is deliberate. Knit was rejected largely for demanding total adoption. Twill asks for
-none.
-
-## Install
-
-Twill installs in **two places**, and this is not optional. Server code must never sit in
-`ReplicatedStorage`, where any client can read it.
+**Only `Lifecycle` acts as a framework** by driving your initialization. Every other module is a standalone library you call on demand.
 
 ```
 ReplicatedStorage/
-└── Twill/                  ← drop here
+└── Twill/                  ← Shared modules, client view, and root table
 
 ServerScriptService/
-└── TwillServer/            ← and here
+└── TwillServer/            ← Server-only logic, data layer, and rate limits
 ```
 
-Those two folders are the whole framework. Every dependency is bundled, so there is no
-package manager, no build step, and nothing to configure. Every require resolves against
-the place itself, so any workflow that produces one runs Twill unchanged.
+Two folders contain the entire framework. Dependencies come pre-bundled: no package manager, no build step, and no mandatory toolchain required.
 
-## In one screen
+---
 
-`ServerScriptService/Main`, a `Script`:
+## Core Pillars
 
-```lua
+- **Deterministic Booting**: Two-phase boot (`Init` → `Start`) resolves inter-service dependencies cleanly without require cycles or deadlock.
+- **Player Pipeline & Data Gate**: Services receive players via `OnPlayerReady` only after their profile is loaded and validated.
+- **Guarded Networking**: Remote calls pass through four screening layers (Packet wire types, rate ceilings, schemas, and server validation).
+- **Delta State Replication**: Server-to-client state diffing sends only mutated fields; client pull is intentionally restricted.
+- **Scoped Lifetimes**: Connections and loops attach to Player, Character, or Alive bags (`Scope`/`Trove`) and clean up automatically.
+- **Fail-Closed Security**: Missing permissions, rate overruns, and filter failures reject safely by default rather than leaking state.
+
+---
+
+## Quick Example
+
+### 1. Server Bootstrap (`ServerScriptService/Main.server.luau`)
+
+```luau
 local Twill = require("@game/ReplicatedStorage/Twill")
 
 Twill.Data.Configure({
     Store = "PlayerData",
     Version = 1,
-    Template = { Coins = 0 },
+    Template = { Coins = 100, Inventory = {} },
 })
 
 Twill.Lifecycle.SetPlayerGate(Twill.Data.Gate)
 Twill.Lifecycle.Start(script.Parent.Services)
 ```
 
-A service, any `ModuleScript` under that `Services` folder:
+### 2. Service Definition (`ServerScriptService/Services/ShopService.luau`)
 
-```lua
+```luau
 local ShopService = {}
+ShopService.Priority = 10
 
-function ShopService.OnPlayerReady(player, data)
-    data.Coins += 100
+function ShopService.OnPlayerReady(player, data, trove)
+    -- Profile is already loaded and guaranteed
+    data.Coins += 50
+
+    -- Bound to the player's session; cleans up automatically on leave
+    trove:Connect(player.Chatted, function(message)
+        -- ...
+    end)
 end
 
 return ShopService
 ```
 
-That is a server which loads player data, boots your services in a defined order, and
-announces each player once their data exists.
+---
 
-The full walkthrough is the
-[quick start](https://andrian-syh.github.io/rblx-twill/getting-started/quick-start/).
-
-## What is included
+## Modules
 
 | Group | Modules |
-| --- | --- |
-| **Core** | `Lifecycle`, `Net`, `Replication`, `Data`, `Scope`, `Log` |
-| **Utilities** | `Schema`, `Limit`, `Loop`, `Watch`, `Format`, `Serialize`, `Compress`, `Tree`, `Error`, `BigNumber`, `Chance` |
-| **Game systems** | `Authorization`, `Admin`, `Monetization`, `Leaderstats`, `Filter`, `Random`, `Token`, `Navigation` |
-
-Each has a reference page carrying every signature taken from the source, and the side it
-runs on marked on every member. See the
-[module reference](https://andrian-syh.github.io/rblx-twill/reference/).
-
-## What Twill does not do
-
-No gameplay: no character controller, no combat, no camera, no input handling. No reactive
-view layer, no ECS, and no state management for the client beyond receiving what the server
-published.
-
-These modules have opinions about infrastructure, which is a smaller and much more
-transferable thing to be opinionated about.
-
-## Licence
-
-Twill's own code is **[MIT](LICENSE)**.
-
-The bundled components keep their own licences, listed in
-[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md). None of them is copyleft, so none forces
-a licence on your game or on Twill itself. What they do require is that their notices
-travel with their code.
-
-The one to know about is **ProfileStore, which is Apache-2.0**. Redistributing Twill with it
-means shipping the Apache-2.0 licence text, keeping its notices intact, and stating any
-modifications. Twill makes none.
+| :--- | :--- |
+| **Core** | [`Lifecycle`](https://andrian-syh.github.io/rblx-twill/reference/lifecycle/) · [`Net`](https://andrian-syh.github.io/rblx-twill/reference/net/) · [`Replication`](https://andrian-syh.github.io/rblx-twill/reference/replication/) · [`Data`](https://andrian-syh.github.io/rblx-twill/reference/data/) · [`Scope`](https://andrian-syh.github.io/rblx-twill/reference/scope/) · [`Log`](https://andrian-syh.github.io/rblx-twill/reference/log/) |
+| **Utilities** | [`Schema`](https://andrian-syh.github.io/rblx-twill/reference/schema/) · [`Limit`](https://andrian-syh.github.io/rblx-twill/reference/limit/) · [`Loop`](https://andrian-syh.github.io/rblx-twill/reference/loop/) · [`Watch`](https://andrian-syh.github.io/rblx-twill/reference/watch/) · [`Format`](https://andrian-syh.github.io/rblx-twill/reference/format/) · [`Serialize`](https://andrian-syh.github.io/rblx-twill/reference/serialize/) · [`Compress`](https://andrian-syh.github.io/rblx-twill/reference/compress/) · [`Tree`](https://andrian-syh.github.io/rblx-twill/reference/tree/) · [`Error`](https://andrian-syh.github.io/rblx-twill/reference/error/) · [`BigNumber`](https://andrian-syh.github.io/rblx-twill/reference/bignumber/) · [`Chance`](https://andrian-syh.github.io/rblx-twill/reference/chance/) · [`Navigation`](https://andrian-syh.github.io/rblx-twill/reference/navigation/) |
+| **Game Systems** | [`Authorization`](https://andrian-syh.github.io/rblx-twill/reference/authorization/) · [`Admin`](https://andrian-syh.github.io/rblx-twill/reference/admin/) · [`Monetization`](https://andrian-syh.github.io/rblx-twill/reference/monetization/) · [`Leaderstats`](https://andrian-syh.github.io/rblx-twill/reference/leaderstats/) · [`Filter`](https://andrian-syh.github.io/rblx-twill/reference/filter/) · [`Random`](https://andrian-syh.github.io/rblx-twill/reference/random/) · [`Token`](https://andrian-syh.github.io/rblx-twill/reference/token/) |
 
 ---
 
-Repository: <https://github.com/andrian-syh/rblx-twill> ·
-Documentation: <https://andrian-syh.github.io/rblx-twill/> ·
-Editing the docs site: [`site/README.md`](site/README.md)
+## Scope & Boundaries
+
+Twill deliberately focuses strictly on **game infrastructure**. It does not provide gameplay systems (character controllers, combat mechanics, camera rigs) or reactive UI layers (ECS, Roact/Fusion equivalents). You are free to pair Twill with any visual or gameplay stack of your choice.
+
+---
+
+## License
+
+Twill's source code is licensed under the [MIT License](LICENSE).
+
+Bundled third-party libraries (`ProfileStore`, `Trove`, `Packet`, `Cmdr`, `AptInt`, `Cryptography`) are redistributed under their respective permissive open-source licenses as documented in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
