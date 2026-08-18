@@ -23,6 +23,20 @@ export function rehypeBaseLinks(base) {
 			) {
 				node.properties.href = prefix + href;
 			}
+		} else if (
+			(node.type === 'mdxJsxTextElement' || node.type === 'mdxJsxFlowElement') &&
+			node.name === 'a'
+		) {
+			const hrefAttr = node.attributes?.find((attr) => attr.name === 'href');
+			if (
+				hrefAttr &&
+				typeof hrefAttr.value === 'string' &&
+				hrefAttr.value.startsWith('/') &&
+				!hrefAttr.value.startsWith('//') &&
+				!hrefAttr.value.startsWith(`${prefix}/`)
+			) {
+				hrefAttr.value = prefix + hrefAttr.value;
+			}
 		}
 		node.children?.forEach(walk);
 	}
