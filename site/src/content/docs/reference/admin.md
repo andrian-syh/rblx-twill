@@ -263,7 +263,38 @@ not on this server. It works one user at a time on purpose.
 Reading prints one aligned row per stored value. Past forty values it switches to
 an indented JSON block instead, which keeps a deep tree readable rather than
 flattening it into hundreds of dotted paths. Past two hundred it asks for a path
-instead of answering.
+instead of answering. In Studio it also prints the whole value to the output,
+where nothing is too large to show; a live server does not, because that would be
+writing somebody's saved data into its own logs.
+
+#### Writing a value
+
+`set` reads what you type the way you wrote it. JSON where the text is JSON, so
+`500` is a number, `true` is a boolean, and `{"Owned":true}` is a table. Anything
+JSON cannot read stays the text it already was, which is what makes `gold` mean
+gold rather than a syntax error.
+
+[Big numbers](/reference/bignumber/) come first, before JSON is tried:
+
+| Typed | Stored |
+| --- | --- |
+| `big:1500` | A big number, whatever its size |
+| `123456789012345678901234567890` | A big number, because no ordinary number holds those digits |
+| `1500` | An ordinary number |
+
+The mark matters for small values. A field holding a big number is a table of
+limbs, and writing a plain `1500` over it leaves the game's own arithmetic
+reaching for `limbs` on a number. Write `big:1500` and the field keeps its shape.
+
+Unmarked digits are promoted only when an ordinary number provably cannot hold
+them: the digits are compared against what a `number` reproduces, so
+`9007199254740992` stays ordinary and `9007199254740993` does not. Nobody types
+thirty digits meaning a rounded float.
+
+:::tip[What `get` prints is what `set` takes]
+A big number is shown as `big:` followed by every digit, never shortened. Copy a
+value out of `get` and it goes straight back into `set` unchanged.
+:::
 
 **`twill`** reports what this server is running. It changes nothing.
 

@@ -401,6 +401,13 @@ Not from Twill's own `moderation` command, which reads durations exactly. This i
 Cmdr's built-in `duration` type, which resolves units by fuzzy match. Check which
 type your own command declares.
 
+**`A big: value is whole digits, such as big:1500`**
+
+From `playerdata set`. The `big:` mark writes a
+[big number](/reference/bignumber/), so what follows it has to be digits, with an
+optional leading minus. Anything else is refused rather than stored as the text
+`big:whatever`.
+
 **`You cannot grant rank N; your own is M`**
 
 From `rank set`. The console decides who may run what by rank, so granting one at

@@ -16,6 +16,16 @@ const prefix = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
 const releases: ReleaseItem[] = [
 	{
+		version: 'v1.3.1',
+		title: 'Big Numbers Survive the Console',
+		date: 'August 19, 2026',
+		tagline: 'A currency the console quietly rounded, and the mark that stops it.',
+		summary:
+			'Values typed into playerdata were read through JSON, so big numbers came back smaller than they went in. The new big: mark keeps them whole, and what the console prints can now be typed straight back.',
+		slug: '/news/v1-3-1/',
+		icon: 'star',
+	},
+	{
 		version: 'v1.3.0',
 		title: 'Console Commands & Internal State',
 		date: 'August 16, 2026',

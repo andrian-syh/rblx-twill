@@ -1,0 +1,87 @@
+---
+title: v1.3.1 — Big Numbers Survive the Console
+description: Released August 19, 2026. A currency the console quietly rounded, and the mark that stops it.
+template: splash
+---
+
+import NewsBackLink from '../../../components/NewsBackLink.astro';
+import NewsPagination from '../../../components/NewsPagination.astro';
+
+<div class="news-article-container">
+
+<NewsBackLink />
+
+<header class="news-article-header">
+	<div class="news-article-badges">
+		<span class="news-badge-version">v1.3.1</span>
+		<span class="news-badge-date">August 19, 2026</span>
+	</div>
+	<p class="news-article-lead">
+		A currency the console quietly rounded, and the mark that stops it.
+	</p>
+</header>
+
+## The write that looked like it worked
+
+`playerdata set` read every value through JSON, and JSON has no integers past
+what a double holds. So a big number typed into the console came out smaller
+than it went in, and nothing said so.
+
+```text
+123456789012345678901234567890  ->  1.2345678901234568e+29
+9007199254740993                ->  9007199254740992
+```
+
+The second line is the dangerous one. Off by exactly one, no error, no warning,
+and no way for the person who typed it to notice.
+
+**The loss was not only precision.** A field holding a
+[`BigNumber`](/reference/bignumber/) is a table of limbs, so writing an ordinary
+number over one left the game's own arithmetic reaching for `limbs` on a number.
+The console reported success; the failure surfaced later, somewhere else, with
+nothing pointing back to the command that caused it.
+
+## Digits no ordinary number holds are now kept
+
+Unmarked digits are promoted to a big number only when an ordinary one provably
+cannot hold them. The digits are compared against what a `number` actually
+reproduces rather than guessed from length, so the boundary is exact:
+
+```text
+9007199254740992  stays an ordinary number
+9007199254740993  becomes a big number
+```
+
+Nobody types thirty digits meaning a rounded float, so there is no competing
+reading to weigh.
+
+## Small values need the mark
+
+Promotion cannot help a field that holds `1500` as a big number, because `1500`
+is perfectly representable either way. Nothing about the text says which was
+meant, and guessing would be guessing at the shape of somebody's saved data.
+
+```text
+playerdata set Someone main Stats.Coins big:1500
+```
+
+The `big:` mark says it outright. A mark that is not whole digits is refused
+rather than stored as the text `big:whatever`.
+
+## What `get` prints is what `set` takes
+
+The console used to show a big number shortened, as `123.46Oc`. An admin could
+not read the stored value at all, and nothing on screen said the field was a big
+number in the first place — which is exactly why typing a plain `1500` over one
+looked reasonable.
+
+Both directions of the round trip now close. A big number is shown as `big:`
+followed by every digit, never shortened, and copying that straight back into
+`set` stores the same value it came from.
+
+<NewsPagination
+	prev={{ label: 'v1.3.0 — Console Commands', href: '/news/v1-3-0/' }}
+	next={{ label: 'All releases', href: '/news/' }}
+/>
+
+</div>

@@ -47,6 +47,20 @@ DataStore. Calling functions is the shape that works in every case, including th
 first read after a join.
 :::
 
+### Reading and writing one from the console
+
+The [`playerdata` command](/reference/admin/#built-in-commands) prints a big
+number as `big:` followed by every digit, and takes the same form back:
+
+```text
+playerdata set Someone main Stats.Coins big:1500
+```
+
+The mark is what keeps the field a big number. Writing a plain `1500` over one
+stores an ordinary number, and the game's next `BigNumber.Add` then reaches for
+`limbs` on something that has none. Digits too long for an ordinary number are
+promoted without the mark, since nothing else could have been meant.
+
 ## API
 
 None of the functions below changes its operands; each returns a fresh value.

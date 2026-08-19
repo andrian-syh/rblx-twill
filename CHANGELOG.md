@@ -6,6 +6,36 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 Twill adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Breaking changes wait for a major version.
 
+## [1.3.1] - 2026-08-19
+
+A currency the console quietly rounded, and the mark that stops it.
+
+### Fixed
+
+- `playerdata set` turned a big number into an ordinary one. Every value typed
+  into the console was read as JSON, and JSON has no integers past what a double
+  holds, so `123456789012345678901234567890` was stored as `1.2345678901234568e+29`
+  and `9007199254740993` was stored as `9007199254740992` with nothing said. The
+  loss was not only precision: a field holding a
+  [`BigNumber`](https://andrian-syh.github.io/rblx-twill/reference/bignumber/) is
+  a table of limbs, so writing an ordinary number over one left the game's own
+  arithmetic reaching for `limbs` on a number.
+
+### Added
+
+- `big:` on `playerdata set`, which writes a big number whatever its size.
+  Unmarked digits are promoted only when an ordinary number provably cannot hold
+  them, compared against what a `number` reproduces rather than guessed from
+  length, so `9007199254740992` stays ordinary and `9007199254740993` does not.
+- A refusal for a `big:` value that is not whole digits, rather than storing the
+  text `big:whatever`.
+
+### Changed
+
+- The console shows a big number as `big:` followed by every digit instead of
+  shortening it. An admin could not read the stored value, and what was shown
+  could not be typed back; both directions of the round trip now close.
+
 ## [1.3.0] - 2026-08-16
 
 Seven console commands, and the switch to turn them off.
