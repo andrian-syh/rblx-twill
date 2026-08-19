@@ -130,8 +130,11 @@ against.
 
 ## Status
 
-**v1.3.1.** The API is stable. Breaking changes wait for a major version, so
-anything documented here can be built on.
+**v1.4.0.** The API is stable, and where one does move, the
+[changelog](https://github.com/andrian-syh/rblx-twill/blob/main/CHANGELOG.md)
+carries a Migration section saying exactly what to rewrite. A major version is
+reserved for a release that reshapes how the framework works rather than for any
+single change.
 
 `Twill.Version` reports the version the installed copy carries, which is the
 quickest way to tell what a place is actually running.

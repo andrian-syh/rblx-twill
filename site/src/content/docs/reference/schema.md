@@ -136,7 +136,7 @@ end
 ## Use with Net
 
 [`Net.Handle`](/reference/net/#schema) takes a list of these, applied positionally
-to a packet's arguments.
+to a remote's arguments.
 
 ```luau
 Twill.Net.Handle(buy, onBuy, {
@@ -147,5 +147,6 @@ Twill.Net.Handle(buy, onBuy, {
 })
 ```
 
-Packet already guarantees the argument **types** at the wire level. A schema is
-for everything a wire type cannot express: ranges, lengths, and shapes.
+A remote's declaration already guarantees the argument **types** at the wire
+level. A schema is for everything a wire type cannot express: ranges, lengths,
+and shapes.

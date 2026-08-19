@@ -71,10 +71,10 @@ their pages mark every member that only exists there.
 
 ## Bundled libraries on the root
 
-Three names on the root table are not Twill modules and have no page here:
-`Twill.Trove`, `Twill.Signal`, and `Twill.Packet`. They are bundled third-party
-packages, exposed because you already hold their values — a `Scope` bag is a
-Trove, and a declared remote is a Packet.
+Two names on the root table are not Twill modules and have no page here:
+`Twill.Trove` and `Twill.Signal`. They are bundled third-party packages, exposed
+because you already hold their values — a `Scope` bag is a Trove, and
+`Replication.OnChanged` hands back a signal.
 
 Their API belongs to their projects, and Twill's stability promise does not cover
 it. See [Bundled packages](/reference/bundled-packages/).

@@ -106,13 +106,22 @@ exists, wait on the signal.
 ```luau
 -- Asked once before any waiting, so an already-true condition costs nothing.
 local ready = Loop.Until(function()
-	return remote.Id ~= nil
+	return roundHasStarted
 end, 30)
 
 if not ready then
-	logger:Warn("the server never registered the packet")
+	logger:Warn("the round never started")
 	return
 end
+```
+
+Waiting for the network is not one of these cases. `Net` reports readiness
+directly, and a call made before then is held rather than lost:
+
+```luau
+Net.OnReady(function()
+	remote:Fire("ready")
+end)
 ```
 
 It answers `false` when the time runs out rather than yielding forever, which is

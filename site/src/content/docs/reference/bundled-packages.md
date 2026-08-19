@@ -19,7 +19,6 @@ to redistribute belongs with the thing you redistribute.
 
 | Package | Licence | Author |
 | --- | --- | --- |
-| Packet 1.7 | 0BSD | 5uphi |
 | Trove | MIT | Sleitnick, part of RbxUtil |
 | Signal (NamedSignal) | MIT | Averlyst |
 | AptInt | Unlicense | fosterchild1 |
@@ -45,20 +44,19 @@ forum](https://devforum.roblox.com/t/fastest-cryptography-library-for-roblox/368
 [`Random`](/reference/random/) and [`Token`](/reference/token/) reach a small
 part of it: SHA-256, HMAC-SHA256, ChaCha20, and Blake3.
 
-## Three are reachable from the root
+## Two are reachable from the root
 
-Most bundled packages are reached only through a Twill module. Three are not:
+Most bundled packages are reached only through a Twill module. Two are not:
 
 | Reached as | Is | By |
 | --- | --- | --- |
 | `Twill.Trove` | Trove | Sleitnick |
 | `Twill.Signal` | NamedSignal | Averlyst |
-| `Twill.Packet` | Packet | 5uphi |
 
 They are exposed because you already hold their values. `Scope.Player` hands back
-a Trove, `Replication.OnChanged` hands back a signal, and `Net.Declare` hands
-back a packet, so their methods are part of Twill's surface whether or not the
-root names them. Naming them only saves you a path.
+a Trove and `Replication.OnChanged` hands back a signal, so their methods are
+part of Twill's surface whether or not the root names them. Naming them only
+saves you a path.
 
 **Their API is theirs, not Twill's.** Twill's promise that the API is stable and
 that breaking changes wait for a major version covers Twill's own modules. Code
@@ -66,9 +64,11 @@ written against `Twill.Signal` is code written against NamedSignal, and it
 follows that project's decisions rather than this one's.
 
 Where a Twill module covers what you need, write against the module. `Scope`
-rather than `Trove.new`, `Net.Declare` rather than `Packet`. Those wrappers are
-load-bearing in several cases, and they are the part this project promises to
-keep still.
+rather than `Trove.new`. Those wrappers are load-bearing in several cases, and
+they are the part this project promises to keep still.
+
+Networking is no longer on this list. [`Net`](/reference/net/) carries its own
+wire format, so nothing third-party sits between a declaration and the bytes.
 
 ## What each licence asks
 
@@ -80,9 +80,8 @@ modifications must be stated.
 notice travels with the code. The headers inside those files are the notice. Do
 not strip them.
 
-**0BSD and Unlicense** (Packet, AptInt) ask for nothing at all, not even
-attribution. They are listed anyway, because a reader deserves to know what they
-are running.
+**Unlicense** (AptInt) asks for nothing at all, not even attribution. It is
+listed anyway, because a reader deserves to know what they are running.
 
 None of the above is copyleft, so nothing here forces a licence on Twill or on
 your game. Twill's own code is MIT.

@@ -99,7 +99,7 @@ This is the only place enforcement counts.
 ```luau
 Twill.Net.Handle(Remotes.StartRound, onStartRound, {
 	-- Checked before the caller spends any of their rate allowance, so
-	-- someone without the rank cannot use the packet to exhaust anything.
+	-- someone without the rank cannot use the remote to exhaust anything.
 	MinimumRank = Ranks.Moderator,
 
 	Reject = function()

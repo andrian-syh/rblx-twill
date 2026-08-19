@@ -33,7 +33,7 @@ nothing at all in between. Writing the line stays with the caller.
 ```luau
 local speak = Limit.Throttle(5)
 
-local refused = speak(player, packetName)
+local refused = speak(player, remoteName)
 if refused then
 	logger:Warn(`{player.Name} was refused {refused} time(s)`)
 end

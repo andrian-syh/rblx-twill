@@ -6,22 +6,23 @@ description: Declare a remote once, serve it with metering and validation, and r
 ## Declare
 
 Both sides declare the same remote, in either order, and both get the same
-packet.
+handle.
 
 ```luau title="ReplicatedStorage/YourGame/Remotes.luau"
 local Net = require("@game/ReplicatedStorage/Twill/Net")
-local Packet = require("@game/ReplicatedStorage/Twill/Packages/Packet")
+local Types = Net.Types
 
 return {
-	Emote = Net.Declare("Emote", { Packet.String }),
-	BuyItem = Net.Declare("BuyItem", { Packet.String }, { Packet.Boolean8, Packet.String }),
+	Emote = Net.Declare("Emote", { Types.String(32) }),
+	BuyItem = Net.Declare("BuyItem", { Types.String(32) }, { Types.Boolean, Types.String(64) }),
+	Aim = Net.DeclareUnreliable("Aim", { Types.Vector3F32 }),
 }
 ```
 
-The second array makes the packet reply to its caller.
+The second array lets a client `Ask` and wait for the reply.
 
 Declaring the same name with different types is refused loudly, which is what
-stops one caller from serialising through another's types.
+stops one caller from encoding through another's types.
 
 ## Serve
 
@@ -56,13 +57,24 @@ end
 ## Call
 
 ```luau title="client"
-local bought, message = Remotes.BuyItem:Fire("sword")
+local bought, message = Remotes.BuyItem:Ask("sword")
+
+Remotes.Emote:Fire("wave")
+Remotes.Aim:Fire(camera.CFrame.LookVector)
 ```
 
-:::caution[Do not fire while a module is still loading]
-A client-declared packet receives its wire id from the server a moment later.
-Fire from `Start` onwards.
-:::
+`Ask` always ends: with the answer, with the `Reject`, or with nothing when the
+wait runs out. It never leaves the calling thread waiting forever.
+
+A call made before the server's numbering has reached the client is held and sent
+once it does, so there is no boot-order trap. Wait explicitly only when you want
+to:
+
+```luau
+Net.OnReady(function()
+	Remotes.Emote:Fire("wave")
+end)
+```
 
 ## The four layers of screening
 
@@ -71,10 +83,12 @@ can answer the question.
 
 ### 1. Wire types
 
-Packet enforces them at the wire level. A client that sends a number where a
-string was declared never reaches your handler.
+The declaration enforces them. A client that sends a number where a string was
+declared never reaches your handler, and a string longer than the ceiling you
+declared is refused.
 
-Types are free. Declare them precisely.
+Types are free. Declare them precisely: `Types.String(32)` rather than
+`Types.String`, `Types.NumberVarU` rather than a float.
 
 ### 2. Rate
 
@@ -86,7 +100,8 @@ Rate = 0.25       -- one call every four seconds
 ```
 
 Below one, it is a cooldown. Pick a number a real player cannot exceed and no
-higher.
+higher. A separate budget weighs the bytes a player sends across every remote,
+so batching is not a way around it.
 
 ### 3. Schema
 
@@ -111,15 +126,28 @@ Validate = function(player, itemId)
 end
 ```
 
+**An `Instance` sent by a client belongs here.** The decoder proves it exists and
+is the class you declared. It cannot prove the caller is allowed to touch it.
+
+## Two things a client cannot say
+
+**A player.** `Types.Player` is refused in an argument list, because a player
+named on the wire is a player the sender chose. The caller arrives as your
+handler's first argument, from the engine.
+
+**An answer nobody asked for.** Only the client asks; the server never waits on a
+reply from a client. If you need something only a client knows, send it as an
+ordinary event and treat it as a claim rather than a fact.
+
 ## Reject is mandatory for replies
 
-A packet that replies must have a `Reject`, or the `Handle` itself is refused:
+A remote that replies must have a `Reject`, or the `Handle` itself is refused:
 
 ```text
 'BuyItem' replies to the caller, so it needs a Reject option
 ```
 
-Without one, a refused call leaves its caller waiting forever.
+Without one, a refused call leaves its caller waiting.
 
 Return the same shape as a normal reply, so the caller has one thing to check:
 
@@ -129,7 +157,17 @@ Reject = function()
 end
 ```
 
-A packet that does not reply may omit it. Refused calls there are dropped.
+A remote that does not reply may omit it. Refused calls there are dropped.
+
+## Use unreliable for what a newer message replaces
+
+```luau
+Aim = Net.DeclareUnreliable("Aim", { Types.Vector3F32 })
+```
+
+Aim directions, cosmetic effects, footsteps. Never anything transactional. There
+is no `response` parameter on `DeclareUnreliable`, so a reply cannot be attached
+to one by mistake.
 
 ## Restrict by rank
 

@@ -64,26 +64,6 @@ metatable that JSON drops, and copying results out of AptInt's limb pool.
 
 ---
 
-## Packet — 0BSD (BSD Zero Clause)
-
-**Author:** 5uphi
-**Source:** https://devforum.roblox.com/t/packet-networking-library/3573907
-**Creator Store asset:** `104116977416770`
-**Location in Twill:** `ReplicatedStorage/Twill/Packages/Packet`
-
-> Permission to use, copy, modify, and/or distribute this software for any
-> purpose with or without fee is hereby granted.
-
-0BSD asks for nothing — no attribution, no notice, no conditions. Packet is
-listed here anyway, because someone running Twill deserves to know what is in
-it.
-
-**Open item:** the vendored copy carries no version marker. Releases 1.1 through
-1.7 were security fixes, so check it against the Creator Store asset before
-shipping a release.
-
----
-
 ## Trove — MIT
 
 **Author:** Sleitnick, part of [RbxUtil](https://github.com/Sleitnick/RbxUtil)

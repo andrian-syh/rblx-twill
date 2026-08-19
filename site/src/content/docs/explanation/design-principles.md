@@ -71,7 +71,7 @@ secret **while a server is running** changes the meaning of everything already
 loaded or issued. A second call is far more likely to be a mistake than an
 intention, so it is an error rather than a silent replacement.
 
-The same reasoning covers handlers: one per packet in `Net`, one per product in
+The same reasoning covers handlers: one per remote in `Net`, one per product in
 `Monetization`. A silently replaced handler stops working without saying so, and
 in the monetisation case stops paying.
 
@@ -201,7 +201,7 @@ supported span are an error rather than an approximation.
 
 ## Reuse before writing
 
-Twill bundles Packet, ProfileStore, Trove, Cmdr, and others rather than
+Twill bundles ProfileStore, Trove, Cmdr, and others rather than
 reimplementing them. Each is better at its job than a framework's own version
 would be, and each carries a licence Twill can honour.
 

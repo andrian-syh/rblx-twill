@@ -16,6 +16,16 @@ const prefix = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
 const releases: ReleaseItem[] = [
 	{
+		version: 'v1.4.0',
+		title: "Networking Is Twill's Own",
+		date: 'August 20, 2026',
+		tagline: 'A built-in wire format, and a corrupt call that costs only itself.',
+		summary:
+			'Net carries its own wire format. Every call declares the length of its own body, so a corrupt or refused one is stepped over rather than read, and the calls behind it still arrive. Types are declared with Net.Types, and the bundled Packet library is gone.',
+		slug: '/news/v1-4-0/',
+		icon: 'rocket',
+	},
+	{
 		version: 'v1.3.1',
 		title: 'Big Numbers Survive the Console',
 		date: 'August 19, 2026',

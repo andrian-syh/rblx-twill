@@ -56,9 +56,10 @@ argument, but the word is genuinely overloaded.
 
 | Term | What it means |
 | :--- | :--- |
-| **Wire id** | The numeric identifier the server assigns to a packet. A client-declared packet receives it a moment later, which is why `Fire` must not be called while a module is still loading. |
-| **Signature** | The rendering of a packet's argument and reply types. Declaring one name with two different signatures is refused, because the alternative is one caller serialising through another's types. |
-| **Reject** | What a refused caller is told. Required on a packet that replies, since a refusal without one leaves the caller waiting forever. |
+| **Wire id** | The number the server assigns to a remote. A client-declared remote receives it a moment later; a call made before then is held and sent once it arrives. |
+| **Signature** | The rendering of a remote's argument and reply types. Declaring one name with two different signatures is refused, because the alternative is one caller encoding through another's types. |
+| **Frame** | One call inside a message, carrying the length of its own body. That length is why a corrupt or refused call costs only itself. |
+| **Reject** | What a refused caller is told. Required on a remote that replies, since a refusal without one leaves the caller waiting. |
 | **Token bucket** | A meter that refills at its rate and never holds more than its burst. **A rate below one is how you spell a cooldown.** |
 | **Throttle** (Limit) | A function that answers **how many were held back** since it last spoke, and `nil` in between. It exists so that logging does not amplify the flood it is refusing. |
 | **Key** (replication) | The top-level name a value is published under. **It cannot contain a dot**, because the first dot separates the key from the path inside it. |

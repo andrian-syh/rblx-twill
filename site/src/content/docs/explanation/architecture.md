@@ -55,7 +55,7 @@ what only the server may know.
 
 | Module | Shared | Server only |
 | --- | --- | --- |
-| `Net` | Declaration | Metering, screening, serving |
+| `Net` | Declaration, the wire format, and the transport | Metering, screening, serving |
 | `Replication` | The client view | The publisher and its per-player copies |
 | `Authorization` | Reading a rank | Deciding one, group lookups |
 | `Admin` | The console client | The command gate and registry |
@@ -226,7 +226,6 @@ dead `Instance`.
 
 | Package | Owns |
 | --- | --- |
-| Packet | Wire encoding and argument types |
 | ProfileStore | Sessions, saving, cross-server messaging |
 | Trove | Cleanup, behind `Scope` |
 | Cmdr | The console, behind `Admin` |

@@ -2,9 +2,96 @@
 
 All notable changes to this project are recorded here.
 
-The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
-Twill adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-Breaking changes wait for a major version.
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+A major version is reserved for a release that reshapes how the framework works:
+at least three large changes landing together, reaching more than a quarter of
+what came before. A smaller change to an API lands in a minor version and brings
+a Migration section with it, so what has to be rewritten is always written down.
+
+## [1.4.0] - 2026-08-20
+
+Networking is Twill's own, and a corrupt call now costs only itself.
+
+### Added
+
+- A built-in wire format under `Twill.Net`. Every call carries the length of its
+  own body, so a corrupt or refused call is stepped over rather than read, and
+  every call behind it in the same message still arrives. Both reference
+  libraries this replaces lose the whole message instead.
+- `Net.Types`, the catalogue a remote is declared with: integer and float widths
+  including variable-length whole numbers, a correct half float, three CFrame
+  precisions, arrays, structs, maps, optionals, closed unions, enums, constants,
+  and `Types.Any` for a payload nobody can declare.
+- `Net.DeclareUnreliable`, which has no `response` parameter, so a reply cannot
+  be attached to a droppable remote by mistake. Oversized unreliable calls are
+  dropped with a line naming the remote rather than vanishing.
+- `Net.IsReady`, `Net.OnReady`, and `Net.AwaitReady`. A call made before the
+  server's numbering reaches a client is held and sent once it does.
+- `remote:Ask`, which always ends: with the answer, with the `Reject`, or with
+  nothing when the wait runs out. A handler that never returns is answered for
+  after a deadline.
+- `remote:Connect`, `Once`, `Wait`, and the `FireClients` / `FireAllExcept`
+  spellings. Listeners run from a copy of the list, so giving one up from inside
+  another is ordinary.
+- A byte budget per player, weighed before any of their calls are opened, so
+  batching many calls into one message costs what those calls weigh.
+
+### Changed
+
+- Remotes are declared with `Net.Types` rather than with the bundled Packet
+  library's types. `Net.Declare("Buy", { Packet.String })` becomes
+  `Net.Declare("Buy", { Net.Types.String(32) })`.
+- `Twill.Packet` is gone from the root table, and
+  `ReplicatedStorage.Twill.Packages.Packet` is no longer shipped.
+- `Types.Player` is refused in an argument list. A player named on the wire is a
+  player the sender chose; the caller already arrives as the handler's first
+  argument.
+- Metering now runs in two stages. The bytes of a whole message are weighed
+  before it is opened, and each call is metered by name before its arguments are
+  decoded, so the decoding is not paid for on a call that will be refused.
+- Metering creates a player's standing the moment it is needed, closing the
+  window in which a joining player was unmetered.
+- `Net.List` reports each remote's number alongside its signature.
+- Replication no longer polls for up to thirty seconds before asking for its
+  first snapshot. It waits on `Net.OnReady`.
+
+### Fixed
+
+- Text and buffers longer than 255 bytes no longer wrap their length prefix and
+  corrupt everything after them. A value past the ceiling its field declared is
+  refused at the sender, naming the field.
+- Half floats round-trip the very small values that previously became zero or
+  garbage, both infinities, and NaN.
+- A CFrame that scales, skews, or mirrors is refused by the compact rotation
+  types rather than silently flattened. `Types.CFrame` keeps all twelve
+  components.
+- A constant outside a declared set is refused on the way out instead of decoding
+  as `nil` on arrival.
+- A union tag naming a member the union was not declared with is refused rather
+  than selecting an arbitrary decoder.
+- A response number arriving from a peer can no longer reach a thread. It is
+  looked up only in the table belonging to the side that issued it.
+- Instance references decode to `nil` when the engine delivers nothing, which is
+  a legal outcome for anything streamed out, rather than producing an
+  intermittent error.
+
+### Migration
+
+Declarations are the only call sites that change.
+
+```luau
+-- before
+local Packet = require("@game/ReplicatedStorage/Twill/Packages/Packet")
+Net.Declare("BuyItem", { Packet.String }, { Packet.Boolean8 })
+
+-- after
+Net.Declare("BuyItem", { Net.Types.String(32) }, { Net.Types.Boolean })
+```
+
+`Handle`, `IsHandled`, `Get`, and `List` are unchanged. A client that used to
+wait on `remote.Id` waits on `Net.OnReady`, or on nothing at all, since a call
+made before the numbering arrives is now held rather than lost.
 
 ## [1.3.1] - 2026-08-19
 

@@ -8,8 +8,8 @@ Loop.Every(1, onTick, Scope.Player(player))
 Loop.After(5, onTimeout, trove)
 Loop.Stagger(pets, 20, updateOnePet)
 
-if not Loop.Until(function() return remote.Id ~= nil end, 30) then
-	logger:Warn("remote never arrived")
+if not Loop.Until(function() return roundHasStarted end, 30) then
+	logger:Warn("the round never started")
 end
 ```
 

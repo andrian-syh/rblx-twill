@@ -128,15 +128,15 @@ Long-lived work that belongs to the session goes in `Scope.Framework()`.
 
 ## Calling the server
 
-Declare the packet in a module both sides require, then fire it from a
+Declare the remote in a module both sides require, then call it from a
 controller.
 
 ```luau title="ReplicatedStorage/Shared/Remotes"
 local Net = require("@game/ReplicatedStorage/Twill/Net")
-local Packet = require("@game/ReplicatedStorage/Twill/Packages/Packet")
+local Types = Net.Types
 
 return {
-	BuyItem = Net.Declare("BuyItem", { Packet.String }, { Packet.Boolean8, Packet.String }),
+	BuyItem = Net.Declare("BuyItem", { Types.String(32) }, { Types.Boolean, Types.String(64) }),
 }
 ```
 
@@ -149,8 +149,8 @@ local ShopController = {}
 
 function ShopController.Start()
 	buyButton.Activated:Connect(function()
-		-- The packet replies, so this waits for the server's answer.
-		local bought, message = Remotes.BuyItem:Fire("sword")
+		-- The remote replies, so this waits for the server's answer.
+		local bought, message = Remotes.BuyItem:Ask("sword")
 
 		if not bought then
 			showToast(message)
@@ -161,10 +161,11 @@ end
 return ShopController
 ```
 
-:::caution[Never fire while a module is still loading]
-A packet declared on the client is given its wire id by the server, and that
-arrives a moment later. Fire from a callback or from `Start`, never at the top
-level of a module.
+:::note[Calling before the network is up is safe]
+A remote declared on the client is given its number by the server, and that
+arrives a moment later. A call made before then is held and sent once it does, so
+a controller does not have to be careful about when it fires. Use
+`Net.OnReady` when you want to know the moment it happens.
 :::
 
 ## What a controller must never decide
@@ -182,7 +183,7 @@ end
 
 That decides what is **shown**. What is **allowed** is decided again on the
 server, by `MinimumRank` on the handler, because a hidden button is not a closed
-door. Anyone can fire the packet directly.
+door. Anyone can call the remote directly.
 
 ## Next
 

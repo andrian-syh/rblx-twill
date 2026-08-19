@@ -236,12 +236,12 @@ function ShopService.Start()
 		-- line is here, so it is a choice of number, not a choice to have one.
 		Rate = 2,
 
-		-- Packet already guarantees the type. This bounds the length, which a
-		-- wire type cannot express.
+		-- The declaration already guarantees the type. This bounds the length,
+		-- which a wire type cannot express.
 		Schema = { { "string", 1, 20 } },
 
-		-- Required, because the packet replies. Without it a refused caller
-		-- would wait forever, so Twill refuses to serve the packet at all.
+		-- Required, because the remote replies. Without it a refused caller
+		-- would wait, so Twill refuses to serve the remote at all.
 		Reject = function()
 			return false, "slow down"
 		end,

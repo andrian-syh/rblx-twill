@@ -226,12 +226,12 @@ usual fix is to declare it in a shared module both sides require.
 
 **`'X' already has a handler`**
 
-One handler per packet. `Net.IsHandled` lets a module check rather than claim and
+One handler per remote. `Net.IsHandled` lets a module check rather than claim and
 be refused.
 
 **`'X' replies to the caller, so it needs a Reject option`**
 
-A packet that replies must say what a refused caller is told, otherwise a refusal
+A remote that replies must say what a refused caller is told, otherwise a refusal
 leaves them waiting forever.
 
 **`Rate for 'X' must be above zero`**
@@ -241,8 +241,8 @@ rejected as a mistake.
 
 **Calls are silently dropped, and the log says `'P' is over the rate for 'X' (N call(s) refused)`**
 
-The caller exceeded the packet's rate. Refusals are reported at most once every
-few seconds per player and packet, with a count, so the log cannot become an
+The caller exceeded the remote's rate. Refusals are reported at most once every
+few seconds per player and remote, with a count, so the log cannot become an
 amplifier for the flood it is refusing.
 
 **`'P' lacks the rank for 'X'`**
@@ -261,13 +261,22 @@ consent.
 
 **`handler for 'X' errored: ...`**
 
-Your handler threw. A packet that replies answers with `Reject`; one that does not
-drops the call. Either way the failure never reaches the packets behind it.
+Your handler threw. A remote that replies answers with `Reject`; one that does
+not drops the call. Either way the failure never reaches the calls behind it in
+the same message.
 
-**`Fire` errors on the client during startup**
+**`'X' was declared here but the server never declared it`**
 
-A client-declared packet receives its wire id from the server a moment later.
-Fire from `Start` onwards, never at the top level of a module.
+A name declared on this client that no server module declares. Calls on it are
+dropped locally rather than reaching the wire. Usually a misspelling, or a shared
+remotes module the server never requires.
+
+**`a call this side could not read`**
+
+A call arrived that the declared types could not decode. The call is dropped and
+the ones behind it in the same message still arrive. From a client this is
+ordinarily somebody probing the remote; between your own two sides it means the
+declarations have drifted apart.
 
 ## Replication
 
@@ -279,8 +288,9 @@ to. Requiring it once anywhere in your client boot is enough.
 
 **`the server never registered replication; nothing will arrive`**
 
-The client waited for the replication packets and gave up. The server half never
-loaded, which usually means the server never required `Twill.Replication` either.
+The client waited for the server to declare the replication remotes and gave up.
+The server half never loaded, which usually means the server never required
+`Twill.Replication` either.
 
 **`patch arrived for 'X' before its value did; ignored`**
 
