@@ -16,6 +16,16 @@ const prefix = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
 const releases: ReleaseItem[] = [
 	{
+		version: 'v1.6.0',
+		title: 'Nothing Waits Forever',
+		date: 'August 20, 2026',
+		tagline: "Twill's own signal, where every listener runs and no waiting thread is ever stranded.",
+		summary:
+			"A thread parked in Wait used to stay suspended for the rest of the session when its signal was destroyed. Signal wakes it. Every listener runs inside its own xpcall, connecting and disconnecting mid-fire follow the engine's rules, and the common firing got twice as fast.",
+		slug: '/news/v1-6-0/',
+		icon: 'star',
+	},
+	{
 		version: 'v1.5.0',
 		title: 'Cleanup That Finishes',
 		date: 'August 20, 2026',

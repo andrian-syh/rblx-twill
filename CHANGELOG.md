@@ -9,6 +9,68 @@ at least three large changes landing together, reaching more than a quarter of
 what came before. A smaller change to an API lands in a minor version and brings
 a Migration section with it, so what has to be rewritten is always written down.
 
+## [1.6.0] - 2026-08-20
+
+Signals are Twill's own, and no thread waiting on one is ever left behind.
+
+### Added
+
+- `Twill.Signal`, replacing the bundled signal library. Every listener is called
+  inside its own `xpcall`, so one that throws is reported with its own traceback
+  and stepped over rather than taking the ones behind it down.
+- `Destroy` and `DisconnectAll` wake every thread parked in `Wait`, handing each
+  of them nothing. A wait can no longer outlive the signal it waits on, which was
+  a suspended thread nothing could reach and no profiler named.
+- `signal:Wait(timeout)` gives up after a number of seconds. A wait that fires
+  first cancels its timeout, so it can never be woken twice.
+- `signal:Count`, `signal:IsEmpty`, `signal:IsDestroyed`, and `Signal.Is`.
+  `Count` makes a listener that outlived its owner something a test can assert
+  against.
+- `connection:Reconnect`, which takes a let-go listener back on without
+  allocating a new one.
+
+### Changed
+
+- Connecting, disconnecting, and firing during a firing now follow the engine's
+  own rules: a listener connected mid-fire sits that firing out, one let go
+  mid-fire is not called again, and firing from inside a listener runs there and
+  then. Each connection records which firing it was made during, so the previous
+  library's preserved-tail bookkeeping and its firing flag are both gone.
+- `Twill.Signal` is a Twill module rather than a bundled package on the root
+  table, so it carries Twill's stability promise. Nothing third-party is
+  reachable from the root any more.
+- A destroyed signal keeps its methods and raises a sentence naming what
+  happened, instead of being emptied and raising `attempt to index nil`.
+- A pooled dispatch thread that was cancelled from outside is checked before
+  reuse rather than resumed blind.
+- Firing one listener twenty thousand times went from 14.0 ms to 7.6 ms, because
+  dispatch no longer routes every firing through the task scheduler to buy a
+  traceback `xpcall` already provides. Firing a hundred listeners two hundred
+  times went from 0.9 ms to 2.0 ms, which is the cost of the per-listener
+  `xpcall`.
+- `ReplicatedStorage.Twill.Packages.Signal` is no longer shipped.
+
+### Migration
+
+The names you already use are unchanged: `new`, `wrap`, `Connect`, `Once`,
+`Wait`, `Fire`, `DisconnectAll`, `Destroy`, and the
+`Signal.Signal<(value: any) -> ()>` type spelling. The immediate-mode twins are
+gone, because there is now only one meaning to have.
+
+| Was | Now |
+| --- | --- |
+| `signal:ConnectNow(f)` | `signal:Connect(f)` |
+| `signal:OnceNow(f)` | `signal:Once(f)` |
+| `signal:WaitNow()` | `signal:Wait()` |
+| `signal:FireNow(...)` | `signal:Fire(...)` |
+| `signal:DisconnectAllNow()` | `signal:DisconnectAll()` |
+| `signal:DestroyNow()` | `signal:Destroy()` |
+| `connection:DisconnectNow()` | `connection:Disconnect()` |
+| `connection:ReconnectNow()` | `connection:Reconnect()` |
+| `connection:Destroy()` | `connection:Disconnect()` |
+| `signal:GetConnections()` | `signal:Count()`, for the common reason |
+| `signal:CancelAllMutations()` | nothing to cancel |
+
 ## [1.5.0] - 2026-08-20
 
 Cleanup is Twill's own, and it finishes even when one of them fails.

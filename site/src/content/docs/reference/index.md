@@ -37,6 +37,7 @@ Available on the server and the client.
 | [Replication](/reference/replication/) | Publishing server state and reading it on the client. |
 | [Scope](/reference/scope/) | Cleanup bags tied to a player, a character, or a life. |
 | [Bag](/reference/bag/) | The cleanup container those bags are, and how it closes. |
+| [Signal](/reference/signal/) | Events of your own, where every listener runs. |
 | [Log](/reference/log/) | Scoped, level-filtered logging. |
 | [Schema](/reference/schema/) | Declarative validation for values you did not write. |
 | [Limit](/reference/limit/) | Token buckets, per-player allowances, and log throttling. |
@@ -69,15 +70,6 @@ Requiring any of these from a client fails with a message naming the module.
 Four modules span both sides under one name. `Net`, `Replication`,
 `Authorization`, and `Admin` each have a server half that is not replicated, and
 their pages mark every member that only exists there.
-
-## A bundled library on the root
-
-One name on the root table is not a Twill module and has no page here:
-`Twill.Signal`. It is a bundled third-party package, exposed because you already
-hold its values — `Replication.OnChanged` hands back a signal.
-
-Its API belongs to that project, and Twill's stability promise does not cover it.
-See [Bundled packages](/reference/bundled-packages/).
 
 ## Reading the badges
 

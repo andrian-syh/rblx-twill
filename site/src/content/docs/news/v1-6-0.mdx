@@ -1,0 +1,161 @@
+---
+title: v1.6.0 — Nothing Waits Forever
+description: Released August 20, 2026. Twill's own signal, where every listener runs and no waiting thread is ever stranded.
+template: splash
+---
+
+import NewsBackLink from '../../../components/NewsBackLink.astro';
+import NewsPagination from '../../../components/NewsPagination.astro';
+
+<div class="news-article-container">
+
+<NewsBackLink />
+
+<header class="news-article-header">
+	<div class="news-article-badges">
+		<span class="news-badge-version">v1.6.0</span>
+		<span class="news-badge-date">August 20, 2026</span>
+	</div>
+	<p class="news-article-lead">
+		Twill's own signal, where every listener runs and no waiting thread is ever stranded.
+	</p>
+</header>
+
+## The thread nobody could find
+
+Every signal library Twill looked at shares one ending. A thread parked in
+`Wait` is resumed by the next fire — and if that fire never comes, nothing else
+ever resumes it.
+
+```luau
+local ready = Signal.new()
+
+task.spawn(function()
+	ready:Wait()
+	print("unreachable, in every library but this one")
+end)
+
+ready:Destroy()
+```
+
+Destroying the signal disconnected the wait's listener and dropped the last
+reference to it. The thread stayed suspended for the rest of the session: not
+running, not collectable, not visible to any profiler, and holding everything
+its stack closed over.
+
+`Twill.Signal` wakes it. `Destroy` and `DisconnectAll` both resume everything
+parked on the signal, handing each of them nothing, so a `Wait` always ends.
+`Wait` also takes a number of seconds to give up after, which no library Twill
+compared offered except one.
+
+## Every listener runs
+
+Each listener is called inside its own `xpcall`. One that throws is reported
+through [`Log`](/reference/log/) — with the traceback from where it broke, not
+from the dispatcher — and stepped over.
+
+```luau
+signal:Connect(function() print("one") end)
+signal:Connect(function() error("something went wrong") end)
+signal:Connect(function() print("three") end)
+
+signal:Fire()
+```
+
+Prints `one`, reports the failure, prints `three`. The signal is untouched
+afterwards.
+
+## The engine's rules, kept
+
+Connecting while a signal is firing sits that firing out. Disconnecting while a
+signal is firing takes effect at once, even if the run has not reached that
+listener yet. Firing from inside a listener runs there and then, nested.
+
+These are `BindableEvent`'s answers, and now they are Twill's, so there is one
+set of rules to remember rather than one per library.
+
+Getting there took one idea: **every connection records which firing it was made
+during**, and the dispatcher skips anything younger than the firing it is in.
+That single integer comparison replaced the preserved-tail bookkeeping the
+previous library needed for the same guarantee — and it removed the firing flag
+entirely, so the class of bug where a signal silently locks itself forever is
+not guarded against, it is unrepresentable.
+
+## Named arguments, checked at the call
+
+```luau
+local Died = Signal.new<(who: Player, cause: string) -> ()>()
+
+Died:Connect(function(who, cause) end)   -- both typed, both named
+Died:Fire(player, "fell")                -- checked
+Died:Fire(player)                        -- refused, at the call
+```
+
+The names carry into autocomplete at the `Connect`. This survives from the
+library it replaces, because it was the best idea in it.
+
+## Smaller things that used to be silent
+
+**A cancelled pooled thread** used to be handed straight back out and resumed,
+raising from inside the dispatcher. Threads are now checked before reuse.
+
+**A destroyed signal** used to be emptied and stripped of its methods, so calling
+one afterwards raised `attempt to index nil`. It now keeps its methods and raises
+a sentence naming what happened.
+
+**Counting** is new. `Count`, `IsEmpty`, and `IsDestroyed` exist so a listener
+that outlived its owner is something a test can assert against:
+
+```luau
+Scope.Close(player)
+assert(events.Died:Count() == 0, "a listener outlived the player")
+```
+
+## Faster where signals actually live
+
+Measured in a real place, best of five:
+
+| | Twill.Signal | Previous |
+| --- | --- | --- |
+| Fire 1 listener, 20 000 times | **7.6 ms** | 14.0 ms |
+| Fire 100 listeners, 200 times | 2.0 ms | **0.9 ms** |
+
+The common case got roughly twice as fast, because dispatch no longer routes
+every firing through the task scheduler to buy a traceback that `xpcall` already
+provides. The hundred-listener case is the price of the first promise on this
+page: about ten nanoseconds per listener, paid only when one firing reaches a
+crowd.
+
+## Upgrading
+
+Nothing to do. `new`, `wrap`, `Connect`, `Once`, `Wait`, `Fire`, `DisconnectAll`,
+and `Destroy` keep their names and their meanings, and the
+`Signal<(value: any) -> ()>` type spelling is unchanged.
+
+The immediate-mode twins are gone, because there is now only one meaning to
+have:
+
+| Was | Now |
+| --- | --- |
+| `signal:ConnectNow(f)` | `signal:Connect(f)` |
+| `signal:OnceNow(f)` | `signal:Once(f)` |
+| `signal:WaitNow()` | `signal:Wait()` |
+| `signal:FireNow(...)` | `signal:Fire(...)` |
+| `signal:DisconnectAllNow()` | `signal:DisconnectAll()` |
+| `signal:DestroyNow()` | `signal:Destroy()` |
+| `connection:DisconnectNow()` | `connection:Disconnect()` |
+| `connection:ReconnectNow()` | `connection:Reconnect()` |
+| `connection:Destroy()` | `connection:Disconnect()` |
+| `signal:GetConnections()` | `signal:Count()`, for the common reason |
+| `signal:CancelAllMutations()` | nothing to cancel |
+
+`Twill.Signal` is now a Twill module with a Twill stability promise, rather than
+a bundled library on the root table. With it, **nothing third-party remains
+reachable from the root**. See [Signal](/reference/signal/) for the full surface.
+
+<NewsPagination
+	prev={{ label: 'v1.5.0 — Cleanup That Finishes', href: '/news/v1-5-0/' }}
+	next={{ label: 'All releases', href: '/news/' }}
+/>
+
+</div>
