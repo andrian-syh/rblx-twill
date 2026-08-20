@@ -16,6 +16,16 @@ const prefix = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
 const releases: ReleaseItem[] = [
 	{
+		version: 'v1.5.0',
+		title: 'Cleanup That Finishes',
+		date: 'August 20, 2026',
+		tagline: "Twill's own cleanup container, closing newest first and running to the end.",
+		summary:
+			'A cleanup that raised used to strand every entry behind it and silently kill the bag for the rest of the session. Bag closes each one in its own pcall, newest first, in linear time, and lets a cleanup add to the bag it is closing.',
+		slug: '/news/v1-5-0/',
+		icon: 'star',
+	},
+	{
 		version: 'v1.4.0',
 		title: "Networking Is Twill's Own",
 		date: 'August 20, 2026',

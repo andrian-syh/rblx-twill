@@ -19,7 +19,6 @@ to redistribute belongs with the thing you redistribute.
 
 | Package | Licence | Author |
 | --- | --- | --- |
-| Trove | MIT | Sleitnick, part of RbxUtil |
 | Signal (NamedSignal) | MIT | Averlyst |
 | AptInt | Unlicense | fosterchild1 |
 | BytePress | MIT | Twill |
@@ -44,31 +43,31 @@ forum](https://devforum.roblox.com/t/fastest-cryptography-library-for-roblox/368
 [`Random`](/reference/random/) and [`Token`](/reference/token/) reach a small
 part of it: SHA-256, HMAC-SHA256, ChaCha20, and Blake3.
 
-## Two are reachable from the root
+## One is reachable from the root
 
-Most bundled packages are reached only through a Twill module. Two are not:
+Most bundled packages are reached only through a Twill module. One is not:
 
 | Reached as | Is | By |
 | --- | --- | --- |
-| `Twill.Trove` | Trove | Sleitnick |
 | `Twill.Signal` | NamedSignal | Averlyst |
 
-They are exposed because you already hold their values. `Scope.Player` hands back
-a Trove and `Replication.OnChanged` hands back a signal, so their methods are
-part of Twill's surface whether or not the root names them. Naming them only
-saves you a path.
+It is exposed because you already hold its values. `Replication.OnChanged` hands
+back a signal, so its methods are part of Twill's surface whether or not the root
+names it. Naming it only saves you a path.
 
 **Their API is theirs, not Twill's.** Twill's promise that the API is stable and
 that breaking changes wait for a major version covers Twill's own modules. Code
 written against `Twill.Signal` is code written against NamedSignal, and it
 follows that project's decisions rather than this one's.
 
-Where a Twill module covers what you need, write against the module. `Scope`
-rather than `Trove.new`. Those wrappers are load-bearing in several cases, and
-they are the part this project promises to keep still.
+Where a Twill module covers what you need, write against the module. Those
+wrappers are load-bearing in several cases, and they are the part this project
+promises to keep still.
 
-Networking is no longer on this list. [`Net`](/reference/net/) carries its own
-wire format, so nothing third-party sits between a declaration and the bytes.
+Two things are no longer on this list. [`Net`](/reference/net/) carries its own
+wire format, so nothing third-party sits between a declaration and the bytes, and
+[`Bag`](/reference/bag/) is Twill's own cleanup container, so a bag handed out by
+[`Scope`](/reference/scope/) is a Twill type with a Twill stability promise.
 
 ## What each licence asks
 
@@ -76,7 +75,7 @@ wire format, so nothing third-party sits between a declaration and the bytes.
 must ship with any redistribution, notices must be preserved, and significant
 modifications must be stated.
 
-**MIT** (Trove, Signal, Cmdr, Cryptography) asks that the copyright and permission
+**MIT** (Signal, Cmdr, Cryptography) asks that the copyright and permission
 notice travels with the code. The headers inside those files are the notice. Do
 not strip them.
 

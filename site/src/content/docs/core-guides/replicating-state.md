@@ -23,7 +23,7 @@ local subscription = Twill.Replication.Subscribe("Loadout.Primary", function(wea
 	label.Text = weapon or "none"
 end)
 
-trove:Add(subscription)
+bag:Add(subscription)
 ```
 
 The callback runs once immediately if the value is already known, so there is no

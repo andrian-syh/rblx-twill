@@ -9,9 +9,9 @@ A service receives a player bag as the third argument of `OnPlayerReady`. Most
 code never needs anything else.
 
 ```luau
-function CombatService.OnPlayerReady(player, data, trove)
-	trove:Connect(player.CharacterAdded, onCharacter)
-	trove:Add(buildHudFor(player))
+function CombatService.OnPlayerReady(player, data, bag)
+	bag:Connect(player.CharacterAdded, onCharacter)
+	bag:Add(buildHudFor(player))
 end
 ```
 
@@ -50,9 +50,9 @@ Neither service has to know about the other, and one close cleans up both.
 ## Loops and watches take a bag
 
 ```luau
-Twill.Loop.Every(1, tick, trove)
-Twill.Loop.After(5, expire, trove)
-Twill.Watch.Tagged("Door", onDoor, trove)
+Twill.Loop.Every(1, tick, bag)
+Twill.Loop.After(5, expire, bag)
+Twill.Watch.Tagged("Door", onDoor, bag)
 ```
 
 Leave the last argument out and the work goes to `Scope.Framework()`, which lives
@@ -62,11 +62,11 @@ anything tied to a player.
 ## Anything with `Destroy` fits
 
 ```luau
-trove:Add(instance)
-trove:Add(subscription)
-trove:Add(handle)
-trove:Add(errors, "Destroy")
-trove:Add(function()
+bag:Add(instance)
+bag:Add(subscription)
+bag:Add(handle)
+bag:Add(errors, "Destroy")
+bag:Add(function()
 	restoreSomething()
 end)
 ```

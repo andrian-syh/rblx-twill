@@ -5,7 +5,7 @@ description: Work that repeats, waits, or is spread out.
 
 ```luau
 Loop.Every(1, onTick, Scope.Player(player))
-Loop.After(5, onTimeout, trove)
+Loop.After(5, onTimeout, bag)
 Loop.Stagger(pets, 20, updateOnePet)
 
 if not Loop.Until(function() return roundHasStarted end, 30) then
@@ -14,7 +14,7 @@ end
 ```
 
 Everything here hands back a handle carrying `Destroy`, so a
-[Trove](/reference/scope/) holds it like anything else.
+[bag](/reference/bag/) holds it like anything else.
 
 ```luau
 export type Handle = {
@@ -43,7 +43,7 @@ Runs a callback on an interval for as long as its bag stays open.
 function Loop.Every(
 	interval: number,
 	callback: (elapsed: number) -> (),
-	owner: Scope.Trove?
+	owner: Scope.Bag?
 ): Handle
 ```
 
@@ -53,7 +53,7 @@ function Loop.Every(
 | :--- | :--- | :--- |
 | `interval` | `number` | Seconds between runs. Must be above zero. |
 | `callback` | `(elapsed: number) -> ()` | Receives how long actually passed, which will not be exactly the interval. |
-| `owner` | `Scope.Trove?` | The bag it belongs to. The framework's own when left out. |
+| `owner` | `Scope.Bag?` | The bag it belongs to. The framework's own when left out. |
 
 **Returns**
 
@@ -75,7 +75,7 @@ of catch-up work.
 Runs a callback once, later, unless its bag closes first.
 
 ```luau
-function Loop.After(delay: number, callback: () -> (), owner: Scope.Trove?): Handle
+function Loop.After(delay: number, callback: () -> (), owner: Scope.Bag?): Handle
 ```
 
 **Parameters**
@@ -84,7 +84,7 @@ function Loop.After(delay: number, callback: () -> (), owner: Scope.Trove?): Han
 | :--- | :--- | :--- |
 | `delay` | `number` | Seconds to wait. Zero or more. |
 | `callback` | `() -> ()` | What to run when the wait is over. |
-| `owner` | `Scope.Trove?` | The bag it belongs to. The framework's own when left out. |
+| `owner` | `Scope.Bag?` | The bag it belongs to. The framework's own when left out. |
 
 **Returns**
 
@@ -108,7 +108,7 @@ function Loop.Stagger<T>(
 	items: { T },
 	perFrame: number,
 	step: (item: T, index: number) -> (),
-	owner: Scope.Trove?
+	owner: Scope.Bag?
 ): Handle
 ```
 
@@ -119,7 +119,7 @@ function Loop.Stagger<T>(
 | `items` | `{ T }` | The array to walk. Read live, so entries may be added or removed while it runs. |
 | `perFrame` | `number` | How many entries one frame may carry. At least one. |
 | `step` | `(item: T, index: number) -> ()` | Receives one entry and where it sat. |
-| `owner` | `Scope.Trove?` | The bag it belongs to. The framework's own when left out. |
+| `owner` | `Scope.Bag?` | The bag it belongs to. The framework's own when left out. |
 
 **Returns**
 

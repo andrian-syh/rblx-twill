@@ -4,7 +4,7 @@ description: Agents that walk somewhere, and one loop driving all of them.
 ---
 
 ```luau
-local agent = Twill.Navigation.new(npc, nil, trove)
+local agent = Twill.Navigation.new(npc, nil, bag)
 
 agent.Arrived:Connect(function(partial)
 	print("there", partial)
@@ -132,7 +132,7 @@ nothing added to its world.
 Creates an agent that walks a model somewhere.
 
 ```luau
-function Navigation.new(model: Model, options: Options?, owner: Scope.Trove?): Agent
+function Navigation.new(model: Model, options: Options?, owner: Scope.Bag?): Agent
 ```
 
 **Parameters**
@@ -141,7 +141,7 @@ function Navigation.new(model: Model, options: Options?, owner: Scope.Trove?): A
 | :--- | :--- | :--- |
 | `model` | `Model` | What is being walked. No `PrimaryPart` is required. |
 | `options` | `Options?` | Pathfinding parameters, custom movement, and the patience to spend on a waypoint. |
-| `owner` | `Scope.Trove?` | The bag the agent belongs to. Nothing owns it when left out. |
+| `owner` | `Scope.Bag?` | The bag the agent belongs to. Nothing owns it when left out. |
 
 **Returns**
 

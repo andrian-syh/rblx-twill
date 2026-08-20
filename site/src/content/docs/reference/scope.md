@@ -14,8 +14,8 @@ Scope.Player(player):Connect(someSignal, onSomething)
 Scope.Character(character):Connect(humanoid.Died, onDeath)
 ```
 
-Every bag is a [Trove](/reference/bundled-packages/), so `Connect`, `Add`,
-`Construct`, `AttachToInstance`, and the rest all work.
+Every bag is a [`Bag`](/reference/bag/), so `Connect`, `Add`,
+`Extend`, `AttachTo`, and the rest all work.
 
 ## Three lifetimes
 
@@ -54,8 +54,8 @@ Most code never calls this module at all, because
 bag as its third argument.
 
 ```luau
-function MyService.OnPlayerReady(player, data, trove)
-	trove:Connect(workspace.Thing.Touched, onTouched)
+function MyService.OnPlayerReady(player, data, bag)
+	bag:Connect(workspace.Thing.Touched, onTouched)
 end
 ```
 
@@ -71,12 +71,12 @@ does nothing rather than failing.
 Returns the bag that closes when this player leaves, creating it on first ask.
 
 ```luau
-function Scope.Player(player: Player): Trove
+function Scope.Player(player: Player): Bag
 ```
 
 **Returns**
 
-`Trove` - That player's bag, shared by every caller.
+`Bag` - That player's bag, shared by every caller.
 
 ### `Scope.Character`
 
@@ -86,12 +86,12 @@ Returns the bag that closes when this character is removed, which happens at
 respawn rather than at the moment of death.
 
 ```luau
-function Scope.Character(character: Model): Trove
+function Scope.Character(character: Model): Bag
 ```
 
 **Returns**
 
-`Trove` - That character's bag, shared by every caller.
+`Bag` - That character's bag, shared by every caller.
 
 ### `Scope.Alive`
 
@@ -101,12 +101,12 @@ Returns the bag that closes the instant this character dies, or on removal if it
 is taken away without dying.
 
 ```luau
-function Scope.Alive(character: Model): Trove
+function Scope.Alive(character: Model): Bag
 ```
 
 **Returns**
 
-`Trove` - That character's alive bag, shared by every caller.
+`Bag` - That character's alive bag, shared by every caller.
 
 A character that has no `Humanoid` yet is watched until one appears, so this is
 safe to call on a model that is still assembling.
@@ -178,12 +178,12 @@ function Scope.CloseAlive(character: Model)
 Returns the bag that lives as long as the server or client session does.
 
 ```luau
-function Scope.Framework(): Trove
+function Scope.Framework(): Bag
 ```
 
 **Returns**
 
-`Trove` - The one framework bag, shared by every module.
+`Bag` - The one framework bag, shared by every module.
 
 Anything in Twill that starts a connection without an owner puts it here,
 because nothing in the framework is allowed to start a connection nobody owns.

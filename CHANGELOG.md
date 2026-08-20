@@ -9,6 +9,79 @@ at least three large changes landing together, reaching more than a quarter of
 what came before. A smaller change to an API lands in a minor version and brings
 a Migration section with it, so what has to be rewritten is always written down.
 
+## [1.5.0] - 2026-08-20
+
+Cleanup is Twill's own, and it finishes even when one of them fails.
+
+### Added
+
+- `Twill.Bag`, the cleanup container behind every bag `Scope` hands out. Closing
+  runs newest first, so nothing is torn down after the thing it leans on. Every
+  cleanup runs in its own `pcall`, so one that raises is reported and stepped
+  over rather than stranding the entries behind it. Adding from inside a cleanup
+  is allowed, and the addition is closed in the same pass.
+- Named entries. `bag:Add(tween, "Cancel", "aim")` closes whatever held that name
+  before, so holding one thing at a time needs no bookkeeping.
+- `bag:Task`, `bag:Delay`, `bag:Bind`, `bag:Clone`, `bag:Release`, `bag:Get`,
+  `bag:Count`, `bag:IsEmpty`, `bag:IsDestroyed`, `bag:Detach`, and `Bag.Is`.
+  `Count` and `IsEmpty` make a leak something a test can assert against.
+
+### Changed
+
+- `Scope.Trove` is now `Scope.Bag`, and the bags `Scope`, `Watch`, `Loop`,
+  `Navigation`, and `OnPlayerReady` hand out are `Twill.Bag` values.
+- `Twill.Trove` is gone from the root table, and
+  `ReplicatedStorage.Twill.Packages.Trove` is no longer shipped.
+- `AttachToInstance` is now `AttachTo`, and attaching to an instance that is
+  already outside the data model closes the bag at once instead of raising.
+- Adding something with no way to close now raises at the `Add` that offered it.
+  A promise, a tween, or a sound is held by naming its method, which is why there
+  is no `AddPromise` and no promise dependency.
+- `Construct`, `Pop`, `WrapClean`, `BindToRenderStep`, and `AddPromise` are gone.
+  `Pop` is now `Release`; the rest were one line at the call site already.
+
+### Fixed
+
+- A cleanup that raised used to escape the loop, leaving every entry behind it
+  held forever and the bag's guard flag raised, so the bag silently stopped
+  cleaning anything from then on. Player bags are shared between systems, so one
+  service's bad `Destroy` could take every other service's teardown with it.
+- A one-shot listener whose signal fired during the connect used to leave a dead
+  connection in the bag. The entry is now registered before the signal is
+  connected.
+- A thread cancelling itself used to fail silently. It is now deferred.
+- Closing is linear in the number of entries. Supporting adding-during-cleanup by
+  rescanning for the next entry, as the other well-known container does, is
+  quadratic: measured in Studio, five thousand entries took 9.9 ms that way and
+  0.54 ms this way.
+
+### Migration
+
+Rename the type. Everything else keeps its name.
+
+```diff
+-function MyService.OnPlayerReady(player, data, trove: Scope.Trove)
++function MyService.OnPlayerReady(player, data, bag: Scope.Bag)
+```
+
+`Add`, `Connect`, `Extend`, `Remove`, `Clean`, and `Destroy` are unchanged, so
+code that only uses those needs no edit at all.
+
+| Was | Now |
+| --- | --- |
+| `bag:AttachToInstance(part)` | `bag:AttachTo(part)` |
+| `bag:Pop(x)` | `bag:Release(x)` |
+| `bag:Construct(Class, ...)` | `bag:Add(Class.new(...))` |
+| `bag:WrapClean()` | `function() bag:Destroy() end` |
+| `bag:BindToRenderStep(n, p, f)` | `bag:Bind(n, p, f)` |
+| `bag:AddPromise(p)` | `bag:Add(p, "cancel")` |
+| `Twill.Trove.new()` | `Twill.Bag.new()` |
+
+Cleanup order reversed. If two entries in one bag depend on each other, they are
+now closed in the order that keeps the dependency alive, which is the order you
+wanted; if some code depended on the old forward order, it was depending on a
+guarantee the old container did not document.
+
 ## [1.4.0] - 2026-08-20
 
 Networking is Twill's own, and a corrupt call now costs only itself.

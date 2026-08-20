@@ -4,7 +4,7 @@
   <p><b>A modular, zero-setup infrastructure framework for Roblox Luau.</b></p>
 
   <p>
-    <a href="https://github.com/andrian-syh/rblx-twill/releases"><img src="https://img.shields.io/badge/version-1.4.0-2563eb?style=flat-square" alt="Version" /></a>
+    <a href="https://github.com/andrian-syh/rblx-twill/releases"><img src="https://img.shields.io/badge/version-1.5.0-2563eb?style=flat-square" alt="Version" /></a>
     <a href="https://luau.org/"><img src="https://img.shields.io/badge/language-Luau-00A2FF?style=flat-square&logo=lua&logoColor=white" alt="Luau" /></a>
     <a href="https://roblox.com/"><img src="https://img.shields.io/badge/platform-Roblox-000000?style=flat-square&logo=roblox&logoColor=white" alt="Roblox" /></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-10b981?style=flat-square" alt="License" /></a>
@@ -45,7 +45,7 @@ Two folders contain the entire framework. Dependencies come pre-bundled: no pack
 - **Player Pipeline & Data Gate**: Services receive players via `OnPlayerReady` only after their profile is loaded and validated.
 - **Guarded Networking**: A built-in wire format with per-call framing, so remote calls pass through four screening layers (wire types, byte and rate ceilings, schemas, and server validation) before a handler ever runs.
 - **Delta State Replication**: Server-to-client state diffing sends only mutated fields; client pull is intentionally restricted.
-- **Scoped Lifetimes**: Connections and loops attach to Player, Character, or Alive bags (`Scope`/`Trove`) and clean up automatically.
+- **Scoped Lifetimes**: Connections and loops attach to Player, Character, or Alive bags (`Scope`/`Bag`) and clean up automatically.
 - **Fail-Closed Security**: Missing permissions, rate overruns, and filter failures reject safely by default rather than leaking state.
 
 ---
@@ -73,12 +73,12 @@ Twill.Lifecycle.Start(script.Parent.Services)
 local ShopService = {}
 ShopService.Priority = 10
 
-function ShopService.OnPlayerReady(player, data, trove)
+function ShopService.OnPlayerReady(player, data, bag)
     -- Profile is already loaded and guaranteed
     data.Coins += 50
 
     -- Bound to the player's session; cleans up automatically on leave
-    trove:Connect(player.Chatted, function(message)
+    bag:Connect(player.Chatted, function(message)
         -- ...
     end)
 end
@@ -108,4 +108,4 @@ Twill deliberately focuses strictly on **game infrastructure**. It does not prov
 
 Twill's source code is licensed under the [MIT License](LICENSE).
 
-Bundled third-party libraries (`ProfileStore`, `Trove`, `Cmdr`, `AptInt`, `Cryptography`) are redistributed under their respective permissive open-source licenses as documented in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+Bundled third-party libraries (`ProfileStore`, `Cmdr`, `AptInt`, `Cryptography`) are redistributed under their respective permissive open-source licenses as documented in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

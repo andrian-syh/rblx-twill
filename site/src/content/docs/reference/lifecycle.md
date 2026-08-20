@@ -25,7 +25,7 @@ ShopService.Critical = true
 
 function ShopService.Init() end
 function ShopService.Start() end
-function ShopService.OnPlayerReady(player, data, trove) end
+function ShopService.OnPlayerReady(player, data, bag) end
 function ShopService.OnPlayerRemoving(player) end
 
 return ShopService
@@ -39,7 +39,7 @@ export type Service = {
 	Critical: boolean?,
 	Init: (() -> ())?,
 	Start: (() -> ())?,
-	OnPlayerReady: ((player: Player, data: any, trove: Scope.Trove) -> ())?,
+	OnPlayerReady: ((player: Player, data: any, bag: Scope.Bag) -> ())?,
 	OnPlayerRemoving: ((player: Player) -> ())?,
 }
 ```
@@ -109,9 +109,9 @@ is loaded. Each service receives the player, whatever the gate released, and a
 [`Scope.Player`](/reference/scope/) bag already opened for it.
 
 ```luau
-function ShopService.OnPlayerReady(player, data, trove)
+function ShopService.OnPlayerReady(player, data, bag)
 	data.Visits += 1
-	trove:Connect(player.Chatted, onChatted)
+	bag:Connect(player.Chatted, onChatted)
 end
 ```
 

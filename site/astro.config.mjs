@@ -198,6 +198,7 @@ export default defineConfig({
 								{ label: 'Replication', slug: 'reference/replication' },
 								{ label: 'Data', slug: 'reference/data' },
 								{ label: 'Scope', slug: 'reference/scope' },
+								{ label: 'Bag', slug: 'reference/bag' },
 								{ label: 'Log', slug: 'reference/log' },
 							],
 						},

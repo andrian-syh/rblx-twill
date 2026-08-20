@@ -330,7 +330,7 @@ Calls back whenever a key, or one field inside it, moves.
 function Replication.Subscribe<T>(
 	full: string,
 	callback: (value: T?) -> (),
-	owner: Scope.Trove?
+	owner: Scope.Bag?
 ): Subscription
 ```
 
@@ -340,7 +340,7 @@ function Replication.Subscribe<T>(
 | :--- | :--- | :--- |
 | `full` | `string` | A key, optionally followed by a dot separated path. |
 | `callback` | `(value: T?) -> ()` | Receives the new value, or `nil` when it is cleared. |
-| `owner` | `Scope.Trove?` | A bag to put the subscription in. The caller keeps it when left out. |
+| `owner` | `Scope.Bag?` | A bag to put the subscription in. The caller keeps it when left out. |
 
 **Returns**
 
@@ -355,7 +355,7 @@ callback may run before anything changes.
 ```luau
 Replication.Subscribe("Data.Stats.Coins", function(coins)
 	label.Text = Format.Comma(coins or 0)
-end, trove)
+end, bag)
 ```
 
 Pass `owner` **or** bag the return value, never both: two bags holding one

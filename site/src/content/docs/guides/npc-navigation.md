@@ -45,7 +45,7 @@ Ask again when the goal has actually moved:
 ```luau
 local REPLAN_DISTANCE = 12
 
-local function chase(agent, target: Model, trove)
+local function chase(agent, target: Model, bag)
 	local asked = nil
 
 	Twill.Loop.Every(0.5, function()
@@ -57,7 +57,7 @@ local function chase(agent, target: Model, trove)
 
 		asked = at
 		agent:GoTo(at)
-	end, trove)
+	end, bag)
 end
 ```
 
@@ -74,11 +74,11 @@ above is for one that runs.
 ## Clean up by giving it a bag
 
 ```luau
-function CombatService.OnPlayerReady(player, data, trove)
+function CombatService.OnPlayerReady(player, data, bag)
 	local pet = spawnPet(player)
 
 	-- Closes when they leave, which takes the agent with it.
-	Twill.Navigation.new(pet, nil, trove)
+	Twill.Navigation.new(pet, nil, bag)
 end
 ```
 
@@ -87,7 +87,7 @@ connections, its `Path`, and any markers it was showing. There is no teardown to
 write.
 
 For an NPC that belongs to a round rather than a player, use the round's own
-trove. For one that lives as long as the server, use
+bag. For one that lives as long as the server, use
 [`Scope.Framework()`](/reference/scope/#scopeframework).
 
 ## Something that is not a humanoid
@@ -106,7 +106,7 @@ Twill.Navigation.new(drone, {
 	Move = function(position)
 		mover.Position = position
 	end,
-}, trove)
+}, bag)
 ```
 
 Nothing has to report that a move finished. Arrival is decided from how near the

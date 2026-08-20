@@ -58,7 +58,7 @@ ShopService.Critical = true      -- a failed boot here refuses every player
 
 function ShopService.Init() end
 function ShopService.Start() end
-function ShopService.OnPlayerReady(player, data, trove) end
+function ShopService.OnPlayerReady(player, data, bag) end
 function ShopService.OnPlayerRemoving(player) end
 
 return ShopService
@@ -161,13 +161,13 @@ Twill.Lifecycle.Start(script.Parent.Services)
 receives three things:
 
 ```luau
-function ShopService.OnPlayerReady(player, data, trove)
+function ShopService.OnPlayerReady(player, data, bag)
 	-- 1. the player
 	-- 2. whatever the gate released, which with Data.Gate is their live profile
 	data.Visits += 1
 
 	-- 3. a bag that closes when they leave, so this is never left behind
-	trove:Connect(player.Chatted, onChatted)
+	bag:Connect(player.Chatted, onChatted)
 end
 ```
 

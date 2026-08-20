@@ -16,10 +16,10 @@ binds to *what a thing is* rather than to where somebody filed it.
 
 ```luau
 function HazardService.Start()
-	Twill.Watch.Tagged("Killbrick", function(part, trove)
+	Twill.Watch.Tagged("Killbrick", function(part, bag)
 		-- Runs once per tagged instance, including everything already tagged
 		-- before this line ran.
-		trove:Connect(part.Touched, function(hit)
+		bag:Connect(part.Touched, function(hit)
 			local humanoid = hit.Parent and hit.Parent:FindFirstChildOfClass("Humanoid")
 
 			if humanoid then
@@ -77,7 +77,7 @@ pair covers most of what a configuration folder used to do, and travels with the
 instance.
 
 ```luau
-Twill.Watch.Tagged("Vendor", function(vendor, trove)
+Twill.Watch.Tagged("Vendor", function(vendor, bag)
 	-- Read once, with a sensible default when the builder did not set one.
 	local stock = vendor:GetAttribute("Stock") or "general"
 
@@ -86,13 +86,13 @@ Twill.Watch.Tagged("Vendor", function(vendor, trove)
 	prompt.Parent = vendor
 
 	-- Put it in the bag so the prompt goes when the vendor does.
-	trove:Add(prompt)
-	trove:Connect(prompt.Triggered, function(player)
+	bag:Add(prompt)
+	bag:Connect(prompt.Triggered, function(player)
 		openShop(player, stock)
 	end)
 
 	-- Follow the attribute if a live edit should take effect.
-	trove:Connect(vendor:GetAttributeChangedSignal("Stock"), function()
+	bag:Connect(vendor:GetAttributeChangedSignal("Stock"), function()
 		stock = vendor:GetAttribute("Stock") or "general"
 	end)
 end)
@@ -108,8 +108,8 @@ per-instance bags.
 Twill.Watch.Tagged("Killbrick", onKillbrick)
 
 -- Belongs to one player. Ends when they leave, and closes every bag it opened.
-function ArenaService.OnPlayerReady(player, data, trove)
-	Twill.Watch.Tagged("ArenaDoor", onDoor, trove)
+function ArenaService.OnPlayerReady(player, data, bag)
+	Twill.Watch.Tagged("ArenaDoor", onDoor, bag)
 end
 ```
 

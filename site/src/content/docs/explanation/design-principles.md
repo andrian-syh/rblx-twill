@@ -201,7 +201,7 @@ supported span are an error rather than an approximation.
 
 ## Reuse before writing
 
-Twill bundles ProfileStore, Trove, Cmdr, and others rather than
+Twill bundles ProfileStore, Cmdr, and others rather than
 reimplementing them. Each is better at its job than a framework's own version
 would be, and each carries a licence Twill can honour.
 

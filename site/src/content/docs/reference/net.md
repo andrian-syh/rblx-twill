@@ -227,7 +227,7 @@ emote:FireAllClients("wave")
 emote:FireAllExcept(player, "wave")
 
 -- either side, for what the other side sends
-local connection = emote:Connect(function(text) end, trove)
+local connection = emote:Connect(function(text) end, bag)
 ```
 
 Calls made in the same frame leave together as one message. A remote that
@@ -349,7 +349,7 @@ it.
 Runs a callback once this side can send, at once when it already can.
 
 ```luau
-function Net.OnReady(callback: () -> (), trove: any?)
+function Net.OnReady(callback: () -> (), bag: any?)
 ```
 
 Pass a `Scope` bag as the second argument and the wait is given up with it.
@@ -470,8 +470,8 @@ thread waiting on an answer.
 `[Server]` | `[Client]`
 
 ```luau
-function remote:Connect(callback: (...any) -> (), trove: any?): Connection
-function remote:Once(callback: (...any) -> (), trove: any?): Connection
+function remote:Connect(callback: (...any) -> (), bag: any?): Connection
+function remote:Once(callback: (...any) -> (), bag: any?): Connection
 ```
 
 On the client the callback receives the call's arguments. On the server, use

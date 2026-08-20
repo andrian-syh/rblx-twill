@@ -23,12 +23,12 @@ hands it each player once their saved data exists.
 ```luau title="ServerScriptService/Services/ShopService"
 local ShopService = {}
 
-function ShopService.OnPlayerReady(player, data, trove)
+function ShopService.OnPlayerReady(player, data, bag)
 	-- `data` is the live profile. Mutate it and it saves on its own.
 	data.Visits += 1
 
-	-- `trove` closes when the player leaves, so this is never left behind.
-	trove:Connect(player.Chatted, onChatted)
+	-- `bag` closes when the player leaves, so this is never left behind.
+	bag:Connect(player.Chatted, onChatted)
 end
 
 return ShopService
@@ -130,7 +130,7 @@ against.
 
 ## Status
 
-**v1.4.0.** The API is stable, and where one does move, the
+**v1.5.0.** The API is stable, and where one does move, the
 [changelog](https://github.com/andrian-syh/rblx-twill/blob/main/CHANGELOG.md)
 carries a Migration section saying exactly what to rewrite. A major version is
 reserved for a release that reshapes how the framework works rather than for any

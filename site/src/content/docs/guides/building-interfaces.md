@@ -80,7 +80,7 @@ The repetition is always the same shape — a path, a ref, a property, a formatt
 local function bind(path: string, instance: Instance, property: string, show: ((any) -> any)?)
 	Twill.Replication.Subscribe(path, function(value)
 		(instance :: any)[property] = if show then show(value) else value
-	end, trove)
+	end, bag)
 end
 
 bind("Data.Coins", refs.Coins, "Text", Twill.Format.Comma)
@@ -97,7 +97,7 @@ slightly differently, and a `Bind` in the framework would have to guess about
 transforms, defaults, and what a `nil` means on a property that cannot hold one.
 
 :::caution[Give a per-player binding a bag]
-The `trove` above is doing real work. A subscription with no bag lives until the
+The `bag` above is doing real work. A subscription with no bag lives until the
 session ends, and its callback holds the instance it writes into. That is fine
 for a HUD that lives as long as the session, and a leak for anything built per
 player or per character.
@@ -176,13 +176,13 @@ Anything longer-lived, or anything parented into the world, belongs in a
 local root = Twill.Tree.Build(spec, workspace)
 
 -- Goes when the player does, connections and all.
-trove:Add(root)
+bag:Add(root)
 ```
 
 Subscriptions are separate and need the same treatment:
 
 ```luau
-trove:Add(Twill.Replication.Subscribe("Data.Coins", onCoins))
+bag:Add(Twill.Replication.Subscribe("Data.Coins", onCoins))
 ```
 
 ## When to bring a UI library

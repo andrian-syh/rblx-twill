@@ -26,8 +26,7 @@ what it usually does.
 
 | Term | What it means |
 | :--- | :--- |
-| **Bag** | The everyday word for a Trove handed out by [`Scope`](/reference/scope/). You put what you made into it, and the framework closes it. |
-| **Trove** | The cleanup object from Sleitnick's package. It holds connections, instances, and functions, and releases all of them when destroyed. |
+| **Bag** | A [`Twill.Bag`](/reference/bag/), usually handed out by [`Scope`](/reference/scope/). You put what you made into it, and the framework closes it. Closing runs newest first and always runs to the end. |
 | **Player bag** | Closes when that player leaves. Handed to every service as the third argument of `OnPlayerReady`, which is why most code never calls `Scope` directly. |
 | **Character bag** | Closes when the character model is removed, which Roblox does at **respawn**, not at the moment of death. For anything that should outlive dying, such as a ragdoll. |
 | **Alive bag** | Closes the instant the humanoid dies, or on removal if the character is taken away without dying. For anything that should stop while a player is dead: movement, abilities, input. |

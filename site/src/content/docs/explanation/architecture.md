@@ -111,13 +111,13 @@ gate(player, release)          Data.Gate loads the profile
    ↓
 release(data)                  only the first call counts
    ↓
-OnPlayerReady(player, data, trove)   every service, in boot order
+OnPlayerReady(player, data, bag)   every service, in boot order
 ```
 
 The gate is what makes `OnPlayerReady` worth having. Without it, every service
 would begin with the same check for whether the data had arrived.
 
-The `trove` is a [`Scope.Player`](/reference/scope/) bag, already open, closed
+The `bag` is a [`Scope.Player`](/reference/scope/) bag, already open, closed
 when the player leaves. A gate that throws costs that player their session: they
 are asked to rejoin rather than let in without whatever it was fetching.
 
@@ -227,7 +227,6 @@ dead `Instance`.
 | Package | Owns |
 | --- | --- |
 | ProfileStore | Sessions, saving, cross-server messaging |
-| Trove | Cleanup, behind `Scope` |
 | Cmdr | The console, behind `Admin` |
 | AptInt | Arbitrary precision, behind `BigNumber` |
 | BytePress | Binary compression, behind `Compress` |

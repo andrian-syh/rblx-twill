@@ -4,12 +4,12 @@ description: A set of instances, followed as it changes.
 ---
 
 ```luau
-Watch.Tagged("KillBrick", function(part, trove)
-	trove:Connect(part.Touched, onTouched)
+Watch.Tagged("KillBrick", function(part, bag)
+	bag:Connect(part.Touched, onTouched)
 end)
 
-Watch.Players(function(player, trove)
-	trove:Connect(player.CharacterAdded, onCharacter)
+Watch.Players(function(player, bag)
+	bag:Connect(player.CharacterAdded, onCharacter)
 end)
 ```
 
@@ -34,7 +34,7 @@ arrangement that is correct in both directions. That is what this module is.
 
 ## Per-instance bags
 
-Every instance gets its own [Trove](/reference/scope/), closed the moment it
+Every instance gets its own [bag](/reference/bag/), closed the moment it
 leaves the set. Nothing bound to an instance has to be unbound by hand.
 
 The binding itself belongs to the bag given as the last argument, or to
@@ -50,8 +50,8 @@ Follows everyone on the server, including whoever was already here.
 
 ```luau
 function Watch.Players(
-	onAdded: (player: Player, trove: Scope.Trove) -> (),
-	owner: Scope.Trove?
+	onAdded: (player: Player, bag: Scope.Bag) -> (),
+	owner: Scope.Bag?
 ): Binding
 ```
 
@@ -59,8 +59,8 @@ function Watch.Players(
 
 | Name | Type | Description |
 | :--- | :--- | :--- |
-| `onAdded` | `(player: Player, trove: Scope.Trove) -> ()` | Called once per player, with a bag that closes when they leave. |
-| `owner` | `Scope.Trove?` | The bag the binding belongs to. The framework's own when left out. |
+| `onAdded` | `(player: Player, bag: Scope.Bag) -> ()` | Called once per player, with a bag that closes when they leave. |
+| `owner` | `Scope.Bag?` | The bag the binding belongs to. The framework's own when left out. |
 
 **Returns**
 
@@ -84,8 +84,8 @@ Follows everything carrying a tag, including what was tagged before this ran.
 ```luau
 function Watch.Tagged(
 	tag: string,
-	onAdded: (instance: Instance, trove: Scope.Trove) -> (),
-	owner: Scope.Trove?
+	onAdded: (instance: Instance, bag: Scope.Bag) -> (),
+	owner: Scope.Bag?
 ): Binding
 ```
 
@@ -94,8 +94,8 @@ function Watch.Tagged(
 | Name | Type | Description |
 | :--- | :--- | :--- |
 | `tag` | `string` | The `CollectionService` tag to follow. Must not be empty. |
-| `onAdded` | `(instance: Instance, trove: Scope.Trove) -> ()` | Called once per instance, with a bag that closes when the tag goes. |
-| `owner` | `Scope.Trove?` | The bag the binding belongs to. The framework's own when left out. |
+| `onAdded` | `(instance: Instance, bag: Scope.Bag) -> ()` | Called once per instance, with a bag that closes when the tag goes. |
+| `owner` | `Scope.Bag?` | The bag the binding belongs to. The framework's own when left out. |
 
 **Returns**
 
@@ -116,8 +116,8 @@ Follows the direct children of one instance, including the ones already there.
 ```luau
 function Watch.Children(
 	parent: Instance,
-	onAdded: (child: Instance, trove: Scope.Trove) -> (),
-	owner: Scope.Trove?
+	onAdded: (child: Instance, bag: Scope.Bag) -> (),
+	owner: Scope.Bag?
 ): Binding
 ```
 
@@ -126,8 +126,8 @@ function Watch.Children(
 | Name | Type | Description |
 | :--- | :--- | :--- |
 | `parent` | `Instance` | Whose children to follow. |
-| `onAdded` | `(child: Instance, trove: Scope.Trove) -> ()` | Called once per child, with a bag that closes when it goes. |
-| `owner` | `Scope.Trove?` | The bag the binding belongs to. The framework's own when left out. |
+| `onAdded` | `(child: Instance, bag: Scope.Bag) -> ()` | Called once per child, with a bag that closes when it goes. |
+| `owner` | `Scope.Bag?` | The bag the binding belongs to. The framework's own when left out. |
 
 **Returns**
 

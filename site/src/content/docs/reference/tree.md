@@ -147,7 +147,7 @@ For anything longer-lived, or anything parented into the world, put the root in 
 
 ```luau
 local root = Tree.Build(spec, workspace)
-trove:Add(root)
+bag:Add(root)
 ```
 
 ## What this is not
