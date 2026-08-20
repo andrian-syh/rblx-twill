@@ -42,23 +42,6 @@ forum](https://devforum.roblox.com/t/fastest-cryptography-library-for-roblox/368
 [`Random`](/reference/random/) and [`Token`](/reference/token/) reach a small
 part of it: SHA-256, HMAC-SHA256, ChaCha20, and Blake3.
 
-## Nothing here is reachable from the root
-
-Every bundled package is reached only through a Twill module. Every name on the
-root table is Twill's own, with Twill's stability promise behind it.
-
-Three things left this list. [`Net`](/reference/net/) carries its own wire
-format, so nothing third-party sits between a declaration and the bytes.
-[`Bag`](/reference/bag/) is Twill's own cleanup container, so a bag handed out by
-[`Scope`](/reference/scope/) is a Twill type. [`Signal`](/reference/signal/) is
-Twill's own signal, so the value
-[`Replication.OnChanged`](/reference/replication/) hands back is one this project
-promises to keep still.
-
-Where a Twill module covers what you need, write against the module. Those
-wrappers are load-bearing in several cases, and they are the part this project
-promises to keep still.
-
 ## What each licence asks
 
 **Apache-2.0** (ProfileStore) is the most demanding of the set. The licence text

@@ -1,11 +1,11 @@
 ---
 title: Signal
-description: Every listener runs, and none of them can stop the rest.
+description: Events of your own, with named arguments.
 ---
 
-`Twill.Signal` is an event of your own: something to fire, and something for
-other code to listen to, without a `BindableEvent` and without the round trip
-through the engine that one costs.
+`Twill.Signal` is an event you own: something to fire, and something for other
+code to listen to, without a `BindableEvent` and without the round trip through
+the engine that one costs.
 
 ```luau
 local Signal = require("@game/ReplicatedStorage/Twill/Signal")
@@ -19,88 +19,11 @@ end)
 Died:Fire(player)
 ```
 
-Twill hands you these already. [`Replication.OnChanged`](/reference/replication/#replicationonchanged)
-returns one, and [`Navigation`](/reference/navigation/) gives every journey three.
+Twill hands these out already.
+[`Replication.OnChanged`](/reference/replication/#replicationonchanged) returns
+one, and [`Navigation`](/reference/navigation/) gives every journey three.
 
-## The three promises
-
-Everything else on this page is detail. These are the reasons the module exists.
-
-### Every listener runs
-
-Each listener is called inside its own `xpcall`. One that throws is reported and
-stepped over; the ones behind it still run, and the signal is untouched
-afterwards.
-
-```luau
-signal:Connect(function() print("one") end)
-signal:Connect(function() error("something went wrong") end)
-signal:Connect(function() print("three") end)
-
-signal:Fire()
--- prints one, reports the failure, prints three
-```
-
-The report goes through [`Log`](/reference/log/) at `Error`, carrying the
-traceback from where the listener broke rather than from the dispatcher.
-
-### No wait is forever
-
-A [`Wait`](#signalwait) can be given a number of seconds to give up after. More
-importantly, destroying a signal, or letting all its listeners go, **wakes
-everything parked on it** rather than leaving those threads suspended for the
-rest of the session.
-
-```luau
-local ready = Signal.new()
-
-task.spawn(function()
-	ready:Wait()
-	print("this line is always reached")
-end)
-
-ready:Destroy()
-```
-
-A thread that can never be resumed is a leak that no `Destroy` reaches and no
-profiler names. Waking it with nothing is the only ending that always arrives.
-
-### Connecting and disconnecting mid-fire behave
-
-A listener connected while the signal is firing sits that firing out and runs the
-next one. A listener let go while the signal is firing is not called again, even
-if the run has not reached it yet.
-
-```luau
-local seen = {}
-local second
-
-signal:Connect(function() second:Disconnect() ; table.insert(seen, 1) end)
-second = signal:Connect(function() table.insert(seen, 2) end)
-signal:Connect(function() table.insert(seen, 3) end)
-
-signal:Fire()
--- seen is {1, 3}
-```
-
-These are the engine's own rules. Matching them means the answer to "what happens
-if I disconnect here" is one you already know.
-
-## Making one
-
-### `Signal.new`
-
-`[Server]` | `[Client]`
-
-Makes a signal with nothing listening to it yet.
-
-```luau
-function Signal.new<Called>(): Signal<Called>
-```
-
-**Returns**
-
-`Signal` - A signal of its own, ready to be connected to.
+## Naming what a signal carries
 
 The type argument names the arguments the signal carries, and it names them
 literally:
@@ -113,19 +36,86 @@ Died:Fire(player, "fell")                -- checked
 Died:Fire(player)                        -- refused, at the call
 ```
 
-Left off, a signal carries `...any` and nothing is checked. The names are what
-show up in autocomplete at the `Connect`, so they are worth writing once.
+Left off, a signal carries `...any` and nothing is checked. The names appear in
+autocomplete at the `Connect`, so they are worth writing once.
+
+## How firing behaves
+
+Three rules govern every firing, and they follow the engine's own signals so
+there is one set to remember rather than one per library.
+
+**Listeners run in the order they connected**, each inside its own `xpcall`. One
+that raises is reported through [`Log`](/reference/log/) at `Error` — carrying
+the traceback from where it broke, not from the dispatcher — and stepped over.
+The listeners behind it still run.
+
+**A listener connected mid-fire sits that firing out** and runs the next one. A
+listener released mid-fire is not called again, even if the run has not reached
+it yet.
+
+**Firing from inside a listener runs there and then**, nested, the way a
+`BindableEvent` does. A listener that yields does not hold up the ones behind
+it: the run moves on, and that listener finishes on its own.
+
+## Waits always end
+
+A [`Wait`](#signalwait) can be given a number of seconds to give up after.
+Beyond that, destroying a signal or releasing all its listeners **wakes
+everything parked on it**, handing each of them nothing.
+
+```luau
+local ready = Signal.new()
+
+task.spawn(function()
+	ready:Wait()
+	print("this line is always reached")
+end)
+
+ready:Destroy()
+```
+
+A thread that can never be resumed is a leak no `Destroy` reaches and no
+profiler names, so waking it with nothing is the only ending that always
+arrives.
+
+## API
+
+### `Signal.new`
+
+`[Server]` | `[Client]`
+
+Creates a signal with nothing listening to it yet.
+
+```luau
+function Signal.new<Called>(): Signal<Called>
+```
+
+**Returns**
+
+`Signal` - A signal of its own, ready to be connected to.
 
 ### `Signal.wrap`
 
 `[Server]` | `[Client]`
 
-Makes a signal that fires whenever an engine signal does, passing on its
+Creates a signal that fires whenever an engine signal does, passing on its
 arguments.
 
 ```luau
 function Signal.wrap<Called>(source: RBXScriptSignal): Signal<Called>
 ```
+
+**Parameters**
+
+| Name | Type | Description |
+| :--- | :--- | :--- |
+| `source` | `RBXScriptSignal` | The engine signal to stand in for. |
+
+**Returns**
+
+`Signal` - A signal that fires along with it, until it is destroyed.
+
+Throws when the value is not an engine signal.
 
 Useful for giving one engine signal several independent lifetimes, or for
 handing out something callers may `Destroy` without touching the original.
@@ -135,35 +125,67 @@ Destroying the wrapper unhooks it from the engine signal.
 
 `[Server]` | `[Client]`
 
-Answers whether a value is one of these signals.
+Reports whether a value is one of these signals.
 
 ```luau
 function Signal.Is(value: any): boolean
 ```
 
-## Listening
+**Parameters**
+
+| Name | Type | Description |
+| :--- | :--- | :--- |
+| `value` | `any` | The value to examine. |
+
+**Returns**
+
+`boolean` - True when it is a signal.
 
 ### `signal:Connect`
 
 `[Server]` | `[Client]`
 
-Calls a function every time the signal fires, until the connection is let go.
+Calls a function every time the signal fires, until the connection is released.
 
 ```luau
 function signal:Connect(callback: Called): Connection
 ```
 
-Listeners run in the order they connected.
+**Parameters**
+
+| Name | Type | Description |
+| :--- | :--- | :--- |
+| `callback` | `Called` | What to call when the signal fires. |
+
+**Returns**
+
+`Connection` - The connection standing for that listener.
+
+Throws when the signal has been destroyed, and when the callback is not a
+function.
 
 ### `signal:Once`
 
 `[Server]` | `[Client]`
 
-Calls a function on the next firing only, letting the connection go as it runs.
+Calls a function on the next firing only, releasing the connection as it runs.
 
 ```luau
 function signal:Once(callback: Called): Connection
 ```
+
+**Parameters**
+
+| Name | Type | Description |
+| :--- | :--- | :--- |
+| `callback` | `Called` | What to call on that one firing. |
+
+**Returns**
+
+`Connection` - The connection, standing only until it fires.
+
+Throws when the signal has been destroyed, and when the callback is not a
+function.
 
 ### `signal:Wait`
 
@@ -177,12 +199,15 @@ function signal:Wait(timeout: number?): Called...
 
 **Parameters**
 
-`timeout: number?` - How long to wait before giving up. Left out, it waits until
-the signal fires, is destroyed, or lets its listeners go.
+| Name | Type | Description |
+| :--- | :--- | :--- |
+| `timeout` | `number?` | Seconds to wait before giving up. Waits indefinitely when left out. |
 
 **Returns**
 
-Whatever the signal was fired with, or nothing when it gave up.
+Whatever the signal was fired with, or nothing when it gave up. Yields.
+
+Throws when the signal has been destroyed, and when the timeout is not a number.
 
 ```luau
 local value = door:Wait(5)
@@ -193,38 +218,10 @@ end
 ```
 
 :::caution[A wait cannot tell you why it ended]
-Timing out and being destroyed both return nothing. When the difference matters,
-`Connect` and decide for yourself rather than reading it out of a `Wait`.
+Timing out and being destroyed both return nothing. Where the difference
+matters, `Connect` and decide for yourself rather than reading it out of a
+`Wait`.
 :::
-
-### `connection:Disconnect`
-
-`[Server]` | `[Client]`
-
-Lets the listener go, so the signal stops calling it. Does nothing twice.
-
-```luau
-function connection:Disconnect()
-```
-
-### `connection:Reconnect`
-
-`[Server]` | `[Client]`
-
-Takes a let-go listener back on, at the end of the line.
-
-```luau
-function connection:Reconnect()
-```
-
-Cheaper than connecting again when a listener is switched on and off repeatedly,
-because nothing new is allocated. Raises if the signal has been destroyed.
-
-### `connection.Connected`
-
-A plain field, `true` while the signal would still call it.
-
-## Firing
 
 ### `signal:Fire`
 
@@ -236,43 +233,81 @@ Calls every listener in the order they connected, with whatever it was given.
 function signal:Fire(...: Called...)
 ```
 
-Firing from inside a listener runs there and then, nested, the way a
-`BindableEvent` does. A listener that yields does not hold up the ones behind
-it — the run moves on and that listener finishes on its own.
+**Parameters**
 
-## Asking
+| Name | Type | Description |
+| :--- | :--- | :--- |
+| `...` | `Called...` | What to hand each listener. |
+
+**Returns**
+
+`()` - Nothing.
+
+Throws when the signal has been destroyed.
 
 ### `signal:Count`
 
-Returns how many listeners the signal would call were it fired right now.
+`[Server]` | `[Client]`
+
+Returns how many listeners the signal would call were it fired now.
+
+```luau
+function signal:Count(): number
+```
+
+**Returns**
+
+`number` - The count of listeners connected.
 
 ### `signal:IsEmpty`
 
-Answers whether nothing at all is listening.
+`[Server]` | `[Client]`
 
-### `signal:IsDestroyed`
+Reports whether nothing at all is listening.
 
-Answers whether `Destroy` has run.
+```luau
+function signal:IsEmpty(): boolean
+```
 
-`Count` and `IsEmpty` exist mostly for tests. A leak you can assert against is a
-leak you find before a player does:
+**Returns**
+
+`boolean` - True when the signal has no listeners left.
+
+`Count` and `IsEmpty` make a listener that outlived its owner something a test
+can assert against:
 
 ```luau
 Scope.Close(player)
 assert(events.Died:Count() == 0, "a listener outlived the player")
 ```
 
-## Closing
+### `signal:IsDestroyed`
+
+`[Server]` | `[Client]`
+
+Reports whether `Destroy` has run.
+
+```luau
+function signal:IsDestroyed(): boolean
+```
+
+**Returns**
+
+`boolean` - True once the signal has been destroyed.
 
 ### `signal:DisconnectAll`
 
 `[Server]` | `[Client]`
 
-Lets every listener go at once, and wakes anything waiting with nothing.
+Releases every listener at once, and wakes anything waiting with nothing.
 
 ```luau
 function signal:DisconnectAll()
 ```
+
+**Returns**
+
+`()` - Nothing.
 
 The signal stays usable, so this is how a signal is reset rather than replaced.
 
@@ -280,26 +315,68 @@ The signal stays usable, so this is how a signal is reset rather than replaced.
 
 `[Server]` | `[Client]`
 
-Lets everything go and makes the signal unusable. Does nothing the second time.
+Releases everything and makes the signal unusable.
 
 ```luau
 function signal:Destroy()
 ```
 
-After this, `Connect`, `Fire`, and `Wait` raise, naming what happened. The signal
-keeps its methods rather than being emptied, so a late call gets a sentence you
-can act on instead of `attempt to index nil`.
+**Returns**
 
-`Destroy` is also what makes a signal holdable by a [`Bag`](/reference/bag/):
+`()` - Nothing.
+
+Does nothing the second time. After this, `Connect`, `Fire`, and `Wait` raise,
+naming what happened; the signal keeps its methods rather than being emptied, so
+a late call gets a sentence rather than `attempt to index nil`.
+
+`Destroy` is also what lets a signal be held by a [`Bag`](/reference/bag/):
 
 ```luau
-local Died = bag:Add(Signal.new())          -- destroyed with the bag
-local Kept = bag:Add(Signal.new(), "DisconnectAll")   -- only emptied
+local Died = bag:Add(Signal.new())                     -- destroyed with the bag
+local Kept = bag:Add(Signal.new(), "DisconnectAll")    -- only emptied
 ```
 
-## Edge cases, and what each one does
+## The connection
 
-Each row is covered by a check in the framework's self test.
+### `connection:Disconnect`
+
+`[Server]` | `[Client]`
+
+Releases the listener, so the signal stops calling it.
+
+```luau
+function connection:Disconnect()
+```
+
+**Returns**
+
+`()` - Nothing.
+
+Does nothing the second time.
+
+### `connection:Reconnect`
+
+`[Server]` | `[Client]`
+
+Takes a released listener back on, at the end of the line.
+
+```luau
+function connection:Reconnect()
+```
+
+**Returns**
+
+`()` - Nothing.
+
+Throws when the signal it belongs to has been destroyed. Does nothing when the
+listener never left. Cheaper than connecting again where a listener is switched
+on and off repeatedly, because nothing new is allocated.
+
+### `connection.Connected`
+
+A plain field, `true` while the signal would still call it.
+
+## Behaviour in detail
 
 | Situation | What happens |
 | --- | --- |
@@ -318,43 +395,16 @@ Each row is covered by a check in the framework's self test.
 | Connecting, firing, or waiting after `Destroy` | Raises, naming what happened. |
 | Connecting something that is not a function | Raises at the `Connect`. |
 
-## What it does not do
+## Notes on cost
 
-**No priorities.** Listeners run in the order they connected, like every signal
-in the engine. Ordering that matters belongs in one listener that calls things in
-the order it wants, where the order is written down.
+A signal with nothing on it is two integer fields, and a signal that is never
+waited on never allocates a waiter table.
 
-**No deferred mode.** `Fire` calls listeners now. Code that wants a listener on
-the next frame can ask for one, and code that does not should not have to pay for
-someone else's setting.
+Listeners are called from pooled threads, and several listeners share one thread
+until one of them yields, so the cost of a thread is paid only by listeners that
+actually suspend. A thread cancelled from outside is checked before reuse rather
+than resumed blind.
 
-**No queued disconnect.** There is one `Disconnect` and it takes effect
-immediately. A container with two disconnect semantics makes every reader check
-which one they are looking at.
-
-**No global registry.** Signals are values. A signal you cannot reach is a signal
-that gets collected, which is not true of anything a module holds by name.
-
-## Performance
-
-A signal with nothing on it is two integer fields; a signal that is never waited
-on never allocates a waiter table.
-
-Listeners are called from pooled threads, and **several listeners share one
-thread** until one of them yields, so the cost of a thread is paid only by
-listeners that actually suspend. A thread that was cancelled from outside is
-checked before reuse rather than resumed blind.
-
-Measured in this place, best of five:
-
-| | Twill.Signal | NamedSignal |
-| --- | --- | --- |
-| Fire 1 listener, 20 000 times | **7.6 ms** | 14.0 ms |
-| Fire 100 listeners, 200 times | 2.0 ms | **0.9 ms** |
-| Connect and disconnect 2 000 | 0.9 ms | **0.7 ms** |
-
-The middle row is the price of the first promise on this page. Wrapping each
-listener in `xpcall` costs roughly ten nanoseconds per call, which is visible
-only when one firing reaches a hundred listeners. Both numbers are far below the
-cost of anything a listener is likely to do, and the first row is where ordinary
-signals live.
+Listeners run in the order they connected, which is the order the engine uses.
+Where ordering matters, put it in one listener that calls things in the order it
+wants, so the order is written down rather than implied.
