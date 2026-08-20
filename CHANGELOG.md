@@ -9,6 +9,30 @@ at least three large changes landing together, reaching more than a quarter of
 what came before. A smaller change to an API lands in a minor version and brings
 a Migration section with it, so what has to be rewritten is always written down.
 
+## [1.6.1] - 2026-08-20
+
+Work the codec was doing twice, and allocations on the path that carries the most.
+
+### Changed
+
+- `Net.Any` no longer builds a path string for every key of every table it
+  writes. The string existed only to name a value in an error message, and it
+  was being built on the way through whether or not anything went wrong. Paths
+  are now composed where the error is raised, and once per container rather
+  than once per key. `Replication` sends its patches through `Any`, so this is
+  the path that carries the most.
+- An error naming a numeric key in a dictionary now names the key. It used to
+  read `value[?]`, and now reads `value[7]`.
+- An array of fixed-width numbers checked the buffer's capacity once for the
+  whole run and then again for every element. The run is now written and read
+  through the offset the single check returned, so a two thousand element array
+  costs two thousand fewer bounds checks in each direction. Nothing is checked
+  less: the one check still covers the whole run before a byte is touched.
+- Packing and unpacking a `CFrameRot` allocated a table per value on the way out
+  and two on the way back. They now use locals.
+- `Any` allocated a twelve element table for every `CFrame` it wrote, to iterate
+  the components it had just unpacked. It now writes them directly.
+
 ## [1.6.0] - 2026-08-20
 
 Signals are Twill's own, and no thread waiting on one is ever left behind.
