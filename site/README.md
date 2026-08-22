@@ -72,6 +72,13 @@ npx astro dev
 
 Check a build before concluding that a dev-only symptom is a real bug.
 
+**Stop the dev server before clearing `.astro/`, and before any build that clears
+it.** The content collection index lives there. Deleting it under a running dev
+server empties that index, and the next request fails with `AstroUserError: The
+slug "..." specified in the Starlight sidebar config does not exist` for a page
+whose file is sitting right there on disk. The file is fine; the index is gone.
+Restarting the dev server rebuilds it.
+
 ## Testing the project-page sub-path
 
 The deployed site is a GitHub project page, so it is served under

@@ -1,18 +1,43 @@
 ---
 import { Icon } from '@astrojs/starlight/components';
+import { releases } from '../data/releases';
 
-interface PageLink {
-	label: string;
-	href: string;
-}
+// No props. Each page's neighbours come from its position in src/data/releases.ts,
+// so adding a release cannot leave the page before it pointing at the wrong thing.
+// That is the defect this replaced: v1.5.0 still read "All releases" long after
+// v1.6.0 shipped, because its next link was written by hand on the page itself.
 
-interface Props {
-	prev?: PageLink;
-	next?: PageLink;
-}
-
-const { prev, next } = Astro.props;
 const prefix = import.meta.env.BASE_URL.replace(/\/+$/, '');
+
+// The last path segment is the page's own slug, and is free of `base`.
+const path = Astro.url.pathname.replace(/\/+$/, '');
+const slug = path.slice(path.lastIndexOf('/') + 1);
+
+const index = releases.findIndex((release) =>
+	release.slug.replace(/\/+$/, '').endsWith(`/${slug}`)
+);
+
+// Fail the build rather than render dead links. A news page missing from the list
+// would otherwise read "All releases" in both directions and look deliberate.
+if (index === -1) {
+	throw new Error(
+		`News page "${slug}" is not listed in src/data/releases.ts. ` +
+			'Add an entry there so the grid and the pagination both pick it up.'
+	);
+}
+
+const allReleases = { label: 'All releases', href: '/news/' };
+const toLink = (release: (typeof releases)[number]) => ({
+	label: `${release.version} — ${release.title}`,
+	href: release.slug,
+});
+
+// The list runs newest first, so the older release sits after the current one.
+const older = releases[index + 1];
+const newer = releases[index - 1];
+
+const prev = older ? toLink(older) : allReleases;
+const next = newer ? toLink(newer) : allReleases;
 ---
 
 <div class="pagination-links print:hidden not-content" dir="ltr">
