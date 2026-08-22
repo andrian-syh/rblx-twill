@@ -16,6 +16,16 @@ const prefix = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
 const releases: ReleaseItem[] = [
 	{
+		version: 'v1.6.1',
+		title: 'The Codec Stops Repeating Itself',
+		date: 'August 20, 2026',
+		tagline: 'Work the codec was doing twice, and allocations on the path that carries the most.',
+		summary:
+			'Net.Any built a path string for every key of every table it wrote, to name a value in an error that almost never came. Paths are now built where the error is raised. A fixed-width array stops re-checking bounds the first check already covered, and CFrame packing no longer allocates a table per value.',
+		slug: '/news/v1-6-1/',
+		icon: 'file',
+	},
+	{
 		version: 'v1.6.0',
 		title: 'Nothing Waits Forever',
 		date: 'August 20, 2026',
