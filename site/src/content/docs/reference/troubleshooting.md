@@ -32,7 +32,7 @@ Twill.Log.SetLevel("Debug")
 
 ## Installation and requires
 
-**`[Twill] TwillServer.Net is missing; the server half of Twill was not installed.`**
+**`[Twill] TwillServer.Net is missing; the server half is not installed`**
 
 `ServerScriptService.TwillServer` is absent or renamed. Both folders are
 required, and the names matter because Twill finds its own server half by name.
@@ -118,7 +118,7 @@ Each `Start` runs on its own thread, so boot order decides when one **begins**,
 never the order in which they finish. Have the later one ask for what it needs
 rather than assume it exists.
 
-**`[Twill.Lifecycle] no service named 'X'`**
+**`Lifecycle.Get has no service named 'X'`**
 
 `Lifecycle.Get` was given a name that was never discovered. Usually a typo, and
 occasionally a service that failed to load earlier in the same run.
@@ -129,7 +129,7 @@ A service marked `Critical` threw in `Init` or `Start`. The reason is in the kic
 message and in `Lifecycle.GetFailure()`. Players arriving afterwards are kicked
 on sight until the server is replaced.
 
-**`boot failed - ...` on the client, and nothing else runs**
+**`boot failed: ...` on the client, and nothing else runs**
 
 The same failure on the client, where there is nobody to kick. The client boot
 stops there.
@@ -152,12 +152,12 @@ The player gate itself threw, rather than the session failing to open. If the
 gate is `Data.Gate`, the cause is above it in the log; if it is your own gate,
 the error is in it.
 
-**`Twill.Data.Gate used before Configure`**
+**`Data.Gate used before Configure`**
 
 `Lifecycle.SetPlayerGate(Data.Gate)` ran before `Data.Configure`. The same
 message exists for `GetOffline`, `Edit`, and `Reset`.
 
-**`Twill.Data is already configured`**
+**`Data is already configured`**
 
 `Configure` runs once. Configuring twice would change the shape of stored data
 underneath a running server.
@@ -166,7 +166,7 @@ underneath a running server.
 
 `main` is the scope name for the primary profile, so a branch cannot take it.
 
-**`Twill.Data has no branch named 'X'`**
+**`Data has no branch named 'X'`**
 
 The name does not match anything in `Branches`. `Data.ListBranches()` reports
 what exists.
@@ -219,7 +219,7 @@ Access to API Services** is enabled.
 Two places declared the same remote with different types. Make them agree. This
 refusal is what stops one caller from serialising through another's types.
 
-**`[Twill.Net] nothing has declared 'X' yet`**
+**`Net.Get has no remote named 'X' yet`**
 
 `Net.Get` ran before whatever declares that name. Declaring is idempotent, so the
 usual fix is to declare it in a shared module both sides require.
@@ -339,7 +339,7 @@ published value itself, not a copy. Publish through `Set`, `SetPath`, or
 rank has not been decided reads as the lowest, so a check made too early refuses
 rather than admits.
 
-**`Twill.Authorization is already configured`**
+**`Authorization is already configured`**
 
 `Configure` runs once, so that who is privileged cannot change while the server
 is running.
@@ -401,7 +401,7 @@ Both are checked again on the server whatever the client decided.
 Submissions are metered per player. The log records who was turned away and how
 many attempts went unreported.
 
-**`Twill.Admin is already configured`**
+**`Admin is already configured`**
 
 `Configure` runs once, for the same reason as the other gates.
 

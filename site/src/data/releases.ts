@@ -18,6 +18,16 @@ export interface Release {
 
 export const releases: Release[] = [
 	{
+		version: 'v1.7.0',
+		title: 'Everything Moves on One Loop',
+		date: 'August 24, 2026',
+		tagline: "Twill's own tweening, and every value in the game moving on a single connection.",
+		summary:
+			'Tween moves properties, attributes, a pivot, a scale, or a plain table field, and every tween in the game shares one connection that exists only while something plays. Destinations can curve through control points, colours cross through Oklab, and a tween that outlives its instance ends itself.',
+		slug: '/news/v1-7-0/',
+		icon: 'star',
+	},
+	{
 		version: 'v1.6.1',
 		title: 'The Codec Stops Repeating Itself',
 		date: 'August 20, 2026',

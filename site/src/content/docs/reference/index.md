@@ -50,6 +50,7 @@ Available on the server and the client.
 | [Error](/reference/error/) | One listener for every unhandled script error. |
 | [BigNumber](/reference/bignumber/) | Exact whole numbers with no ceiling. |
 | [Chance](/reference/chance/) | Weighted draws, and the odds behind them. |
+| [Tween](/reference/tween/) | Values moved over time, every one of them on a single loop. |
 | [Navigation](/reference/navigation/) | Agents that walk somewhere, and one loop driving all of them. |
 | [Authorization](/reference/authorization/) | Ranks, and the questions that depend on them. |
 | [Admin](/reference/admin/) | An in-game command console built on Cmdr, with nine commands of its own. |

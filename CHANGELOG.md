@@ -9,6 +9,45 @@ at least three large changes landing together, reaching more than a quarter of
 what came before. A smaller change to an API lands in a minor version and brings
 a Migration section with it, so what has to be rewritten is always written down.
 
+## [1.7.0] - 2026-08-24
+
+A tweening module of Twill's own, and one shared loop behind every value moving.
+
+### Added
+
+- `Twill.Tween` moves properties, attributes, a model's pivot or scale, and plain
+  table fields, with every tween in the game sharing one connection that exists
+  only while something is playing. A destination given as an array of two or
+  three values curves through control points, which the engine's own tweens
+  cannot do. `Color3` crosses through Oklab, so a blue reaching a yellow passes
+  through the greens rather than sagging through grey.
+- `Tween.new` builds one and leaves it standing; `Tween.Play` builds, plays, and
+  tidies itself away. Both take a bag as their last argument, so leaving a place
+  cannot leave a tween behind.
+- `Tween.Active` reports how many tweens are playing across the whole game, and
+  `Tween.Is` tells one apart from any other table.
+- Starting a tween takes every property it moves away from whoever held it, so
+  two tweens never fight over one field.
+- Tweening an `Instance` on a server is refused unless `AllowServer` is passed,
+  since every frame of it replicates to every client.
+- A tween whose write fails is stopped and reported through `Stopped` with
+  `faulted`, leaving every other tween on the loop running.
+- `Twill.Tween` is named in the root table's type, so it autocompletes like the
+  rest.
+
+### Changed
+
+- Refusal messages across every module now follow one shape: no trailing full
+  stop, no bracketed module prefix, and the function named as `Module.Function`.
+  `Data`, `Token`, `Admin`, and `Authorization` dropped a `Twill.` that six other
+  server modules never carried, and `Net.Codec` dropped a `Twill.Net:` prefix its
+  `where` argument already covered.
+- `Scope`, `BigNumber`, `Format`, `Replication`, `Data`, `Random`,
+  `Monetization`, and `Leaderstats` now refuse arguments of the wrong type where
+  they used to carry on. `Scope.Player` given something that is not a player
+  returned the wrong bag rather than saying so.
+- `Net.OnReady` types its bag as `Scope.Bag?` rather than `any`.
+
 ## [1.6.1] - 2026-08-20
 
 Work the codec was doing twice, and allocations on the path that carries the most.

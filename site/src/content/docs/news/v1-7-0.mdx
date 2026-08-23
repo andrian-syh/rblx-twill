@@ -1,0 +1,136 @@
+---
+title: v1.7.0 — Everything Moves on One Loop
+description: Released August 24, 2026. Twill's own tweening, and every value in the game moving on a single connection.
+template: splash
+---
+
+import NewsBackLink from '../../../components/NewsBackLink.astro';
+import NewsPagination from '../../../components/NewsPagination.astro';
+
+<div class="news-article-container">
+
+<NewsBackLink />
+
+<header class="news-article-header">
+	<div class="news-article-badges">
+		<span class="news-badge-version">v1.7.0</span>
+		<span class="news-badge-date">August 24, 2026</span>
+	</div>
+	<p class="news-article-lead">
+		Twill's own tweening, and every value in the game moving on a single connection.
+	</p>
+</header>
+
+## One connection, however many tweens
+
+A `TweenService` tween is an `Instance`, and a hundred of them are a hundred
+objects the engine tracks whether or not any of them is doing anything.
+
+[`Tween`](/reference/tween/) is a table. Every tween in the game advances on one
+connection, and that connection exists only while something is playing. A place
+that tweens nothing pays nothing, and a frame costs the writes it makes.
+
+```luau
+Twill.Tween.Play(gui, { Position = UDim2.fromScale(0.5, 0.5) }, { Time = 0.4 })
+```
+
+## Four things, not one
+
+`TweenService` reaches properties. This reaches properties, attributes, a model's
+pivot, a model's scale, and the fields of a plain table.
+
+```luau
+Twill.Tween.Play(model, { Pivot = openCFrame, Scale = 1.2 }, { Time = 1 })
+Twill.Tween.Play(part, { ["@Charge"] = 100 }, { Time = 3 })
+```
+
+The plain table is the one worth pausing on. A tween with no `Instance` anywhere
+in it can be driven and asserted without a DataModel, which is how the module is
+tested, and it lets you move a number that nothing on screen owns yet.
+
+## Curves the engine cannot draw
+
+A destination given as an array is a curve rather than a straight line.
+
+```luau
+Twill.Tween.Play(part, {
+	Position = { finish, controlOne, controlTwo },
+}, { Time = 1.5 })
+```
+
+One control point is a quadratic Bezier and two is a cubic. `Vector2`, `Vector3`,
+`UDim2` and `CFrame` can be curved.
+
+Rotation is handed to `CFrame:Lerp` rather than to quaternion arithmetic written
+here. The engine's own is exact, is one call rather than thirty, and cannot drift
+from what the rest of the platform does.
+
+## Colour crosses where the eye reads it
+
+A `Color3` is interpolated through Oklab rather than through raw RGB channels.
+
+A blue reaching a yellow passes through the greens a person expects instead of
+sagging through grey on the way. Nothing is asked of you for this; it is what
+`Color3` does here.
+
+## A property belongs to one tween
+
+Starting a tween takes every property it moves away from whoever held it, and
+cancels the older tween rather than leaving two of them writing the same field
+every frame.
+
+```luau
+slow:Play()
+fast:Play()   -- slow is cancelled, and Position is now fast's
+```
+
+This is per property and per target, so two tweens moving different fields of one
+instance never disturb each other.
+
+## The server is refused by default
+
+Tweening an `Instance` on a server sends every frame of it to every client. That
+is a real cost, and it used to be one you discovered from a bandwidth graph.
+
+```luau
+Twill.Tween.Play(part, { Transparency = 1 }, { AllowServer = true })
+```
+
+Twill refuses it unless you say so. Pass `AllowServer` when the replication is
+the point, which it is for a door every player has to agree about.
+
+## One failure stops one tween
+
+A write can fail long after a tween is built: a property turns read-only, a
+target table is frozen, an instance is replaced.
+
+The write that fails now stops that tween, reports it through `Stopped` with
+`faulted`, and leaves every other tween on the loop running. Before, the failure
+escaped the shared loop and took the rest of that frame's tweens with it.
+
+## Messages read the same everywhere
+
+Refusals across every module now follow one shape: no trailing full stop, no
+bracketed module prefix, and the function named as `Module.Function`.
+
+```text
+before:  [Twill.Net] nothing has declared 'X' yet
+after:   Net.Get has no remote named 'X' yet
+```
+
+`Data`, `Token`, `Admin`, and `Authorization` dropped a `Twill.` that six other
+server modules never carried.
+
+## Arguments that used to be taken on trust
+
+`Scope`, `BigNumber`, `Format`, `Replication`, `Data`, `Random`, `Monetization`,
+and `Leaderstats` now refuse arguments of the wrong type where they used to carry
+on.
+
+One of these was a silent wrong answer rather than a late error:
+`Scope.Player` given something that was not a player returned a bag that was not
+that player's, and closed it at a moment that had nothing to do with them.
+
+<NewsPagination />
+
+</div>

@@ -218,6 +218,7 @@ export default defineConfig({
 								{ label: 'Error', slug: 'reference/error' },
 								{ label: 'BigNumber', slug: 'reference/bignumber' },
 								{ label: 'Chance', slug: 'reference/chance' },
+								{ label: 'Tween', slug: 'reference/tween' },
 							],
 						},
 						{
