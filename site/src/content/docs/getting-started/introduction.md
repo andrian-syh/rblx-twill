@@ -130,7 +130,7 @@ against.
 
 ## Status
 
-**v1.7.0.** The API is stable, and where one does move, the
+**v1.7.1.** The API is stable, and where one does move, the
 [changelog](https://github.com/andrian-syh/rblx-twill/blob/main/CHANGELOG.md)
 carries a Migration section saying exactly what to rewrite. A major version is
 reserved for a release that reshapes how the framework works rather than for any

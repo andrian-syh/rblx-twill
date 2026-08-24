@@ -9,6 +9,28 @@ at least three large changes landing together, reaching more than a quarter of
 what came before. A smaller change to an API lands in a minor version and brings
 a Migration section with it, so what has to be rewritten is always written down.
 
+## [1.7.1] - 2026-08-24
+
+A fixed-width number on the wire is now checked before it is written.
+
+### Fixed
+
+- A fixed-width integer given a value outside its range was written wrapped
+  rather than refused, so a client sending 256 for a byte arrived as 0 and
+  passed a validator that would have rejected 256. The wrap happened before any
+  `Validate` or `Schema` hook saw the value. Both the single-value path and the
+  array path now refuse an out-of-range value instead of wrapping it.
+- A `Net.Union` naming a fixed-width number among its members compiled but threw
+  the first time it carried a number, because only the widest numeric kinds were
+  mapped back from a value. Every numeric kind is now reachable, widest first, so
+  `Union(NumberU8, NumberF64)` keeps its double rather than narrowing it.
+
+### Changed
+
+- The last refusal messages carrying a `Twill.Net: ` prefix, inside the codec and
+  the frame reader, were brought into line with the rest, completing the one
+  shape 1.7.0 began.
+
 ## [1.7.0] - 2026-08-24
 
 A tweening module of Twill's own, and one shared loop behind every value moving.

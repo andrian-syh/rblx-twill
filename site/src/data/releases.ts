@@ -18,6 +18,16 @@ export interface Release {
 
 export const releases: Release[] = [
 	{
+		version: 'v1.7.1',
+		title: 'The Wire Refuses What It Cannot Carry',
+		date: 'August 24, 2026',
+		tagline: 'A fixed-width number outside its range is now refused rather than wrapped into another one.',
+		summary:
+			'A fixed-width integer given a value past what it holds was written wrapped, so a client sending 256 for a byte arrived as 0 and slipped past a validator before it ran. Both the single value and the array path now refuse it. A Union naming a fixed-width number among its members carries one again rather than throwing.',
+		slug: '/news/v1-7-1/',
+		icon: 'file',
+	},
+	{
 		version: 'v1.7.0',
 		title: 'Everything Moves on One Loop',
 		date: 'August 24, 2026',

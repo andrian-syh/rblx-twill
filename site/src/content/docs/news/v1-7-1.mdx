@@ -1,0 +1,73 @@
+---
+title: v1.7.1 — The Wire Refuses What It Cannot Carry
+description: Released August 24, 2026. A fixed-width number outside its range is refused rather than wrapped into another one.
+template: splash
+---
+
+import NewsBackLink from '../../../components/NewsBackLink.astro';
+import NewsPagination from '../../../components/NewsPagination.astro';
+
+<div class="news-article-container">
+
+<NewsBackLink />
+
+<header class="news-article-header">
+	<div class="news-article-badges">
+		<span class="news-badge-version">v1.7.1</span>
+		<span class="news-badge-date">August 24, 2026</span>
+	</div>
+	<p class="news-article-lead">
+		A fixed-width number outside its range is refused rather than wrapped into another one.
+	</p>
+</header>
+
+## A byte that was never 0 arriving as 0
+
+A remote declared with a fixed-width number reserves an exact number of bits for
+it: a `NumberU8` is one byte, and one byte holds nought to 255.
+
+Given 256, the old codec wrote it wrapped. A byte holding 256 came out the other
+side as 0, a byte holding -1 came out as 255, a signed byte holding 200 came out
+as -56.
+
+```luau
+Twill.Net.Declare("SetStack", { Twill.Net.Types.NumberU8 })
+```
+
+The trouble was not the wrap on its own. It was where the wrap happened. It ran
+**before** any `Validate` or `Schema` hook saw the value, so a handler that
+refuses anything above 100 was handed a 0 and let it through. A client sending
+256 was really sending 0, and nothing the server checked could tell.
+
+```text
+before:  256 → written as 0 → validator sees 0 → accepted
+after:   256 → refused at the write, before the handler runs
+```
+
+Both paths that wrote these numbers are fixed: the single value, and each element
+of an array of them. A value outside the range is refused where it used to be
+folded into another one.
+
+## A Union that could not carry a number
+
+A `Union` names several shapes and carries whichever one a value matches. One
+naming a fixed-width number among its members compiled without complaint and then
+threw the first time it actually carried a number, because only the widest
+numeric kinds were mapped back from a value on the wire.
+
+```luau
+Twill.Net.Types.Union(Twill.Net.Types.NumberU8, Twill.Net.Types.NumberF64)
+```
+
+Every numeric kind is reachable now, matched widest first, so a `Union` keeps the
+number it was given rather than narrowing it or refusing it.
+
+## The last of one shape
+
+1.7.0 brought every refusal message into one shape and said so. A handful inside
+the codec and the frame reader still carried an old `Twill.Net: ` prefix, unread
+by that sweep. They read like the rest now.
+
+<NewsPagination />
+
+</div>
