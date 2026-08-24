@@ -4,7 +4,7 @@
   <p><b>A modular, zero-setup infrastructure framework for Roblox Luau.</b></p>
 
   <p>
-    <a href="https://github.com/andrian-syh/rblx-twill/releases"><img src="https://img.shields.io/badge/version-1.7.1-2563eb?style=flat-square" alt="Version" /></a>
+    <a href="https://github.com/andrian-syh/rblx-twill/releases"><img src="https://img.shields.io/badge/version-1.7.2-2563eb?style=flat-square" alt="Version" /></a>
     <a href="https://luau.org/"><img src="https://img.shields.io/badge/language-Luau-00A2FF?style=flat-square&logo=lua&logoColor=white" alt="Luau" /></a>
     <a href="https://roblox.com/"><img src="https://img.shields.io/badge/platform-Roblox-000000?style=flat-square&logo=roblox&logoColor=white" alt="Roblox" /></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-10b981?style=flat-square" alt="License" /></a>

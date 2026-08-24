@@ -9,6 +9,29 @@ at least three large changes landing together, reaching more than a quarter of
 what came before. A smaller change to an API lands in a minor version and brings
 a Migration section with it, so what has to be rewritten is always written down.
 
+## [1.7.2] - 2026-08-24
+
+Compression is now Twill's own code end to end, and reads no stream past its end.
+
+### Changed
+
+- `Compress` no longer leans on a bundled `BytePress` package. Its serializer and
+  its entropy coder are now first-class Twill modules, `Compress.Serializer` and
+  `Compress.Lzw`, written in the framework's own style. The public `Encode` and
+  `Decode` are unchanged, and the byte format is unchanged, so anything already
+  stored still reads back.
+
+### Fixed
+
+- A colour channel is now rounded to its nearest 8-bit step rather than floored,
+  halving the largest error a stored `Color3` can carry.
+- The entropy coder clears and rebuilds its dictionary once it fills, so a long
+  payload whose repetition shifts partway keeps compressing instead of encoding
+  the rest against a frozen table.
+- Decoding a malformed or hostile payload can no longer read past the bytes it
+  was given: a truncated, over-deep, or unknown stream comes back as `nil`,
+  including one crafted to drive the reader into unbounded recursion.
+
 ## [1.7.1] - 2026-08-24
 
 A fixed-width number on the wire is now checked before it is written.

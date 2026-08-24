@@ -1,10 +1,38 @@
 ---
 title: Troubleshooting
-description: Symptoms on the left, the actual cause on the right.
+description: Every message Twill writes, paired with what caused it and how to resolve it.
 ---
 
-Every message Twill writes is quoted here as it appears in the Output, so
-searching this page for the text you are looking at should land on the cause.
+This page is a directory of what Twill reports. Each message it writes is quoted
+below exactly as it appears in the Output, so pasting the line you are looking at
+into search lands you on its cause and its fix.
+
+Entries in **bold** are either a message quoted word for word or a symptom
+described plainly, and the paragraph under each one is the reason and what to do
+about it.
+
+## How to use this page
+
+- **Have a message?** Search this page for its text. The quote is verbatim, so a
+  partial phrase is enough to find it.
+- **Have a symptom but no message?** Find the section for the area you are in from
+  the list below, then read down it; the symptom entries sit alongside the
+  messages.
+- **Have neither?** Start at [When nothing here matches](#when-nothing-here-matches).
+
+| Area | Covers |
+| --- | --- |
+| [Installation and requires](#installation-and-requires) | Missing folders, server-only modules, silent no-ops |
+| [Boot and Lifecycle](#boot-and-lifecycle) | Service discovery, `Init` and `Start`, critical failures |
+| [Player data](#player-data) | Sessions, saving, offline edits, migrations |
+| [Networking](#networking) | Declarations, handlers, rates, ranks, decoding |
+| [Replication](#replication) | Subscriptions, patches, paths, published state |
+| [Permissions](#permissions) | Ranks, resolvers, group lookups |
+| [Admin console](#admin-console) | Cmdr, the command gate, built-in commands |
+| [Monetization](#monetization) | Products, passes, receipts |
+| [Leaderstats](#leaderstats) | Bindings, value objects, sorting |
+| [Filtering](#filtering) | Text filtering and its failure mode |
+| [Studio and tooling](#studio-and-tooling) | The Edit VM, API services, testing purchases |
 
 ## Reading Twill's output
 

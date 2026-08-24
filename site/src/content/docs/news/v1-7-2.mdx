@@ -1,0 +1,72 @@
+---
+title: v1.7.2 — Compression, All the Way Down
+description: Released August 24, 2026. The compressor is now Twill's own code end to end, and reads no stream past its end.
+template: splash
+---
+
+import NewsBackLink from '../../../components/NewsBackLink.astro';
+import NewsPagination from '../../../components/NewsPagination.astro';
+
+<div class="news-article-container">
+
+<NewsBackLink />
+
+<header class="news-article-header">
+	<div class="news-article-badges">
+		<span class="news-badge-version">v1.7.2</span>
+		<span class="news-badge-date">August 24, 2026</span>
+	</div>
+	<p class="news-article-lead">
+		The compressor is now Twill's own code end to end, and reads no stream past its end.
+	</p>
+</header>
+
+## One less thing that came from elsewhere
+
+[`Compress`](/reference/compress/) used to hand its real work to a bundled
+package. That package is gone. The serializer that turns a value into bytes and
+the coder that shrinks them are first-class Twill modules now,
+`Compress.Serializer` and `Compress.Lzw`, written in the same style as the rest
+of the framework and split along the seam a reader would want to change.
+
+```luau
+local packed = Twill.Compress.Encode(save)
+local save = Twill.Compress.Decode(packed)
+```
+
+`Encode` and `Decode` are exactly what they were, and the byte format did not
+move, so a value already sitting in a DataStore reads back the same. This is a
+change to whose code runs, not to what it does.
+
+## A reader that stops at the edge
+
+The part worth pausing on is the reading side. A saved payload can arrive
+truncated by a transport, altered in place, or shaped by someone who means the
+server harm.
+
+Every read now checks the bytes it is about to take before it takes them. A
+stream that is too short, nested deeper than the format allows, or tagged with
+something unknown comes back as `nil` rather than reading whatever lies past its
+end. A payload crafted to drive the reader into unbounded recursion is refused at
+a fixed depth instead of exhausting the stack.
+
+```text
+a truncated save → nil, not a half-built value
+a recursion bomb → nil, not a frozen server
+```
+
+A corrupted field becoming a missing value is a trade a game can absorb. A
+corrupted field becoming a fault is not.
+
+## Two smaller wins
+
+A `Color3` channel is now rounded to its nearest 8-bit step rather than floored,
+which halves the largest error a stored colour can carry.
+
+The entropy coder clears and rebuilds its dictionary once it fills. A long
+payload whose repetition changes partway used to encode the rest against a frozen
+table; now it keeps adapting, and keeps compressing.
+
+<NewsPagination />
+
+</div>

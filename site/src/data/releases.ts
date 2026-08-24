@@ -18,6 +18,16 @@ export interface Release {
 
 export const releases: Release[] = [
 	{
+		version: 'v1.7.2',
+		title: 'Compression, All the Way Down',
+		date: 'August 24, 2026',
+		tagline: "The compressor is now Twill's own code end to end, and reads no stream past its end.",
+		summary:
+			'Compress no longer leans on a bundled package: its serializer and entropy coder are first-class Twill modules now, in the framework’s own style, with the public API and the byte format unchanged so stored data still reads. Colours round instead of floor, the dictionary rebuilds once it fills, and a malformed payload can no longer read past what it was handed.',
+		slug: '/news/v1-7-2/',
+		icon: 'file',
+	},
+	{
 		version: 'v1.7.1',
 		title: 'The Wire Refuses What It Cannot Carry',
 		date: 'August 24, 2026',
