@@ -322,20 +322,21 @@ button[data-open-modal]:hover,
 	border-color: var(--sl-color-gray-4) !important;
 }
 
-/* Link buttons (download, other calls to action). Starlight's primary variant
-   colours itself from accent tokens this monochrome theme leaves without a
-   readable pairing, so it is restyled as the filled pill used elsewhere. */
-.sl-link-button.primary {
+/* Link buttons inside page content (the download button, other calls to
+   action). Starlight's primary variant colours itself from accent tokens this
+   monochrome theme leaves without a readable pairing, so a content one is
+   restyled as a filled button. Scoped to content so the home hero, which has
+   its own treatment, is left alone. */
+.sl-markdown-content .sl-link-button.primary {
 	background-color: var(--sl-color-text);
 	border: 1px solid var(--sl-color-text);
 	color: var(--sl-color-text-invert);
-	border-radius: var(--radius-buttons);
 	font-weight: 500;
 	text-decoration: none;
 	transition: color var(--motion), background-color var(--motion), border-color var(--motion);
 }
 
-.sl-link-button.primary:hover {
+.sl-markdown-content .sl-link-button.primary:hover {
 	background-color: var(--sl-color-accent-high);
 	border-color: var(--sl-color-accent-high);
 	color: var(--sl-color-text-invert);
