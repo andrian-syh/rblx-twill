@@ -119,7 +119,8 @@ function Replication.SetPathFor(player: Player, key: string, path: string, value
 **Returns**
 
 `boolean` - False when a step along the path is blocked by something that is not
-a table, or, for the `For` twin, when the player is not here.
+a table, when the key's guard refuses what the write would have made of it, or,
+for the `For` twin, when the player is not here.
 
 Tables along the path are **built as needed**, so a field can be published before
 its parents exist.
@@ -201,6 +202,12 @@ function Replication.SetValidator(key: string, validator: ((value: any) -> boole
 
 This guards against your own mistakes, not against a client, which cannot publish
 anything at all. One guard per key, and installing a second replaces the first.
+
+**The guard covers every way of writing that key**, the whole value and one field
+inside it alike, so `SetPath` and `Increment` answer to it as `Set` does. A field
+written into a guarded key is tried on a copy of it first, so a refusal leaves
+nothing behind, not even the tables the write would have needed. That copy is the
+cost of guarding a key written by path, and it is paid only where a guard exists.
 
 A validator that throws is read as a refusal, since a test that cannot decide
 must not be read as consent. Clearing a key is always allowed: a guard describes

@@ -100,7 +100,7 @@ Rate = 0.25       -- one call every four seconds
 ```
 
 Below one, it is a cooldown. Pick a number a real player cannot exceed and no
-higher. A separate budget weighs the bytes a player sends across every remote,
+higher. A separate budget weighs everything a player sends across every remote,
 so batching is not a way around it.
 
 ### 3. Schema

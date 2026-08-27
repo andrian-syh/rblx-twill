@@ -368,7 +368,8 @@ function Data.LoadBranch<T>(player: Player, name: string): T?
 
 Callers that arrive while a load is still running wait for that one rather than
 starting a second, and every one of them is answered even when the load fails.
-Throws when no branch answers to the name given.
+Throws when given something that is not a player, when given something that is
+not a branch name, and when no branch answers to the name given.
 
 ### `Data.GetBranch`
 

@@ -137,6 +137,20 @@ so neither is transmitted.
 was not declared with is refused on arrival, and a constant nobody listed is
 refused on the way out.
 
+A union picks its member from the value it is handed, so **its members have to be
+tellable apart by that value alone**. Two that are not are refused at the
+declaration rather than picked between:
+
+```text
+BuyItem argument 1 names 2 members that all look like table when sent,
+and nothing says which one a value meant
+```
+
+Members of the same kind at different widths are fine as long as the widest of
+them is named, since the widest carries what the others could: `Union(NumberU8,
+NumberF64)` keeps its double, and `Union(Vector3F32, Vector3F16)` keeps its
+precision. `Union(NumberVarU, NumberF32)` names no such member and is refused.
+
 ### `Types.Any`
 
 For a payload whose shape nobody can declare. Every value carries a tag, so it
@@ -201,7 +215,8 @@ end, {
 Cheapest first, so a caller flooding one remote is turned away before their
 arguments are read at all.
 
-1. **Bytes.** The whole message is weighed before a single call is opened.
+1. **Weight.** The whole message is weighed before a single call is opened,
+   instances included.
 2. **Still here.** A player who has left is dropped without a word.
 3. **Declared and served.** A call naming a remote nothing serves goes no further.
 4. **`MinimumRank`.** Refused before spending any of their allowance.
@@ -520,10 +535,14 @@ Below one it is a cooldown. `Rate = 0.25` permits one call every four seconds.
 The burst never falls below a single token, so the first call is allowed however
 slow the refill. A rate of zero or less is refused at `Handle`.
 
-A separate budget weighs the **bytes** a player sends, across every remote,
+A separate budget weighs **everything a player sends**, across every remote,
 before any of their calls are opened. Batching many calls into one message
 therefore costs what those calls actually weigh rather than what one message
 costs.
+
+Instances travel beside a payload rather than inside it, so they are weighed
+separately and charged at a flat rate each. Without that, a payload of almost
+nothing could carry any number of them and be admitted for almost nothing.
 
 Metering lives in [`Twill.Limit`](/reference/limit/), which creates a player's
 standing the moment it is needed and forgets it when they leave. There is no

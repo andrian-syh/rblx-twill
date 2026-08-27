@@ -112,6 +112,10 @@ function Compress.Decode(text: string): any
 was never a Compress payload at all comes back as `nil`, so a corrupted field is a
 missing value rather than a broken caller.
 
+A count found in a payload is weighed against the bytes that came with it before
+anything is built for it, so text claiming millions of entries costs the reading
+of a few bytes rather than the memory those entries would have taken.
+
 ## Transport ceilings still apply
 
 Every transport imposes its own limit on the result, and the result is text.

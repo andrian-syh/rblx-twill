@@ -9,6 +9,60 @@ at least three large changes landing together, reaching more than a quarter of
 what came before. A smaller change to an API lands in a minor version and brings
 a Migration section with it, so what has to be rewritten is always written down.
 
+## [1.7.4] - 2026-08-28
+
+What a union could not tell apart, what a count could ask for, and a guard that
+only covered half its key.
+
+### Fixed
+
+- A `Net.Union` picks its member from the value it is handed, and where two
+  members could not be told apart by that value it picked one and lost the rest.
+  A union of a map and an array sent every table as an array, so a map arrived
+  empty. `Union(NumberVarU, NumberF32)` truncated a fraction, and its signed twin
+  turned 1.5 into -2. `Union(Color3, Color3F32)` quantised to eight bits because
+  the narrower member was tried first. Members sharing a runtime shape are now
+  told apart by the widest of them, and a union with no such member is refused at
+  the declaration rather than picked between.
+- `Compress.Serializer` built a table for a count found in the stream before
+  weighing that count against the bytes that came with it, so five bytes could
+  ask for ninety megabytes. A count is now weighed first, which costs a malformed
+  payload a `nil` rather than the memory it named.
+- A `Replication` key's guard covered `Set` and `Mutate` but not `SetPath`,
+  `SetPathFor`, `Increment`, or `IncrementFor`, so half of the ways of writing a
+  guarded key went unguarded. Every write now answers to the guard, and a field
+  written into a guarded key is tried on a copy of it first, so a refusal leaves
+  nothing behind.
+- The metering that decides whether a message is worth opening weighed only the
+  payload, never the instances travelling beside it, so a caller could carry any
+  number of them for almost nothing. Both are now charged for.
+- Ten datatypes could be declared inside a `Net.Union` but never carried by one:
+  `UDim`, `UDim2`, `Rect`, `Region3`, `NumberRange`, `TweenInfo`, `DateTime`,
+  `BrickColor`, `NumberSequence`, and `ColorSequence`. Each is now recognised.
+- Reading an unknown name from the root table reported a missing `Packages`
+  folder rather than the name that was asked for, whenever that folder was not
+  there to look in.
+- A colour crossing through a channel no screen can show answered with `nan` for
+  the whole colour rather than a colour, since the even space the crossing runs
+  through has no answer for a channel below nothing.
+- `Tween` refused a time and a delay that were not finite but accepted a rate and
+  a repeat count that were not. All four are held to the same rule now.
+- `Data.LoadBranch` was the only branch function that did not say what it expects
+  when handed something that is not a player or not a branch name.
+
+### Changed
+
+- A `Net.Union` member of a kind no sent value can be recognised as is refused at
+  the declaration instead of compiling and failing at the first send. This covers
+  `Types.Any`, `Types.Nil`, and `Types.Static`, none of which a union could carry
+  before either.
+- `Twill.Admin`'s shared configuration type names `TwillCommands`, which the
+  server half has taken since 1.7.0.
+- Two module descriptions were corrected. `Navigation` claimed to answer a goal
+  against the nearest place an agent can stand, which it has never done; it
+  refuses a goal too far off instead. `Net.List` was described as reporting what a
+  client may send, when it reports what has been declared.
+
 ## [1.7.3] - 2026-08-27
 
 Four places where the wrong thing happened quietly.

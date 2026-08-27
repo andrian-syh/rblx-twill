@@ -18,6 +18,16 @@ export interface Release {
 
 export const releases: Release[] = [
 	{
+		version: 'v1.7.4',
+		title: 'Told Apart, or Not Sent',
+		date: 'August 28, 2026',
+		tagline: 'A union that could not tell its members apart now says so, instead of picking one.',
+		summary:
+			'A union picks its member from the value it is handed, and where two members looked alike it picked one and lost the rest: a map arrived as an empty array, a fraction arrived whole, a colour arrived quantised. Such a union is now refused where it is declared. A count found in a payload is weighed before anything is built for it, a replication guard covers every way of writing its key, and ten datatypes a union could name but never carry finally travel.',
+		slug: '/news/v1-7-4/',
+		icon: 'file',
+	},
+	{
 		version: 'v1.7.3',
 		title: 'Four Quiet Wrongs',
 		date: 'August 27, 2026',

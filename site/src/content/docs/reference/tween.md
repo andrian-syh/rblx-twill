@@ -166,9 +166,9 @@ export type Options = {
 | `EasingStyle` | `"Quad"` | A style name, or a curve of your own taking and returning a number. |
 | `EasingDirection` | `"Out"` | `In`, `Out`, `InOut`, or `OutIn`. |
 | `DelayTime` | 0 | Seconds to wait before the first move. |
-| `RepeatCount` | 0 | Extra rounds after the first. Below zero repeats forever. |
+| `RepeatCount` | 0 | Extra rounds after the first. Below zero repeats forever. Must be finite. |
 | `Reverses` | false | Whether a round travels back before it counts as done. |
-| `FPS` | every frame | Write no more often than this many times a second. |
+| `FPS` | every frame | Write no more often than this many times a second. Must be finite and above zero. |
 | `AllowServer` | false | Whether an `Instance` may be tweened on a server. |
 
 Eleven easing styles are available: `Linear`, `Quad`, `Cubic`, `Quart`, `Quint`,
