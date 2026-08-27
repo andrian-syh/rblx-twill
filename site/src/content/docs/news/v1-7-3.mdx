@@ -1,0 +1,99 @@
+---
+title: v1.7.3 — Four Quiet Wrongs
+description: Released August 27, 2026. A rollback no longer replays migrations, and three other failures that never said a word.
+template: splash
+---
+
+import NewsBackLink from '../../../components/NewsBackLink.astro';
+import NewsPagination from '../../../components/NewsPagination.astro';
+
+<div class="news-article-container">
+
+<NewsBackLink />
+
+<header class="news-article-header">
+	<div class="news-article-badges">
+		<span class="news-badge-version">v1.7.3</span>
+		<span class="news-badge-date">August 27, 2026</span>
+	</div>
+	<p class="news-article-lead">
+		A rollback no longer replays migrations, and three other failures that never said a word.
+	</p>
+</header>
+
+## The hour after a rollback
+
+Publishing a version and taking it back an hour later is an ordinary day. What
+was not ordinary is what it did to the players who logged in during that hour.
+
+A profile carries the version it was last raised to. A server reading a profile
+from a version it had never heard of ran no upgrade — correctly, there were none
+to run — and then stamped its own, lower version onto it anyway. The profile now
+claimed to be older than it was. When that player next reached a server on the
+newer version, every migration in between ran a second time, on data that had
+already had them.
+
+```text
+join a rolled-back server   version 3 → marked 2
+return to the newer one     migration 3 runs again
+```
+
+Whether that is survivable depends entirely on what the migration does. One that
+renames a field is harmless the second time. One that doubles a currency doubles
+it again. One that reads a field the rename already removed writes a zero.
+
+A version a server does not understand is now left exactly as it is, and reported
+once so the mismatch is visible rather than inferred later from a support thread.
+The upgrade path itself is unchanged: a profile behind the server still climbs,
+one step at a time, in order.
+
+## A decoder that promised never to throw
+
+[`Compress.Decode`](/reference/compress/#compressdecode) is documented to answer
+`nil` for anything it cannot read, which is a promise callers act on by not
+wrapping it. Its length header catches a payload cut short, but the module says
+plainly that bytes altered in place still read — that is the trade, and it is the
+right one for transports that lose a tail without rewriting a middle.
+
+Such bytes reached the entropy coder, and one arrangement of them reached a line
+that had nothing to work from and raised. The caller holding no `pcall` got a
+fault where it had been told to expect a missing value.
+
+A stream that cannot be followed is now dropped whole and read back as nothing.
+Not the piece it managed before the trouble, either: half a value that decodes
+cleanly is worse than no value, because nothing downstream can tell the
+difference.
+
+## Numbers that left but never arrived
+
+1.7.1 taught the fixed-width integers to refuse a value past what they hold,
+rather than wrapping it into a different one. The variable-width pair kept the
+mirror image of the same bug.
+
+`NumberVarU` and `NumberVarI` stop at five bytes. A value past that, or a
+negative one given to the unsigned kind, was written without complaint and then
+refused by the reader on the other side. The sender saw success. The receiver
+skipped the call. Nothing was logged anywhere near the code that caused it.
+
+They now refuse at the sender, in the same words the fixed-width numbers use:
+
+```text
+BuyItem argument 1 carries 0 to 34359738367, and was given 34359738368
+```
+
+The ceilings are worth knowing rather than discovering: `NumberVarU` reaches
+34359738367, and `NumberVarI` reaches from -17179869184 to 17179869183. Past
+that is [`BigNumber`](/reference/bignumber/) carried as text.
+
+## A tween that stopped without saying why
+
+[`Tween.Stopped`](/reference/tween/#tweenstopped) carries `gone` for a tween
+whose target left the world. It fired for a target reparented away, and stayed
+silent for one that was destroyed — which is the far more common of the two, and
+the one the documentation used as its example.
+
+Both report it now.
+
+<NewsPagination />
+
+</div>

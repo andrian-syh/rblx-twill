@@ -548,6 +548,11 @@ call this: `Configure` runs it for every profile that loads. Data already at the
 version is left untouched, and a step that throws stops the whole thing and
 raises, naming the version it was reaching.
 
+**Data past the version is left exactly as it is**, including the version it
+carries, and reported once. This is what a rollback looks like from the older
+server's side, and marking the data back down would mean every migration in
+between ran again the next time that player reached a newer server.
+
 ## Failure messages
 
 | Kick message | Cause |

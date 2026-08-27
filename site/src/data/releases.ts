@@ -18,6 +18,16 @@ export interface Release {
 
 export const releases: Release[] = [
 	{
+		version: 'v1.7.3',
+		title: 'Four Quiet Wrongs',
+		date: 'August 27, 2026',
+		tagline: 'A rollback no longer replays migrations, and three other failures that never said a word.',
+		summary:
+			'Data at a version past the server reading it kept getting marked back down, so every migration in between ran a second time the next time that player reached a newer server. A compressed payload altered in place could raise from a decoder documented never to throw. A variable-width number too large to carry was written anyway and failed at the receiver. A tween whose target was destroyed stopped without saying why.',
+		slug: '/news/v1-7-3/',
+		icon: 'file',
+	},
+	{
 		version: 'v1.7.2',
 		title: 'Compression, All the Way Down',
 		date: 'August 24, 2026',

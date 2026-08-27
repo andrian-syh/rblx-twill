@@ -63,6 +63,12 @@ value is, so the wire never has to.
 think about width. They cost one byte for values under 128 and grow only as the
 value does, which removes the choice that overflow bugs come from.
 
+They are not unbounded. Five bytes is where they stop, so `NumberVarU` reaches
+34359738367 and `NumberVarI` reaches from -17179869184 to 17179869183. A value
+past either end is refused at the sender rather than sent as something the
+receiver cannot read. Above that range, reach for
+[`BigNumber`](/reference/bignumber/) and carry it as text.
+
 `NumberF16` is a real half, including the very small values a naive
 implementation drops to zero, both infinities, and a NaN that stays a NaN.
 

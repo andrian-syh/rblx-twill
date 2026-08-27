@@ -9,6 +9,33 @@ at least three large changes landing together, reaching more than a quarter of
 what came before. A smaller change to an API lands in a minor version and brings
 a Migration section with it, so what has to be rewritten is always written down.
 
+## [1.7.3] - 2026-08-27
+
+Four places where the wrong thing happened quietly.
+
+### Fixed
+
+- Stored data at a version past the one a server upgrades to had its version
+  marked back down to that server's, so returning to a newer server ran every
+  migration in between a second time on data that had already had them. A
+  rollback lasting an hour was enough to double a currency for everyone who
+  logged in during it. The version a server does not understand is now left
+  exactly as it is, and reported once.
+- A compressed payload whose bytes changed in place could raise from inside
+  `Compress.Decode`, which is documented never to throw and is read by callers
+  holding no `pcall`. A stream that cannot be followed is now dropped whole and
+  read back as nothing, rather than raising or handing back the piece of a value
+  it managed before the trouble.
+- `NumberVarU` and `NumberVarI` accepted a value wider than a varint carries, and
+  `NumberVarU` accepted a negative one. Both wrote successfully and then failed at
+  the receiver, so the sender saw nothing and the call vanished. They now refuse
+  at the sender, in the same shape the fixed-width numbers have refused since
+  1.7.1. `NumberVarU` carries up to 34359738367; `NumberVarI` carries
+  -17179869184 to 17179869183.
+- A tween whose target was destroyed stopped without saying why, so `Stopped`
+  reported `gone` only for a target reparented away rather than destroyed, which
+  is the rarer of the two. Both now report it.
+
 ## [1.7.2] - 2026-08-24
 
 Compression is now Twill's own code end to end, and reads no stream past its end.
