@@ -9,9 +9,6 @@ fixes to its random number generator. Those are noted in its own section.
 Verified against the upstream sources on 31 July 2026, Cmdr on 1 August 2026,
 and Cryptography on 12 August 2026.
 
-`BytePress` and `WeightedRandom` are not listed here. They are Twill's own and
-carry Twill's MIT licence.
-
 ---
 
 ## Cmdr — MIT

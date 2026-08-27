@@ -20,10 +20,6 @@ to redistribute belongs with the thing you redistribute.
 | Package | Licence | Author |
 | --- | --- | --- |
 | AptInt | Unlicense | fosterchild1 |
-| BytePress | MIT | Twill |
-
-`BytePress` is Twill's own, kept beside the third-party packages because it is
-reached the same way. It carries Twill's licence, not somebody else's.
 
 ## Server
 

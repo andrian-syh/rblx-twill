@@ -229,7 +229,6 @@ dead `Instance`.
 | ProfileStore | Sessions, saving, cross-server messaging |
 | Cmdr | The console, behind `Admin` |
 | AptInt | Arbitrary precision, behind `BigNumber` |
-| BytePress | Binary compression, behind `Compress` |
 | Cryptography | Hashing and CSPRNG, behind `Random` and `Token` |
 
 Every one of these is reached through a Twill module rather than directly, and in
