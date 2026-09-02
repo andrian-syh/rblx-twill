@@ -1,7 +1,15 @@
 ---
 title: Authorization
-description: Who is allowed to do what.
+description: Who is allowed to do what
 ---
+
+```luau
+local Authorization = require("@game/ReplicatedStorage/Twill").Authorization
+
+if Authorization.AtLeast(player, Ranks.Moderator) then
+	openThePanel(player)
+end
+```
 
 A rank is a number. You name the numbers yourself, in a table both sides can
 read, and higher means more.
@@ -22,7 +30,7 @@ twelve are both served by a plain table of numbers.
 
 For the patterns, see [Gate actions by rank](/guides/ranks-and-permissions/).
 
-## Configure
+## Deciding a rank
 
 The server decides, once, during `Init`.
 
@@ -37,22 +45,17 @@ Twill.Authorization.Configure({
 })
 ```
 
-```luau
-export type Config = {
-	Default: number?,
-	Users: { [number]: number }?,
-	Resolve: ((player: Player) -> number?)?,
-}
-```
+`Users` and `Default` answer at once, so a player is never left without a rank
+while a slower answer is worked out. `Resolve` may yield; until it returns, the
+player holds what `Users` or `Default` gave them.
 
-What can be answered at once is published at once, so a player is never left
-without a rank while a slower answer is being worked out. `Resolve` may yield;
-until it returns, the player holds what `Users` or `Default` gave them.
+A `Resolve` answering anything but a number leaves the rank as it stands, which
+is how it declines to decide.
 
 ## Reading a rank
 
-Reading works the same on both sides, because the answer travels as a **player
-attribute** rather than over a remote.
+The answer travels as a player attribute named `TwillRank`, so reading works the
+same on both sides without a remote.
 
 ```luau
 if Twill.Authorization.GetRank(player) >= Ranks.Moderator then
@@ -60,8 +63,8 @@ if Twill.Authorization.GetRank(player) >= Ranks.Moderator then
 end
 ```
 
-A client can read that attribute but **cannot write it**. Hiding a button by rank
-is therefore safe. Trusting a client's claim about its own rank is not.
+A client can read that attribute but cannot write it. Hiding a button by rank is
+therefore safe. Trusting a client's claim about its own rank is not.
 
 Every decision that matters is made on the server, which is what
 [`MinimumRank`](/reference/net/#minimumrank) on `Net.Handle` is for.
@@ -80,7 +83,7 @@ function Authorization.GetRank(player: Player): number
 
 **Returns**
 
-`number` - Their rank, or the lowest one when none has been decided.
+`number` - Their rank, or zero when none has been decided.
 
 A player whose rank has not been decided yet reads as zero, so a check made too
 early refuses rather than admits.
@@ -97,10 +100,10 @@ function Authorization.AtLeast(player: Player, rank: number): boolean
 
 **Returns**
 
-`boolean` - True when they reach it.
+`boolean` - `true` when they reach it.
 
 The same comparison, spelled once. Reading this on a client is for what a player
-is **shown**, never for what they are **allowed** to do.
+is shown, never for what they are allowed to do.
 
 ### `Authorization.OnChanged`
 
@@ -116,9 +119,21 @@ function Authorization.OnChanged(player: Player): RBXScriptSignal
 
 `RBXScriptSignal` - Fires on every change, carrying nothing.
 
-This is how a client waits for a rank rather than reading too early, and how
-anything shown by rank is redrawn when it moves. Draw once for the rank already
-held, then follow this: a rank decided before you connected will never fire.
+This is the attribute's own changed signal. Draw once for the rank already held,
+then follow this: a rank decided before you connected never fires.
+
+### `Authorization.Attribute`
+
+`[Server]` | `[Client]`
+
+The attribute name a rank is published under.
+
+```luau
+Authorization.Attribute   --> "TwillRank"
+```
+
+For code that binds to the attribute directly, such as a UI that follows it
+without going through this module.
 
 ### `Authorization.Configure`
 
@@ -128,18 +143,31 @@ Sets who holds which rank.
 
 ```luau
 function Authorization.Configure(config: Config)
+
+export type Config = {
+	Default: number?,
+	Users: { [number]: number }?,
+	Resolve: ((player: Player) -> number?)?,
+}
 ```
 
-**Returns**
+**Config**
 
-`()` - Nothing.
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `Default` | `number?` | The rank everybody starts at. Zero when left out. |
+| `Users` | `{ [number]: number }?` | Ranks by user id, answered without waiting. |
+| `Resolve` | `((player: Player) -> number?)?` | Decides what a table cannot. May yield. |
 
-Call once, during the first boot phase, before anything can act on a rank. Throws
-on a second call, rather than allowing who is privileged to change while the
-server is running.
+Call once, during the first boot phase, before anything can act on a rank.
+Throws on a second call, rather than letting who is privileged change while the
+server runs.
 
-A `Resolve` that throws is reported and leaves the player on the rank they
-already hold, and one that returns after the player has gone changes nothing.
+Players already on the server when this runs are decided too, so configuring is
+not something a player can arrive ahead of.
+
+A `Resolve` that throws is reported at `Error` and leaves the player on the rank
+they already hold. One that returns after the player has gone changes nothing.
 
 ### `Authorization.SetRank`
 
@@ -151,19 +179,15 @@ Overrides a player's rank for the rest of their session.
 function Authorization.SetRank(player: Player, rank: number)
 ```
 
-**Returns**
-
-`()` - Nothing.
-
 Throws when the rank is not a number.
 
 Nothing is remembered: they rejoin at whatever the usual decision gives them. To
 make a promotion permanent, write it to [`Data`](/reference/data/) and read it
 back in `Resolve`.
 
-The [`rank` command](/reference/admin/#built-in-commands) reaches this from the
-console, under guards this function does not impose on its own. Calling `SetRank`
-in your own code has no such guards, so do not route a player's request into it.
+The [`rank` command](/reference/admin/#rank) reaches this from the console,
+under guards this function does not impose on its own. Calling `SetRank` in your
+own code has no such guards, so do not route a player's request into it.
 
 ### `Authorization.GetGroupStanding`
 
@@ -190,14 +214,13 @@ Throws when the group id is not a number.
 
 Remembered for the rest of their session, because group lookups spend the
 server's web quota, and dropped through [`Scope.Player`](/reference/scope/). A
-failed lookup is **not** remembered, so it is retried rather than treated as an
-answer of no.
+failed lookup is not remembered, so it is retried rather than treated as an
+answer of no, and is reported at `Warn`.
 
-:::caution[`nil` means unknown, not "not a member"]
-Standing that changes while they are playing is not picked up; they see it on
-rejoining. If a group outage should not silently demote your moderators, check
-for `nil` explicitly rather than treating it as a refusal.
-:::
+`nil` means unknown, not that they are outside the group. Standing that changes
+while they are playing is not picked up; they see it on rejoining. Where a group
+outage should not silently demote your moderators, check for `nil` explicitly
+rather than treating it as a refusal.
 
 ### `Authorization.InGroup`
 
@@ -219,8 +242,14 @@ function Authorization.InGroup(player: Player, groupId: number, minimumRank: num
 
 **Returns**
 
-`boolean` - True when they belong, at that rank or above. Yields.
+`boolean` - `true` when they belong, at that rank or above. Yields.
 
-A lookup that failed reads as **not** a member, so this cannot let someone in on
+A lookup that failed reads as not a member, so this cannot let somebody in on
 the strength of an answer nobody received. This is the question `Resolve` is
-usually asked, and it is server only for the same reason `Configure` is.
+usually asked.
+
+## Server only
+
+`Configure`, `SetRank`, `GetGroupStanding`, and `InGroup` exist on a client but
+throw when called, naming themselves as server only. The list of who holds which
+rank never reaches a player.

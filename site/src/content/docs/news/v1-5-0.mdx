@@ -1,6 +1,6 @@
 ---
 title: v1.5.0 — Cleanup That Finishes
-description: Released August 20, 2026. Twill's own cleanup container, closing newest first and running to the end.
+description: Released August 20, 2026. Twill's own cleanup container, closing newest first and running to the end
 template: splash
 ---
 
@@ -31,8 +31,8 @@ An entry whose cleanup raised escaped that loop. The flag stayed raised.
 
 From that moment the bag was dead in a way nothing announced: every remaining
 entry stayed held forever, closing it again returned immediately, and adding to
-it raised. Player bags are **shared between systems** — that is the whole point
-of them — so one service's bad `Destroy` silently took every other service's
+it raised. Player bags are shared between systems, which is the whole point of
+them, so one service's bad `Destroy` silently took every other service's
 teardown down with it, for the rest of that player's session.
 
 `Twill.Bag` closes every entry inside its own `pcall`.
@@ -69,18 +69,18 @@ container gives up at least one:
 
 | | Order | Cost | Survives a failing cleanup | `Add` from inside a cleanup |
 | --- | --- | --- | --- | --- |
-| **Bag** | newest first | linear | yes | yes |
+| Bag | newest first | linear | yes | yes |
 
-Entries are taken out of the array **before** they are run. That one detail is
-what makes closing linear while still letting a cleanup add to the bag it is
-closing — the alternative, rescanning for the next entry after each one, is
-quadratic. Measured in Studio, five thousand entries:
+Entries are taken out of the array before they are run. That one detail is what
+makes closing linear while still letting a cleanup add to the bag it is closing.
+The alternative, rescanning for the next entry after each one, is quadratic.
+Measured in Studio, five thousand entries:
 
 | Entries | Rescanning | Bag |
 | --- | --- | --- |
 | 100 | 0.012 ms | 0.015 ms |
 | 1 000 | 0.284 ms | 0.105 ms |
-| 5 000 | **9.92 ms** | **0.544 ms** |
+| 5 000 | 9.92 ms | 0.544 ms |
 
 Quadratic teardown is invisible until the frame a lot of players leave at once.
 
@@ -93,8 +93,8 @@ local function retarget(model: Model)
 end
 ```
 
-Without a name, that stacks a new tween on every retarget and cancels all of them
-at once when the bag finally closes.
+Without a name, that stacks a new tween on every retarget and cancels all of
+them at once when the bag finally closes.
 
 ## No promise dependency, and promises still work
 
@@ -105,19 +105,19 @@ bag:Add(sound, "Stop")
 ```
 
 A promise carries `cancel`, so naming it is the entire feature. There is no
-`AddPromise` and nothing to register, because **the method name is the extension
-point**. Anything you write yourself is supported the day you write it.
+`AddPromise` and nothing to register, because the method name is the extension
+point. Anything you write yourself is supported the day you write it.
 
-Something with no way to close is refused at the `Add` that offered it, with that
-line named. A container that accepts it and warns has accepted a leak.
+Something with no way to close is refused at the `Add` that offered it, with
+that line named. A container that accepts it and warns has accepted a leak.
 
 ## Smaller things that used to be silent
 
-A **one-shot listener** whose signal fired during the connect used to leave a
-dead connection in the bag until the bag closed. Its entry is now registered
-before the signal is connected.
+A one-shot listener whose signal fired during the connect used to leave a dead
+connection in the bag until the bag closed. Its entry is now registered before
+the signal is connected.
 
-A **thread cancelling itself** used to fail silently. It is now deferred.
+A thread cancelling itself used to fail silently. It is now deferred.
 
 **Attaching to an instance that is already gone** used to raise. It now closes
 the bag at once, because the thing you were waiting for has already happened.

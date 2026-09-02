@@ -1,6 +1,6 @@
 ---
 title: Store and save player data
-description: Set up a profile, add fields safely over time, and read data for players who are not here.
+description: Set up a profile, add fields safely over time, and read data for players who are not here
 ---
 
 ## Set up the store
@@ -44,8 +44,8 @@ end
 data.Stats.Wins += 1
 ```
 
-There is no commit step, and **no save call belongs in `BindToClose`**.
-ProfileStore flushes everything on shutdown already.
+There is no commit step, and no save call belongs in `BindToClose`. Twill
+flushes everything on shutdown already.
 
 :::caution[Re-check after every yield]
 A player can leave while you were waiting. Anything that yields must ask again
@@ -79,7 +79,7 @@ Template = {
 ## Change a field later
 
 Renaming, reshaping, or recomputing a field needs a migration. Bump the version
-and add a step keyed by the version it **produces**.
+and add a step keyed by the version it produces.
 
 ```luau
 Twill.Data.Configure({
@@ -170,8 +170,8 @@ sent to whichever server does, or left in their saved data until next login.
 **Nothing ever writes over a session it does not own.**
 
 Check the [outcome](/reference/data/#outcome). `"unsupported"` means the value
-cannot survive a DataStore and needs
-[`Serialize.Encode`](/reference/serialize/) first.
+cannot survive a DataStore and needs [`Serialize.Encode`](/reference/serialize/)
+first.
 
 ## Move a large collection off the main profile
 
@@ -208,5 +208,5 @@ local landed = Twill.Data.SaveNow(player, function(saved)
 end, 10)
 ```
 
-[`Monetization`](/reference/monetization/) already does this for receipts. You do
-not need to repeat it there.
+[`Monetization`](/reference/monetization/) already does this for receipts. You
+do not need to repeat it there.

@@ -1,6 +1,6 @@
 ---
 title: v1.3.0 — Console Commands & Internal State
-description: Released August 16, 2026. Seven console commands, and the switch to turn them off.
+description: Released August 16, 2026. Seven console commands, and the switch to turn them off
 template: splash
 ---
 
@@ -25,11 +25,11 @@ import NewsPagination from '../../../components/NewsPagination.astro';
 
 The console could reach players and their data. It could not reach Twill. Which
 services booted, which remotes nobody serves, what a replicated key holds, what
-log level a live server is running at — all of it private to the framework, and
+log level a live server is running at, all of it private to the framework, and
 none of it reachable without going through internals.
 
-That is the line these commands draw. **Twill ships commands for state only Twill
-can see, and no gameplay commands at all.** There is no `fly`, no `speed`, no
+That is the line these commands draw. Twill ships commands for state only Twill
+can see, and no gameplay commands at all. There is no `fly`, no `speed`, no
 `godmode`. Those depend on your own character rules and are a few lines each in
 Cmdr, so they stay yours.
 
@@ -42,14 +42,14 @@ shows up as a client firing into silence.
 server. Turning `Debug` on used to mean republishing the place.
 * **`repl`** reads [replicated state](/reference/replication/), and can freeze a
 key that is flooding every client without shutting the server down.
-* **`rank`**, **`pass`**, **`saveall`**, and **`verifyroll`** cover the rest: a
+* **`rank`**, `pass`, `saveall`, and `verifyroll` cover the rest: a
 player's rank, game pass ownership and its cache, an early write for every open
 session, and checking a revealed seed against the commitment
 [a round](/reference/random/) published before the draw.
 
 That last one is worth naming. When a player says the game cheated them, a
-moderator can settle it in front of them, and nothing about the answer depends on
-either of them trusting the other.
+moderator can settle it in front of them, and nothing about the answer depends
+on either of them trusting the other.
 
 ## The command that can hand out authority
 
@@ -87,8 +87,8 @@ them. It was the one action the command let through on its own gate alone.
 
 The module's header also claimed it refused a moderator acting on an equal. It
 can only compare ranks for a target on this server, since a rank is read from a
-`Player`. The documentation site
-[already said so](/reference/troubleshooting/); the module's own header did not.
+`Player`. The documentation site [already said so](/reference/troubleshooting/);
+the module's own header did not.
 
 <NewsPagination />
 

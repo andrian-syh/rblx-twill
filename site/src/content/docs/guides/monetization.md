@@ -1,12 +1,12 @@
 ---
 title: Sell products and passes
-description: Grant a developer product exactly once, and check a pass without burning web quota.
+description: Grant a developer product exactly once, and check a pass without burning web quota
 ---
 
 Selling things is the one part of a Roblox game where a bug costs real money in
 both directions. Grant too eagerly and a redelivered receipt pays twice. Report
-success too early and a server that dies mid-save takes the reward with it, while
-the player has already been charged.
+success too early and a server that dies mid-save takes the reward with it,
+while the player has already been charged.
 
 Both failures come from the same place: the reward, the record that it happened,
 and the answer given to Roblox must agree with each other. Twill keeps them in
@@ -37,9 +37,9 @@ end
 The reward and the record of the purchase are written together, and Roblox is
 told the purchase succeeded only after that write is confirmed.
 
-That ordering is the whole point. ProfileStore's save does not wait, so reporting
-success first would lose the reward if the server died in between, and the player
-would have paid for nothing.
+That ordering is the whole point. A save does not wait, so reporting success
+first would lose the reward if the server died in between, and the player would
+have paid for nothing.
 
 ## What you no longer have to write
 
@@ -48,9 +48,9 @@ server, and two systems that both want it silently overwrite one another. Twill
 owns the one assignment and routes each receipt to its registered handler.
 
 **Do not write your own duplicate check.** Roblox redelivers a receipt until it
-is told the purchase was granted, so the same purchase can arrive more than once.
-Granted purchase ids are recorded in the player's own saved data, in the same
-write as the reward, and a receipt already on that list is answered without
+is told the purchase was granted, so the same purchase can arrive more than
+once. Granted purchase ids are recorded in the player's own saved data, in the
+same write as the reward, and a receipt already on that list is answered without
 paying again.
 
 **Do not answer `PurchaseGranted` yourself.** Anything that goes wrong answers
@@ -93,7 +93,7 @@ The answer is remembered for the rest of the player's session, because the
 underlying call spends web quota. The first call per player and pass yields; the
 rest do not.
 
-A failed check reads as not owned and is **not** remembered, so it is asked again
+A failed check reads as not owned and is not remembered, so it is asked again
 rather than settled wrongly against the player.
 
 ### A pass bought during play
@@ -111,20 +111,18 @@ Twill.Monetization.ForgetPasses(player, 7654321)
 
 ## Test it
 
-Purchases cannot be simulated in Studio. Publish to a private test place, buy the
-product with a real account, and confirm two things:
+Purchases cannot be simulated in Studio. Publish to a private test place, buy
+the product with a real account, and confirm two things:
 
 1. The reward landed and survived a rejoin.
-2. Buying twice grants twice, and a **redelivered** receipt grants once.
+2. Buying twice grants twice, and a redelivered receipt grants once.
 
 The second is the one that costs money to get wrong, and the one this module
 exists for.
 
-:::tip[Force a redelivery to test it]
-Buy the product, then stop the server before the save is confirmed. Roblox brings
-the receipt back on the next join, and a correct setup grants nothing the second
-time while the player keeps what they paid for.
-:::
+Buy the product, then stop the server before the save is confirmed. Roblox
+brings the receipt back on the next join, and a correct setup grants nothing the
+second time while the player keeps what they paid for.
 
 ## Data is required
 

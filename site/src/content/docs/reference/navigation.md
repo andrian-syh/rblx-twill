@@ -1,6 +1,6 @@
 ---
 title: Navigation
-description: Agents that walk somewhere, and one loop driving all of them.
+description: Agents that walk somewhere, and one loop driving all of them
 ---
 
 ```luau
@@ -13,11 +13,14 @@ end)
 agent:GoTo(workspace.Target)
 ```
 
-`PathfindingService` supplies the route. What it does not supply is anything that
-keeps a hundred agents from costing a hundred times as much, and that is what
-this module is: one loop advancing every agent, one budget bounding how many
-routes are worked out at once, and a request that happens when something changes
-rather than on a timer.
+`PathfindingService` supplies the route. What it does not supply is anything
+that keeps a hundred agents from costing a hundred times as much, and that is
+what this module is: one loop advancing every agent, one budget bounding how
+many routes are worked out at once, and a request that happens when something
+changes rather than on a timer.
+
+The loop ticks ten times a second, not every frame, and stops entirely once no
+agent is moving and nothing is waiting for a route.
 
 ## Asking is not waiting
 
@@ -32,8 +35,8 @@ agent.Failed:Connect(onGaveUp)
 ```
 
 Asking again replaces whatever was asked before, however far along it was. The
-abandoned request is dropped when it comes back rather than being allowed to race
-the new one, so exactly one of the two ever reports.
+abandoned request is dropped when it comes back rather than being allowed to
+race the new one, so exactly one of the two ever reports.
 
 ## One budget for every agent
 
@@ -53,15 +56,16 @@ already had.
 
 ## A goal is answered against the ground
 
-:::caution[The point you name is not the point that is routed to]
-`PathfindingService` answers against the nearest place an agent can stand, so a
-goal in the air or under the floor is reached on the ground beneath it rather
-than refused.
+The point you name is not the point that is routed to. `PathfindingService`
+answers against the nearest place an agent can stand, so a goal in the air or
+under the floor is reached on the ground beneath it rather than refused.
 
-`"unreachable"` therefore means no route to anywhere near the goal, **not** that
-the point you named was unstandable. A goal five hundred studs below the map is
-usually a perfectly ordinary walk to the floor above it.
-:::
+`unreachable` therefore means no route to anywhere near the goal, not that the
+point you named was unstandable. A goal five hundred studs below the map is
+usually an ordinary walk to the floor above it.
+
+Distance is measured across the ground, on the X and Z axes only, so a waypoint
+directly above or below an agent counts as reached.
 
 ## Moving something that is not a humanoid
 
@@ -76,37 +80,37 @@ local drone = Twill.Navigation.new(model, {
 })
 ```
 
-`Move` is called **repeatedly** while a waypoint is being approached, so it
-states a destination rather than starting a journey. Nothing has to report back
-that it finished, and there is no signal to fire: arrival is decided here, from
-how near the agent actually is.
+`Move` is called repeatedly while a waypoint is being approached, so it states a
+destination rather than starting a journey. Nothing has to report back that it
+finished, and there is no signal to fire: arrival is decided here, from how near
+the agent actually is.
 
 That is the whole contract. `Jump` is optional and only called for a waypoint
-that asks for one.
+that asks for one. A humanoid's own jump is skipped while it is in the air.
 
 ## When an agent gives up
 
 | Reason | What happened |
-| --- | --- |
-| `unreachable` | No route to anywhere near the goal. |
-| `too far` | The goal is further than a route can be worked out to, so none was attempted. |
+| :--- | :--- |
+| `unreachable` | No route to anywhere near the goal, or the engine refused the request. |
+| `too far` | The goal is more than 3000 studs away, so no route was attempted. |
 | `stuck` | It stopped getting nearer to the waypoint it was heading for. |
 | `gone` | The model left the world mid-journey. |
 
-**Stuck is measured as a lack of progress**, not as a clock against an expected
+Stuck is measured as a lack of progress, not as a clock against an expected
 speed. An agent that has not closed the distance by half a stud for its whole
-`Patience` has stopped travelling whatever it looks like, and that works the same
-for a humanoid, a drone, and a rolling boulder without any of them being asked
-how fast they are.
+`Patience` has stopped travelling whatever it looks like, and that works the
+same for a humanoid, a drone, and a rolling boulder without any of them being
+asked how fast they are.
 
 ## Blocked routes answer themselves
 
 A route is asked for again on its own when something appears across the part of
 it still ahead.
 
-Two guards keep that from becoming a flood: a blockage already **behind** the
-agent is nothing to answer, and one that keeps appearing is answered no more
-often than `Repath` allows.
+Two guards keep that from becoming a flood: a blockage already behind the agent
+is nothing to answer, and one that keeps appearing is answered no more often
+than `Repath` allows.
 
 Nothing is reported when this happens. A repath that succeeds is not an event
 worth waking anybody for, and one that fails arrives as `Failed` like any other.
@@ -117,11 +121,12 @@ worth waking anybody for, and one that fails arrives as `Failed` like any other.
 Twill.Navigation.new(npc, { Visualize = true })
 ```
 
-Markers appear under a `TwillNavigation` folder, coloured for ordinary steps,
-jumps, and the goal. They are taken down when the route ends.
+Neon balls appear under a `TwillNavigation` folder in the workspace, green for
+an ordinary step, yellow for a jump, and red for the goal. They are taken down
+when the route ends.
 
-The folder is made on the first ask, so a game that never visualizes anything has
-nothing added to its world.
+The folder is made on the first ask, so a game that never visualizes anything
+has nothing added to its world.
 
 ## API
 
@@ -149,14 +154,14 @@ function Navigation.new(model: Model, options: Options?, owner: Scope.Bag?): Age
 
 Throws when given something other than a `Model`, when the model has no
 `Humanoid` and no `Move` was given, and on an `Arrival`, `Repath`, or `Patience`
-that is not a sensible number.
+outside what it accepts.
 
-On a server the model's parts are taken into the server's own simulation, so
-where it went is decided there rather than on somebody's machine. **A player's
-own character is left alone**, since taking that would take their control with
-it.
+On a server the model's parts are taken into the server's own simulation, then
+and for every part added to it later, so where it went is decided there rather
+than on somebody's machine. A player's own character is left alone, since taking
+that would take their control with it.
 
-### Options
+### `Options`
 
 ```luau
 export type Options = {
@@ -171,14 +176,14 @@ export type Options = {
 ```
 
 | Field | Default | Meaning |
-| --- | --- | --- |
+| :--- | :--- | :--- |
 | `Agent` | none | Passed to `CreatePath` unchanged: `AgentRadius`, `AgentHeight`, `AgentCanJump`, `AgentCanClimb`, `WaypointSpacing`, `Costs`, `PathSettings`. |
 | `Move` | the humanoid's | Called with where to go, repeatedly, while heading there. |
 | `Jump` | the humanoid's | Called once for a waypoint that asks for a jump. |
-| `Arrival` | 3 | How near, in studs, counts as having reached a waypoint. Keep it below `WaypointSpacing`. |
-| `Repath` | 0.5 | Seconds between answering one blockage and the next. |
-| `Patience` | 3 | Seconds without getting nearer before giving up. |
-| `Visualize` | false | Whether to show the route. |
+| `Arrival` | 3 | How near, in studs, counts as having reached a waypoint. Above zero, and below `WaypointSpacing`. |
+| `Repath` | 0.5 | Seconds between answering one blockage and the next. Zero or more. |
+| `Patience` | 3 | Seconds without getting nearer before giving up. Above zero. |
+| `Visualize` | `false` | Whether to show the route. |
 
 `PathfindingModifier` and `PathfindingLink` work as they always do; name them in
 `Agent.Costs` and Roblox does the rest.
@@ -195,12 +200,13 @@ function Agent:GoTo(target: Target)
 export type Target = Vector3 | BasePart | Model
 ```
 
-**Returns**
+Does not yield. The outcome arrives through `Arrived` or `Failed`.
 
-`()` - Nothing, and it does not yield. The outcome arrives through `Arrived` or
-`Failed`.
+Throws on a destroyed agent, and on a target that is none of the accepted
+shapes.
 
-Throws on a destroyed agent, and on a target that is none of the accepted shapes.
+A part or a model is read at its pivot, once, when the route is worked out. A
+goal that moves afterwards is not followed; ask again.
 
 ### `Agent:Stop`
 
@@ -212,13 +218,9 @@ Stops the agent where it stands and drops the route it was following.
 function Agent:Stop()
 ```
 
-**Returns**
-
-`()` - Nothing.
-
 Neither `Arrived` nor `Failed` follows, because nothing happened to the agent:
-stopping is something the caller did. `Cancelled` fires, which is what a custom
-`Move` listens to if it needs to unwind anything.
+stopping is something the caller did. `Cancelled` fires, and `Move` is called
+once with where the agent already is, which is what brings a humanoid to a halt.
 
 ### `Agent:Destroy`
 
@@ -230,15 +232,13 @@ Releases everything the agent holds.
 function Agent:Destroy()
 ```
 
-**Returns**
-
-`()` - Nothing. Safe to call more than once, and safe to leave to a
-[`Scope`](/reference/scope/) bag, which is the usual way.
+Safe to call more than once, and safe to leave to a [`Scope`](/reference/scope/)
+bag, which is the usual way.
 
 ### Agent readings
 
 | Field | Type | Meaning |
-| --- | --- | --- |
+| :--- | :--- | :--- |
 | `Model` | `Model` | What is being walked. |
 | `Goal` | `Target?` | What was last asked for. |
 | `Route` | `{ PathWaypoint }` | The waypoints being followed. |
@@ -246,15 +246,17 @@ function Agent:Destroy()
 | `Moving` | `boolean` | Whether it is travelling. |
 | `Partial` | `boolean` | Whether the route stops short of the goal. |
 
-:::caution[These are readings, not settings]
-`Route` is the held list, not a copy. Writing into any of these changes what the
-agent believes without changing where it goes. Steer with `GoTo` and `Stop`.
-:::
+These are readings, not settings. `Route` is the held list, not a copy. Writing
+into any of them changes what the agent believes without changing where it goes.
+Steer with `GoTo` and `Stop`.
+
+A route is thinned before it is walked: a waypoint less than two studs from the
+next is dropped, unless it asks for a jump.
 
 `Partial` follows what the engine reports, and the engine only reports a route
 that stops short where one was asked for through `Agent.PathSettings`. Where it
-never reports one, `Partial` is simply always false and `Arrived` always carries
-false with it.
+never reports one, `Partial` is always false and `Arrived` always carries false
+with it.
 
 A route is read as refused when the engine names one of the ways a search can
 fail, and as usable otherwise. Testing it that way round means a route arriving
@@ -270,10 +272,13 @@ Cancelled: Signal<() -> ()>
 ```
 
 | Signal | Fires when |
-| --- | --- |
+| :--- | :--- |
 | `Arrived` | The last waypoint was reached. `partial` is true when the route stopped short of the goal. |
 | `Failed` | The journey ended without arriving. See [the reasons](#when-an-agent-gives-up). |
-| `Cancelled` | A goal was replaced, the agent was stopped, or it was destroyed. |
+| `Cancelled` | A goal was asked for, the agent was stopped, or it was destroyed. |
+
+`Cancelled` fires on every `GoTo`, the first one included, so a listener that
+unwinds something has one shape to handle rather than two.
 
 ### `Navigation.SetBudget`
 
@@ -284,10 +289,6 @@ Sets how many routes may be worked out at once across every agent.
 ```luau
 function Navigation.SetBudget(limit: number)
 ```
-
-**Returns**
-
-`()` - Nothing.
 
 Throws when the limit is not a whole number of one or more. Four when never set.
 
@@ -314,20 +315,30 @@ export type Stats = {
 `Stats` - A snapshot, safe to keep. It does not follow later counting.
 
 `Computed` and `Refused` are running totals for the life of the session.
-`Waiting`, `Working`, and `Listed` are the queue, the requests under way, and the
-agents in the loop right now. Read it twice a few seconds apart rather than once,
-and set the budget against what you see.
+`Waiting`, `Working`, and `Listed` are the queue, the requests under way, and
+the agents in the loop right now. Read it twice a few seconds apart rather than
+once, and set the budget against what you see.
 
 ## What this does not do
 
-**No sharing of one route between units.** Fifty agents chasing the same player
-work out fifty routes, bounded by the budget rather than combined. That is the
-next thing to add if a wave-defence game needs it.
+No sharing of one route between units. Fifty agents chasing the same player work
+out fifty routes, bounded by the budget rather than combined. That is the next
+thing to add if a wave-defence game needs it.
 
-**No turning agents off by distance.** Whether an agent far from every player
-should still be walking is a decision about your game, not about pathfinding.
-Call `Stop` on it.
+No turning agents off by distance. Whether an agent far from every player should
+still be walking is a decision about your game, not about pathfinding. Call
+`Stop` on it.
 
-**No pooling of models, and no replication of its own.** What a client is told about an NPC
-is [`Replication`](/reference/replication/)'s job, and sending a route id with a
-progress number costs far less than sending positions.
+No pooling of models, and no replication of its own. What a client is told about
+an NPC is [`Replication`](/reference/replication/)'s job, and sending a route id
+with a progress number costs far less than sending positions.
+
+## Limits
+
+| Limit | Value |
+| :--- | ---: |
+| Loop tick | 10 times a second |
+| Routes worked out at once | 4, until `SetBudget` |
+| Furthest goal | 3000 studs |
+| Waypoints closer than this are dropped | 2 studs |
+| Progress that counts as getting nearer | 0.5 studs |

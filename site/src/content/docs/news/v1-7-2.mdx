@@ -1,6 +1,6 @@
 ---
 title: v1.7.2 — Compression, All the Way Down
-description: Released August 24, 2026. The compressor is now Twill's own code end to end, and reads no stream past its end.
+description: Released August 24, 2026. The compressor is now Twill's own code end to end, and reads no stream past its end
 template: splash
 ---
 
@@ -47,8 +47,8 @@ server harm.
 Every read now checks the bytes it is about to take before it takes them. A
 stream that is too short, nested deeper than the format allows, or tagged with
 something unknown comes back as `nil` rather than reading whatever lies past its
-end. A payload crafted to drive the reader into unbounded recursion is refused at
-a fixed depth instead of exhausting the stack.
+end. A payload crafted to drive the reader into unbounded recursion is refused
+at a fixed depth instead of exhausting the stack.
 
 ```text
 a truncated save → nil, not a half-built value
@@ -64,8 +64,8 @@ A `Color3` channel is now rounded to its nearest 8-bit step rather than floored,
 which halves the largest error a stored colour can carry.
 
 The entropy coder clears and rebuilds its dictionary once it fills. A long
-payload whose repetition changes partway used to encode the rest against a frozen
-table; now it keeps adapting, and keeps compressing.
+payload whose repetition changes partway used to encode the rest against a
+frozen table; now it keeps adapting, and keeps compressing.
 
 <NewsPagination />
 

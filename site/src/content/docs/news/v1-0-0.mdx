@@ -1,6 +1,6 @@
 ---
 title: v1.0.0 — Initial Stable Release
-description: Released August 12, 2026. First release of the modular pure-Luau game framework.
+description: Released August 12, 2026. First release of the modular pure-Luau game framework
 template: splash
 ---
 
@@ -73,12 +73,12 @@ so it passed every array rule as though it were empty. An array rule now
 requires the keys to be exactly `1..n`.
 
 * **`Replication` ignored numeric path segments on two of three paths.** Resolving
-a path fell back to a numeric key, but writing and waking subscribers did not, so
-`Subscribe("Data.Items.2")` never fired. All three now share one lookup.
+a path fell back to a numeric key, but writing and waking subscribers did not,
+so `Subscribe("Data.Items.2")` never fired. All three now share one lookup.
 
 * **`Serialize.FindUnstorable` did not inspect keys.** A table mixing named and
-numbered keys encodes to an array with the named keys silently dropped. It is now
-refused, along with gaps in a numbering and text that is not valid UTF-8.
+numbered keys encodes to an array with the named keys silently dropped. It is
+now refused, along with gaps in a numbering and text that is not valid UTF-8.
 
 * **The bundled CSPRNG could be left permanently broken.** A failed entropy gather
 was not checked, and reseeding cleared the key before gathering. Both are fixed

@@ -1,6 +1,6 @@
 ---
 title: Architecture
-description: How the two halves fit together, what happens during boot, and how a value reaches a client.
+description: How the two halves fit together, what happens during boot, and how a value reaches a client
 ---
 
 ## Two folders
@@ -15,9 +15,9 @@ ServerScriptService
     └── Packages          bundled dependencies, server-only
 ```
 
-Which module sits where is listed in the
-[module reference](/reference/), and the split follows one rule: a module lives
-in `TwillServer` when what it holds would tell a client how to get around it.
+Which module sits where is listed in the [module reference](/reference/), and
+the split follows one rule: a module lives in `TwillServer` when what it holds
+would tell a client how to get around it.
 
 `TwillServer` is never replicated. What lives there is not only secrets:
 thresholds, the metering algorithm, each player's current allowance, and every
@@ -84,17 +84,17 @@ rather than merely undocumented.
 
 Two phases exist so that no service has to guess whether another is ready.
 
-Boot order decides when a `Start` **begins**, never the order in which they
-finish. That is the price of not letting one slow service stall the boot, and it
-is why a `Start` should ask for what it needs rather than assume another has
-already finished.
+Boot order decides when a `Start` begins, never the order in which they finish.
+That is the price of not letting one slow service stall the boot, and it is why
+a `Start` should ask for what it needs rather than assume another has already
+finished.
 
 ### When boot fails
 
 A service marked `Critical` that throws in either phase puts that side into a
 failed state. On the server, everyone present is kicked and everyone arriving
 afterwards is kicked on sight; on the client there is nobody to kick, so the
-boot simply stops.
+boot stops there.
 
 Only the first failure is recorded, so a cascade reports the cause rather than
 whatever fell over last. A failure in `Start` still refuses everybody, but it
@@ -134,14 +134,14 @@ the player's bag closes
 Reverse order means a service still sees the ones it was allowed to depend on,
 and the bag closes only once every service has had its say. That is why
 `Lifecycle` takes over player-bag closing from `Scope` on the server. A player
-who left while still held at the gate never reached ready, and is never announced
-as leaving.
+who left while still held at the gate never reached ready, and is never
+announced as leaving.
 
 The client runs the same `Lifecycle` but not this pipeline, because there
 `PlayerAdded` means somebody else joined. A module booted there is a
 [controller](/core-guides/controllers/) rather than a service. `Lifecycle` draws
-no distinction between them; the two words exist so it is always clear which side
-a module runs on.
+no distinction between them; the two words exist so it is always clear which
+side a module runs on.
 
 ## How a value reaches a client
 
@@ -176,15 +176,15 @@ listening.
 
 ## How a write reaches a player who is elsewhere
 
-`Data.Edit` and `Data.Reset` take a user id rather than a `Player`, and choose one
-of three routes:
+`Data.Edit` and `Data.Reset` take a user id rather than a `Player`, and choose
+one of three routes:
 
 ```text
 Data.Edit(userId, scope, path, value)
    ↓
 is the session open on this server?
    ├── yes ──→ write to the live profile, save          "applied"
-   └── no  ──→ post a message through ProfileStore      "queued"
+   └── no  ──→ post a message through Store             "queued"
                   ↓
                whichever server holds the session applies it,
                or it waits in stored data until they next log in
@@ -204,8 +204,8 @@ One convention runs through `Replication`, `Data.Edit`, and `Leaderstats`:
  ^key ^path
 ```
 
-The first dot separates them, which is why **a key name cannot contain a dot**.
-A key called `"Player.Data"` can never match a subscription, because the
+The first dot separates them, which is why a key name cannot contain a dot. A
+key called `"Player.Data"` can never match a subscription, because the
 subscription reads it as key `Player`.
 
 `Delta` is the module both sides of `Replication` share for this: splitting an
@@ -215,7 +215,8 @@ subscription.
 
 ## Cleanup
 
-`Scope` holds three tables, keyed by player, character, and character-while-alive.
+`Scope` holds three tables, keyed by player, character, and
+character-while-alive.
 
 Everything in Twill that creates a connection puts it in one of them, or in
 `Scope.Framework()` when it belongs to the process. A bag whose instance is
@@ -226,11 +227,10 @@ dead `Instance`.
 
 | Package | Owns |
 | --- | --- |
-| ProfileStore | Sessions, saving, cross-server messaging |
 | Cmdr | The console, behind `Admin` |
 | AptInt | Arbitrary precision, behind `BigNumber` |
 | Cryptography | Hashing and CSPRNG, behind `Random` and `Token` |
 
-Every one of these is reached through a Twill module rather than directly, and in
-several cases the wrapper is load-bearing. See
+Every one of these is reached through a Twill module rather than directly, and
+in several cases the wrapper is load-bearing. See
 [Bundled packages](/reference/bundled-packages/).

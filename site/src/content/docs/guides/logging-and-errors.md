@@ -1,14 +1,14 @@
 ---
 title: See what your game is doing
-description: Scope your logging, keep it quiet in production, and catch the errors nobody handled.
+description: Scope your logging, keep it quiet in production, and catch the errors nobody handled
 ---
 
 Output that nobody can read is the same as no output. A live server produces
-hundreds of lines a minute, and the ones that matter are buried under prints that
-were useful for an afternoon three months ago.
+hundreds of lines a minute, and the ones that matter are buried under prints
+that were useful for an afternoon three months ago.
 
-Two modules cover this. [`Log`](/reference/log/) gives every message a scope and a
-severity, so the noise can be turned down without deleting anything.
+Two modules cover this. [`Log`](/reference/log/) gives every message a scope and
+a severity, so the noise can be turned down without deleting anything.
 [`Error`](/reference/error/) catches the failures nobody wrote a handler for.
 
 ## One logger per system
@@ -68,13 +68,13 @@ Twill.Log.SetLevel(if RunService:IsStudio() then "Debug" else "Info")
 ```
 
 Nothing is deleted by doing this. A `Debug` line left in the code costs a
-comparison when it is silenced, so leave the investigation aids where they are and
-raise the floor instead of stripping them out before release.
+comparison when it is silenced, so leave the investigation aids where they are
+and raise the floor instead of stripping them out before release.
 
 ## Warnings name the caller
 
-`Warn` and `Error` report the nearest line **outside** Twill, so a complaint
-about a bad call points at the call rather than at the framework that noticed it.
+`Warn` and `Error` report the nearest line outside Twill, so a complaint about a
+bad call points at the call rather than at the framework that noticed it.
 
 ```text
 [Twill.Data] (from MyGame.Services.Shop:42) Edit refused: unsupported value
@@ -99,8 +99,8 @@ function ObservabilityService.Init()
 end
 ```
 
-One handler at a time. Installing a second replaces the first, so install it once
-during `Init` rather than from each system that wants reporting.
+One handler at a time. Installing a second replaces the first, so install it
+once during `Init` rather than from each system that wants reporting.
 
 ## Catch what nobody handled
 
@@ -117,8 +117,8 @@ end
 ```
 
 Every script error the runtime reports now leaves a record carrying its trace.
-Nothing is re-thrown: the error already happened, and raising it again would only
-report it twice.
+Nothing is re-thrown: the error already happened, and raising it again would
+only report it twice.
 
 ### Post them to a channel
 
@@ -128,10 +128,10 @@ local errors = Twill.Error.Install(logger, {
 })
 ```
 
-Posting happens only on the server, where the URL cannot be read by a client, and
-it is throttled so a burst of failures cannot bury the channel. A burst is dropped
-rather than queued, because the point is to be told that something broke, not to
-receive every instance of it.
+Posting happens only on the server, where the URL cannot be read by a client,
+and it is throttled so a burst of failures cannot bury the channel. A burst is
+dropped rather than queued, because the point is to be told that something
+broke, not to receive every instance of it.
 
 :::danger[Keep the URL out of ReplicatedStorage]
 A webhook URL is a credential. Anything that can post to your channel can flood

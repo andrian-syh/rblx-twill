@@ -1,6 +1,6 @@
 ---
 title: Write a controller
-description: The client-side unit, what it may assume, and how it receives state without asking for it.
+description: The client-side unit, what it may assume, and how it receives state without asking for it
 ---
 
 A **controller** is a client-side `ModuleScript` that returns a table. It is the
@@ -43,7 +43,7 @@ everything in it as published.
 | --- | --- | --- |
 | Discovery, `Priority`, `Critical` | Yes | Yes |
 | `Init` then `Start` | Yes | Yes |
-| `OnPlayerReady` / `OnPlayerRemoving` | Yes | **No** |
+| `OnPlayerReady` / `OnPlayerRemoving` | Yes | No |
 
 The player pipeline is server-only on purpose. On a client, `PlayerAdded` means
 somebody *else* joined, so a per-player hook there would mean something entirely
@@ -80,11 +80,9 @@ return HudController
 Nothing in the shop code publishes coins. A field named once in `Data.Configure`
 is doing it, following the server's `data.Coins -= price` on its own.
 
-:::note[Require Replication somewhere on the client]
 The client announces itself the first time its half of the module is required.
 If no client module ever requires it, the server has nothing to send to and the
 controller waits forever for a value that was never addressed to it.
-:::
 
 ### Waiting instead of subscribing
 
@@ -161,12 +159,10 @@ end
 return ShopController
 ```
 
-:::note[Calling before the network is up is safe]
 A remote declared on the client is given its number by the server, and that
-arrives a moment later. A call made before then is held and sent once it does, so
-a controller does not have to be careful about when it fires. Use
+arrives a moment later. A call made before then is held and sent once it does,
+so a controller does not have to be careful about when it fires. Use
 `Net.OnReady` when you want to know the moment it happens.
-:::
 
 ## What a controller must never decide
 
@@ -181,9 +177,9 @@ if Twill.Authorization.AtLeast(player, Ranks.Moderator) then
 end
 ```
 
-That decides what is **shown**. What is **allowed** is decided again on the
-server, by `MinimumRank` on the handler, because a hidden button is not a closed
-door. Anyone can call the remote directly.
+That decides what is shown. What is allowed is decided again on the server, by
+`MinimumRank` on the handler, because a hidden button is not a closed door.
+Anyone can call the remote directly.
 
 ## Next
 

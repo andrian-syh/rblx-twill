@@ -197,6 +197,7 @@ export default defineConfig({
 								{ label: 'Net', slug: 'reference/net' },
 								{ label: 'Replication', slug: 'reference/replication' },
 								{ label: 'Data', slug: 'reference/data' },
+								{ label: 'Store', slug: 'reference/store' },
 								{ label: 'Scope', slug: 'reference/scope' },
 								{ label: 'Bag', slug: 'reference/bag' },
 								{ label: 'Signal', slug: 'reference/signal' },

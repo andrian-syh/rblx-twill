@@ -1,6 +1,6 @@
 ---
 title: Spread work across frames
-description: Repeat work on an interval, defer it, and walk a large list without stalling a frame.
+description: Repeat work on an interval, defer it, and walk a large list without stalling a frame
 ---
 
 A hundred pets updated in one frame is a hundred times the work in that frame.
@@ -8,13 +8,13 @@ The same hundred at twenty a frame is five frames of a fifth of the work, and no
 player can tell the difference. The total is identical; only the shape of the
 spike changes, and the spike is what players feel.
 
-[`Loop`](/reference/loop/) covers the three shapes this takes: work that repeats,
-work that happens later, and work that is too big for one frame.
+[`Loop`](/reference/loop/) covers the three shapes this takes: work that
+repeats, work that happens later, and work that is too big for one frame.
 
 ## Everything here has an owner
 
-Each call returns a handle carrying `Destroy`, and takes the bag it belongs to as
-its last argument.
+Each call returns a handle carrying `Destroy`, and takes the bag it belongs to
+as its last argument.
 
 ```luau
 -- Ends when the player leaves.
@@ -43,12 +43,10 @@ function AutosaveService.Start()
 end
 ```
 
-:::note[Missed runs are not made up]
-A frame that overshoots the interval reports the time that actually passed rather
-than firing twice to catch up. Work out rates from `elapsed` instead of assuming
-the interval, and a stuttering server produces correct totals rather than a burst
-of catch-up work at the worst possible moment.
-:::
+A frame that overshoots the interval reports the time that actually passed
+rather than firing twice to catch up. Work out rates from `elapsed` instead of
+assuming the interval, and a stuttering server produces correct totals rather
+than a burst of catch-up work at the worst possible moment.
 
 ## Do something later
 
@@ -93,10 +91,9 @@ Pick from how stale an entry may be, not from how many there are. Something that
 must react within about a tenth of a second needs the whole set covered in a
 handful of frames; a background hum can take a second.
 
-:::tip[Stagger is for work that tolerates being late]
-Position updates, distance checks, and idle animations tolerate it well. Anything
-a player triggers directly does not, and belongs on the event that triggered it.
-:::
+Position updates, distance checks, and idle animations tolerate it well.
+Anything a player triggers directly does not, and belongs on the event that
+triggered it.
 
 ## Wait for something with no signal
 

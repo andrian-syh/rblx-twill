@@ -1,6 +1,6 @@
 ---
 title: Define and serve remotes
-description: Declare a remote once, serve it with metering and validation, and reply safely.
+description: Declare a remote once, serve it with metering and validation, and reply safely
 ---
 
 ## Declare
@@ -66,9 +66,9 @@ Remotes.Aim:Fire(camera.CFrame.LookVector)
 `Ask` always ends: with the answer, with the `Reject`, or with nothing when the
 wait runs out. It never leaves the calling thread waiting forever.
 
-A call made before the server's numbering has reached the client is held and sent
-once it does, so there is no boot-order trap. Wait explicitly only when you want
-to:
+A call made before the server's numbering has reached the client is held and
+sent once it does, so there is no boot-order trap. Wait explicitly only when you
+want to:
 
 ```luau
 Net.OnReady(function()

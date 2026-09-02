@@ -1,6 +1,6 @@
 ---
 title: v1.7.1 — The Wire Refuses What It Cannot Carry
-description: Released August 24, 2026. A fixed-width number outside its range is refused rather than wrapped into another one.
+description: Released August 24, 2026. A fixed-width number outside its range is refused rather than wrapped into another one
 template: splash
 ---
 
@@ -44,23 +44,23 @@ before:  256 → written as 0 → validator sees 0 → accepted
 after:   256 → refused at the write, before the handler runs
 ```
 
-Both paths that wrote these numbers are fixed: the single value, and each element
-of an array of them. A value outside the range is refused where it used to be
-folded into another one.
+Both paths that wrote these numbers are fixed: the single value, and each
+element of an array of them. A value outside the range is refused where it used
+to be folded into another one.
 
 ## A Union that could not carry a number
 
 A `Union` names several shapes and carries whichever one a value matches. One
-naming a fixed-width number among its members compiled without complaint and then
-threw the first time it actually carried a number, because only the widest
+naming a fixed-width number among its members compiled without complaint and
+then threw the first time it actually carried a number, because only the widest
 numeric kinds were mapped back from a value on the wire.
 
 ```luau
 Twill.Net.Types.Union(Twill.Net.Types.NumberU8, Twill.Net.Types.NumberF64)
 ```
 
-Every numeric kind is reachable now, matched widest first, so a `Union` keeps the
-number it was given rather than narrowing it or refusing it.
+Every numeric kind is reachable now, matched widest first, so a `Union` keeps
+the number it was given rather than narrowing it or refusing it.
 
 ## The last of one shape
 

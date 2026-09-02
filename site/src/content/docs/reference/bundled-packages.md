@@ -1,6 +1,6 @@
 ---
 title: Bundled packages
-description: The third-party code Twill ships with, and what each licence asks of you.
+description: The third-party code Twill ships with, and what each licence asks of you
 ---
 
 Twill bundles every dependency, so installing it needs no package manager and no
@@ -10,8 +10,8 @@ travels with the place, whatever assembled it.
 The authoritative record is
 [THIRD-PARTY-NOTICES.md](https://github.com/andrian-syh/rblx-twill/blob/main/THIRD-PARTY-NOTICES.md)
 in the repository, which carries the licence texts in full. This page summarises
-it. Nothing inside the place records this, because a notice a licence obliges you
-to redistribute belongs with the thing you redistribute.
+it. Nothing inside the place records this, because a notice a licence obliges
+you to redistribute belongs with the thing you redistribute.
 
 ## Shared
 
@@ -27,22 +27,18 @@ to redistribute belongs with the thing you redistribute.
 
 | Package | Licence | Author |
 | --- | --- | --- |
-| ProfileStore | Apache-2.0 | loleris, MAD STUDIO |
 | Cmdr | MIT | evaera |
 | Cryptography | MIT | daily3014 and Xoifaii |
 
-Cryptography is
-[Luau Cryptography](https://github.com/daily3014/rbx-cryptography), also
-[announced on the developer
-forum](https://devforum.roblox.com/t/fastest-cryptography-library-for-roblox/3680271).
+Cryptography is [Luau Cryptography][crypto], also [announced on the developer
+forum][thread].
+
+[crypto]: https://github.com/daily3014/rbx-cryptography
+[thread]: https://devforum.roblox.com/t/fastest-cryptography-library-for-roblox/3680271
 [`Random`](/reference/random/) and [`Token`](/reference/token/) reach a small
 part of it: SHA-256, HMAC-SHA256, ChaCha20, and Blake3.
 
 ## What each licence asks
-
-**Apache-2.0** (ProfileStore) is the most demanding of the set. The licence text
-must ship with any redistribution, notices must be preserved, and significant
-modifications must be stated.
 
 **MIT** (Cmdr, Cryptography) asks that the copyright and permission
 notice travels with the code. The headers inside those files are the notice. Do

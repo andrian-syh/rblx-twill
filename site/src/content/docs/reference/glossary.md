@@ -1,6 +1,6 @@
 ---
 title: Glossary
-description: Terms that carry a specific meaning inside Twill.
+description: Terms that carry a specific meaning inside Twill
 ---
 
 Words on this page mean something particular inside Twill, which is not always
@@ -40,16 +40,14 @@ what it usually does.
 | **Migration** | A function keyed by the version it **produces**, so `[2]` upgrades a version 1 profile. They run in ascending order and only on profiles that already hold data. |
 | **Branch** | A separate store for player data that does not need loading on every join, with its own template, version, and migrations. See [`Data`](/reference/data/#branches). |
 | **Scope** (data) | The name of one store belonging to a user: `"main"` for the primary profile, or a branch name. Used by `Data.Edit`, `Data.Reset`, and the admin console. |
-| **Session** | ProfileStore's hold on a profile. One server at a time, which is what stops two servers writing over each other. Losing it mid-play costs the player their place on that server rather than their progress. |
+| **Session** | `Store`'s hold on a key. One server at a time, which is what stops two servers writing over each other. Losing it mid-play costs the player their place on that server rather than their progress. |
 | **Outcome** | The typed value returned by `Data.Edit` and `Data.Reset`, naming what actually happened instead of a boolean that hides the reason. |
 | **Storable shape** | Data a DataStore can hold and return unchanged. The traps are silent: a table mixing named and numbered keys, and gaps in a numbering, both come back wrong with no error. `Serialize.FindUnstorable` names them. |
 
-:::caution[Two different things are called a scope]
-A **data scope** names a store, such as `"main"`. A `Log` **scope** is the label
-on a logger, such as `[Shop]`. And `Twill.Scope` is the cleanup module, which
-deals in bags and neither of the other two. They never appear in the same
-argument, but the word is genuinely overloaded.
-:::
+Three different things are called a scope. A data scope names a store, such as
+`"main"`. A `Log` scope is the label on a logger, such as `[Shop]`.
+`Twill.Scope` is the cleanup module, which deals in bags and neither of the
+other two. They never appear in the same argument, but the word is overloaded.
 
 ## Networking and replication
 

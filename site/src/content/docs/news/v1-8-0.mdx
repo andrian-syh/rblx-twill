@@ -1,0 +1,94 @@
+---
+title: v1.8.0 — The Store Underneath
+description: Released September 2, 2026. Player data now sits on Twill's own store, and the console can read a key's history
+template: splash
+---
+
+import NewsBackLink from '../../../components/NewsBackLink.astro';
+import NewsPagination from '../../../components/NewsPagination.astro';
+
+<div class="news-article-container">
+
+<NewsBackLink />
+
+<header class="news-article-header">
+	<div class="news-article-badges">
+		<span class="news-badge-version">v1.8.0</span>
+		<span class="news-badge-date">September 2, 2026</span>
+	</div>
+	<p class="news-article-lead">
+		Player data now sits on Twill's own store, and the console can read a key's history.
+	</p>
+</header>
+
+## One less bundled package
+
+[`Data`](/reference/data/) used to hand its real work to a bundled package. That
+package is gone. [`Store`](/reference/store/) holds a DataStore key for one
+server at a time, saves it while it is held, and gives it up on the way out.
+
+```luau
+local keep = guilds:StartSessionAsync("guild-4812")
+
+keep.Data.Level += 1
+```
+
+`Data` did not change. Its functions, its behaviour, and the format of what it
+stores are the same, and a key written by the old package still reads: the older
+format is recognised and raised to the current one on the first save.
+
+`Store` is also usable on its own, for keys that are not player data. A guild, a
+shared world, a leaderboard snapshot.
+
+## What the audit found
+
+Replacing a package that has run for years means inheriting the problems it had
+already solved. Reading the new module end to end turned up eight faults, and
+only one of them was the one that showed in the console.
+
+Two were the same mistake in different places. A write that storage refused
+reported success, because the code checked that the call had not raised rather
+than that anything had been stored. With packing enabled, a failure to pack took
+exactly that path.
+
+```text
+packing fails → nothing stored → LastSaved updated → OnAfterSave fires
+```
+
+Nothing was saved on shutdown at all: the closing handler wrote to the frozen
+module table on its first line and raised there. Shutdown also waited for every
+write with no limit, while each write kept four attempts with backoff climbing
+to thirty seconds, so keys later in the queue could not finish in time.
+
+Taking a key this server already held left the earlier handle looking alive. It
+kept accepting writes that could never be stored and said nothing until the
+server closed.
+
+Three of the eight came from the same root: something waited, or believed, with
+no bound on it.
+
+## The console can answer support questions now
+
+Two additions to `playerdata`.
+
+`status` names the server holding each scope, how many sessions the key has had,
+how long since it was written, and whether storage is reachable and failing.
+
+`versions` reads up to five earlier versions of a scope, newest first. The reset
+warning has promised for several releases that earlier versions are kept. Now
+there is a way to look at them.
+
+Both are also available in code, as `Data.Inspect` and `Data.Versions`.
+
+## One breaking change
+
+`Token` now produces standard HMAC-SHA256. The bundled cryptography library
+byte-swaps a digest that is already in the right order unless told not to, so
+every tag Twill produced before this release was a keyed hash but not HMAC.
+
+Tokens issued before this release read as `forged`. Reissue anything still in
+circulation.
+
+<NewsPagination />
+
+</div>

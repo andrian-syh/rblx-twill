@@ -1,27 +1,32 @@
 ---
 title: Log
-description: Scoped, level-filtered logging.
+description: Scoped, level-filtered logging
 ---
 
-Create one logger per system and keep it for the lifetime of that system.
-
 ```luau
-local Log = require("@game/ReplicatedStorage/Twill/Log")
+local Log = require("@game/ReplicatedStorage/Twill").Log
+
 local logger = Log.new("Shop")
 
 logger:Info("ready")   --> [Shop] ready
 ```
 
+One logger per system, built once and kept for the lifetime of that system.
+
 ## Levels
 
-`Debug < Info < Warn < Error`. `Log.SetLevel` silences everything below the level
-given.
+`Debug` ranks below `Info`, which ranks below `Warn`, which ranks below `Error`.
+One threshold silences everything beneath it.
 
-`Debug` and `Info` go to the output as ordinary prints. `Warn` and `Error` go
-through `warn`, so they carry the yellow marker and a call-site.
+| Level | Written with | Names the caller |
+| :--- | :--- | :--- |
+| `Debug` | `print` | No |
+| `Info` | `print` | No |
+| `Warn` | `warn` | Yes |
+| `Error` | `warn`, then the installed handler | Yes |
 
-`Error` reports. **It never throws.** Raise an error yourself where the caller
-should actually stop.
+`Error` reports and never throws. Raise an error yourself where the caller
+should stop.
 
 ## Call-site attribution
 
@@ -32,9 +37,10 @@ call points at the call rather than at the framework.
 [Twill.Data] (from MyGame.Services.Shop:42) Edit refused: unsupported value
 ```
 
-This is why a stack trace is rarely needed to find who did what. Only a bounded
-stretch of the stack is examined, so a message raised through many layers of
-native code reports no call-site rather than a wrong one.
+A line is outside Twill when its source starts with neither
+`ReplicatedStorage.Twill` nor `ServerScriptService.TwillServer`. Native frames
+are stepped over. Twelve stack levels are examined, so a message raised through
+more layers than that reports no call-site rather than a wrong one.
 
 ## API
 
@@ -52,41 +58,17 @@ function Log.new(scope: string): Logger
 
 | Name | Type | Description |
 | :--- | :--- | :--- |
-| `scope` | `string` | Identifier shown alongside each message, such as a system name. Must not be empty. |
+| `scope` | `string` | Identifier shown alongside each message, such as a system name. Not empty. |
 
 **Returns**
 
 `Logger` - A logger bound to that scope.
 
-Throws when `scope` is empty or is not a string.
+Throws when the scope is empty or is not a string.
 
-**Example**
-
-```luau
-local Log = require("@game/ReplicatedStorage/Twill/Log")
-
--- One logger per system, built once and kept, not one per call.
-local logger = Log.new("Shop")
-
-logger:Debug("loading catalogue")
-logger:Info("ready")
-logger:Warn("price table is empty")
-logger:Error("could not reach the catalogue")
-```
-
-### `Logger` methods
+### `Logger`
 
 `[Server]` | `[Client]`
-
-Every method is called with a colon and takes any number of values, which are
-written after the scope exactly as `print` would write them.
-
-| Method | Use it for |
-| :--- | :--- |
-| `logger:Debug(...)` | Detail useful only while investigating. The first thing silenced once a session is healthy. |
-| `logger:Info(...)` | Normal progress worth seeing in a healthy session, such as a system finishing its setup. |
-| `logger:Warn(...)` | A recoverable problem that did not stop the operation. Names the caller. |
-| `logger:Error(...)` | A failure. Names the caller and reaches the installed handler. Never throws. |
 
 ```luau
 export type Logger = {
@@ -96,6 +78,27 @@ export type Logger = {
 	Warn: (self: Logger, ...any) -> (),
 	Error: (self: Logger, ...any) -> (),
 }
+```
+
+Every method is called with a colon and takes any number of values, written
+after the scope exactly as `print` writes them.
+
+| Method | Use it for |
+| :--- | :--- |
+| `logger:Debug(...)` | Detail useful only while investigating. The first thing silenced. |
+| `logger:Info(...)` | Progress worth seeing in a healthy session, such as a system finishing setup. |
+| `logger:Warn(...)` | A recoverable problem that did not stop the operation. |
+| `logger:Error(...)` | A failure. Reaches the installed handler. Never throws. |
+
+**Example**
+
+```luau
+local logger = Log.new("Shop")
+
+logger:Debug("loading catalogue")
+logger:Info("ready")
+logger:Warn("price table is empty")
+logger:Error("could not reach the catalogue")
 ```
 
 ### `Log.SetLevel`
@@ -116,23 +119,16 @@ export type Level = "Debug" | "Info" | "Warn" | "Error"
 | :--- | :--- | :--- |
 | `level` | `Level` | The lowest severity that still reaches the output. |
 
-**Returns**
+Throws when the level is not one of the four.
 
-`()` - Nothing.
-
-Throws when the level given is not one of the four.
-
-:::caution[The threshold is not scoped to one logger]
-This is a session-wide setting. It affects every logger on this side, Twill's
-own included, whichever logger you happen to call it from.
-:::
+The threshold is session wide, not per logger. It applies to every logger on
+this side, Twill's own included, whichever logger it was called from.
 
 **Example**
 
 ```luau
 local RunService = game:GetService("RunService")
 
--- Studio sees everything; a live server keeps the noise down.
 Log.SetLevel(if RunService:IsStudio() then "Debug" else "Info")
 ```
 
@@ -140,7 +136,7 @@ Log.SetLevel(if RunService:IsStudio() then "Debug" else "Info")
 
 `[Server]` | `[Client]`
 
-Reports the level in force on this side, which every logger is answering to.
+Reports the level in force on this side.
 
 ```luau
 function Log.GetLevel(): Level
@@ -151,15 +147,14 @@ function Log.GetLevel(): Level
 `Level` - The lowest severity still reaching the output.
 
 Each side keeps its own threshold, so the answer on a client says nothing about
-the server. The [`loglevel` command](/reference/admin/#built-in-commands) reads
-and sets the server's without republishing the place.
+the server. The [`loglevel` command](/reference/admin/#loglevel) reads and sets
+the server's without republishing the place.
 
 ### `Log.SetErrorHandler`
 
 `[Server]` | `[Client]`
 
-Routes every reported failure to a handler, which is how failures reach an
-analytics or alerting sink.
+Routes every reported failure to a handler.
 
 ```luau
 function Log.SetErrorHandler(handler: ((scope: string, ...any) -> ())?)
@@ -169,24 +164,25 @@ function Log.SetErrorHandler(handler: ((scope: string, ...any) -> ())?)
 
 | Name | Type | Description |
 | :--- | :--- | :--- |
-| `handler` | `((scope: string, ...any) -> ())?` | Receives the reporting scope and the reported values. Pass `nil` to remove the handler. |
+| `handler` | `((scope: string, ...any) -> ())?` | Receives the reporting scope and the reported values. `nil` removes the handler. |
 
-**Returns**
-
-`()` - Nothing.
-
-One handler at a time. Installing a second replaces the first. The handler is
-called in addition to the normal output, not instead of it, and it runs apart
-from the reporter, so it may yield.
+One handler at a time. Installing a second replaces the first. The handler runs
+on its own thread in addition to the normal output, so it may yield.
 
 **Example**
 
 ```luau
 Log.SetErrorHandler(function(scope: string, ...: any)
-	-- Runs on its own thread, so a slow sink cannot hold up the reporter.
 	AnalyticsService:LogCustomEvent(Players.LocalPlayer, scope, ...)
 end)
 ```
 
 For unhandled script errors rather than deliberate `Error` calls, see
 [`Twill.Error`](/reference/error/).
+
+## Limits
+
+| Limit | Value |
+| :--- | ---: |
+| Level when nothing sets one | `Info` |
+| Stack levels examined for a call-site | 12 |

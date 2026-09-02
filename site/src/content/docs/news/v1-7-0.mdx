@@ -1,6 +1,6 @@
 ---
 title: v1.7.0 — Everything Moves on One Loop
-description: Released August 24, 2026. Twill's own tweening, and every value in the game moving on a single connection.
+description: Released August 24, 2026. Twill's own tweening, and every value in the game moving on a single connection
 template: splash
 ---
 
@@ -36,8 +36,8 @@ Twill.Tween.Play(gui, { Position = UDim2.fromScale(0.5, 0.5) }, { Time = 0.4 })
 
 ## Four things, not one
 
-`TweenService` reaches properties. This reaches properties, attributes, a model's
-pivot, a model's scale, and the fields of a plain table.
+`TweenService` reaches properties. This reaches properties, attributes, a
+model's pivot, a model's scale, and the fields of a plain table.
 
 ```luau
 Twill.Tween.Play(model, { Pivot = openCFrame, Scale = 1.2 }, { Time = 1 })
@@ -58,12 +58,12 @@ Twill.Tween.Play(part, {
 }, { Time = 1.5 })
 ```
 
-One control point is a quadratic Bezier and two is a cubic. `Vector2`, `Vector3`,
-`UDim2` and `CFrame` can be curved.
+One control point is a quadratic Bezier and two is a cubic. `Vector2`,
+`Vector3`, `UDim2` and `CFrame` can be curved.
 
 Rotation is handed to `CFrame:Lerp` rather than to quaternion arithmetic written
-here. The engine's own is exact, is one call rather than thirty, and cannot drift
-from what the rest of the platform does.
+here. The engine's own is exact, is one call rather than thirty, and cannot
+drift from what the rest of the platform does.
 
 ## Colour crosses where the eye reads it
 
@@ -84,8 +84,8 @@ slow:Play()
 fast:Play()   -- slow is cancelled, and Position is now fast's
 ```
 
-This is per property and per target, so two tweens moving different fields of one
-instance never disturb each other.
+This is per property and per target, so two tweens moving different fields of
+one instance never disturb each other.
 
 ## The server is refused by default
 
@@ -124,12 +124,12 @@ server modules never carried.
 ## Arguments that used to be taken on trust
 
 `Scope`, `BigNumber`, `Format`, `Replication`, `Data`, `Random`, `Monetization`,
-and `Leaderstats` now refuse arguments of the wrong type where they used to carry
-on.
+and `Leaderstats` now refuse arguments of the wrong type where they used to
+carry on.
 
-One of these was a silent wrong answer rather than a late error:
-`Scope.Player` given something that was not a player returned a bag that was not
-that player's, and closed it at a moment that had nothing to do with them.
+One of these was a silent wrong answer rather than a late error: `Scope.Player`
+given something that was not a player returned a bag that was not that player's,
+and closed it at a moment that had nothing to do with them.
 
 <NewsPagination />
 

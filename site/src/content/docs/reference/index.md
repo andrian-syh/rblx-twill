@@ -61,7 +61,8 @@ Requiring any of these from a client fails with a message naming the module.
 
 | Module | What it does |
 | --- | --- |
-| [Data](/reference/data/) | Player data on ProfileStore, with versioning and migrations. |
+| [Data](/reference/data/) | Player data, with versioning, migrations, and branches. |
+| [Store](/reference/store/) | The key held by one server at a time, under `Data`. |
 | [Monetization](/reference/monetization/) | Developer products and passes, granted once. |
 | [Leaderstats](/reference/leaderstats/) | The Roblox player list, filled from replicated state. |
 | [Filter](/reference/filter/) | Player-written text made safe to show. |

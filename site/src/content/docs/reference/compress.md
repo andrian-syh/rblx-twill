@@ -1,9 +1,11 @@
 ---
 title: Compress
-description: Large data made small, and safe to send wherever text goes.
+description: Large data made small, and safe to send wherever text goes
 ---
 
 ```luau
+local Compress = require("@game/ReplicatedStorage/Twill").Compress
+
 local packed = Compress.Encode(bigTable)
 MessagingService:PublishAsync("Topic", packed)
 
@@ -14,33 +16,36 @@ What comes out is text, so it survives every transport that carries JSON:
 DataStores, MessagingService, MemoryStore, attributes, remotes.
 
 Underneath, a serializer turns the value into bytes and an entropy coder shrinks
-them, both of them Twill's own. Their output is not valid UTF-8 and is refused by
-every one of those transports, which is the trap this module exists to close.
+them, both of them Twill's own. Their output is not valid UTF-8 and is refused
+by every one of those transports, which is the trap this module exists to close.
 
 Roblox values are handled natively, so [`Serialize`](/reference/serialize/) is
 not needed first.
 
-## Never larger than the original
+## Two forms, the smaller one wins
 
-`Encode` computes two forms and the smaller one wins: plain JSON where the value
-can survive it, the compressed form otherwise, marked by a leading character no
-JSON value can begin with.
+`Encode` always builds the packed form, then reads the value as plain JSON where
+the value can survive it. Plain JSON wins on a tie, and the packed form wins
+otherwise.
 
-**The result is therefore never longer than the JSON of the same value**, while a
-few thousand repetitive rows still land near a fifth of it.
+The result is therefore never longer than the JSON of the same value. Small
+values come back as plain JSON, because packing eight bits into a character JSON
+accepts costs more than the byte it replaced, whatever alphabet is used.
 
-Small values come back as plain JSON because nothing else can win there. Packing
-eight bits into a character JSON accepts always costs more than the byte it
-replaced, whatever alphabet is used. Compression takes over once it earns its
-keep, and never before.
+The packed form starts with `~`, a character no JSON value can begin with, which
+is how `Decode` tells the two apart.
+
+Compression itself is tried only once the serialized bytes reach 128, and kept
+only when it comes out smaller. Below that the compressor cannot win, so it is
+not run at all.
 
 ## Truncation is refused, not read
 
-The byte count travels with the payload, so text that was cut short is refused
-rather than read as a smaller value.
+The byte count travels with the payload, in four bytes ahead of it, so text that
+was cut short is refused rather than read as a smaller value.
 
-A truncated save that looks complete is worse than one that fails, and transports
-with a size ceiling do cut payloads.
+A truncated save that looks complete is worse than one that fails, and
+transports with a size ceiling do cut payloads.
 
 It is a length and not a checksum, so bytes altered in place still read. That is
 the right trade for transports that lose the tail but never rewrite the middle.
@@ -50,16 +55,17 @@ the right trade for transports that lose the tail but never rewrite the middle.
 This matters most for saved data.
 
 | Value | What survives |
-| --- | --- |
+| :--- | :--- |
 | `Color3`, `ColorSequence` | Quantised to 8 bits per channel. |
 | `CFrame` | Position and axis angle at f32. |
 | `DateTime` | Whole seconds. |
 | `Instance` | Travels as a path. Resolves to `nil` where it does not exist. |
 | Functions, threads, buffers | Become `nil`. |
 | Cyclic branches | Become `nil`. |
+| A branch nested past 96 levels | Refused, on the way in and the way out. |
 
-If any of that matters, use [`Serialize`](/reference/serialize/) instead, which is
-exact.
+Where any of that matters, use [`Serialize`](/reference/serialize/) instead,
+which is exact.
 
 ## API
 
@@ -81,8 +87,8 @@ function Compress.Encode(value: any): string
 
 **Returns**
 
-`string` - Text safe to store and to send, never longer than the plain reading of
-the same value.
+`string` - Text safe to store and to send, never longer than the plain reading
+of the same value.
 
 This is lossy by design: it makes a value small and opaque rather than exact and
 readable. Where a person or another system reads the field, or where precision
@@ -108,16 +114,25 @@ function Compress.Decode(text: string): any
 
 `any` - The original value, or `nil` when the text cannot be read.
 
-**Never throws.** A payload that was truncated, altered at its length header, or
-was never a Compress payload at all comes back as `nil`, so a corrupted field is a
-missing value rather than a broken caller.
+This never throws. Text that was truncated, altered at its length header,
+carried an unknown form flag, or was never a Compress payload at all comes back
+as `nil`, so a corrupted field is a missing value rather than a broken caller.
 
-A count found in a payload is weighed against the bytes that came with it before
-anything is built for it, so text claiming millions of entries costs the reading
-of a few bytes rather than the memory those entries would have taken.
+The reader never reads past the length the payload declares, and refuses a
+cyclic or over-deep branch on the way back out, so untrusted input costs a `nil`
+rather than a fault.
 
 ## Transport ceilings still apply
 
 Every transport imposes its own limit on the result, and the result is text.
 Check the limit for the one you are sending through before assuming it fits. See
 [Platform limits](/reference/platform-limits/).
+
+## Limits
+
+| Limit | Value |
+| :--- | ---: |
+| Bytes before compression is attempted | 128 |
+| Length header | 4 bytes |
+| Deepest branch | 96 levels |
+| Packed form marker | `~` |

@@ -1,22 +1,16 @@
 ---
 title: Tree
-description: Instances described as data and built in one pass.
+description: Instances described as data and built in one pass
 ---
 
 ```luau
-local Tree = require("@game/ReplicatedStorage/Twill/Tree")
+local Tree = require("@game/ReplicatedStorage/Twill").Tree
 
 local root, refs = Tree.Build({
 	ClassName = "Frame",
 	Name = "HUD",
-	Size = UDim2.fromScale(1, 1),
-	Attributes = { Opacity = 0.5 },
 	Children = {
-		{
-			ClassName = "TextLabel",
-			Ref = "Title",
-			Text = "Hello",
-		},
+		{ ClassName = "TextLabel", Ref = "Title", Text = "Hello" },
 	},
 }, playerGui)
 
@@ -43,7 +37,7 @@ export type Spec = {
 ```
 
 | Key | Meaning |
-| --- | --- |
+| :--- | :--- |
 | `ClassName` | The kind of instance to create. The only required key. |
 | `Name` | What the instance is called. |
 | `Children` | A list of further specs, built below this one. |
@@ -51,21 +45,22 @@ export type Spec = {
 | `Events` | Signal names mapped to callbacks. Connected after the properties. |
 | `Ref` | A name this instance is handed back under. |
 
+Any key not in that table is written to the instance directly, so an unknown
+property name fails where it is written.
+
 ## The order things happen
 
 Properties are written first, then attributes, then events are connected, and
 children are built last.
 
-That order buys one useful guarantee: **an initial property write never fires
-your own handler**, because nothing is connected while those writes happen. A
-`GetPropertyChangedSignal` handler passed through `Events` hears only the changes
-you make afterwards.
+That order buys one guarantee: an initial property write never fires your own
+handler, because nothing is connected while those writes happen. A
+`GetPropertyChangedSignal` handler passed through `Events` hears only the
+changes made afterwards.
 
-:::caution[A handler that runs at once will not see the children]
-Events are connected before the children exist. That is fine for interaction
-handlers, which run long after the build, but a handler that could fire
-immediately should not assume the rest of the tree is there yet.
-:::
+Events are connected before the children exist. That suits interaction handlers,
+which run long after the build. A handler that could fire immediately cannot
+assume the rest of the tree is there.
 
 ## API
 
@@ -73,8 +68,7 @@ immediately should not assume the rest of the tree is there yet.
 
 `[Server]` | `[Client]`
 
-Builds an instance tree from a spec, and hands back the pieces worth keeping hold
-of.
+Builds an instance tree from a spec and hands back the pieces worth keeping.
 
 ```luau
 function Tree.Build(spec: Spec, parent: Instance?): (Instance, { [string]: Instance })
@@ -94,13 +88,13 @@ function Tree.Build(spec: Spec, parent: Instance?): (Instance, { [string]: Insta
 `{ [string]: Instance }` - Every instance that asked for a `Ref`, by that name,
 however deep in the tree it sat.
 
-Throws when a spec anywhere in the tree has no `ClassName`.
+Throws when a spec anywhere in the tree has no `ClassName` string.
 
-Parenting is the last thing done, so the tree arrives complete rather than being
-watched as it assembles. A tree that fails partway leaves nothing behind in the
-world, because nothing was parented outward yet.
+Children are parented to their own parent as they are built, and the root is
+parented last. A tree that fails partway leaves nothing behind in the world,
+because the root never reached the parent given.
 
-One spec may be built many times, into several places at once.
+Parenting is the caller's, so one spec may be built into several places at once.
 
 **Example**
 
@@ -114,7 +108,6 @@ local root, refs = Tree.Build({
 	Children = {
 		{
 			ClassName = "TextLabel",
-			-- Named here so it can be updated without searching for it later.
 			Ref = "Amount",
 			Size = UDim2.fromScale(1, 1),
 			Text = "0",
@@ -129,30 +122,31 @@ local root, refs = Tree.Build({
 	},
 }, playerGui)
 
--- Refs are collected from the whole tree, so this reaches a nested label
--- without a chain of FindFirstChild calls.
 Twill.Replication.Subscribe("Data.Coins", function(coins)
 	refs.Amount.Text = Twill.Format.Comma(coins or 0)
 end)
 ```
 
+Refs are collected from the whole tree, so a nested label is reached without a
+chain of `FindFirstChild` calls.
+
 ## Connections
 
-`Events` connections are **not** owned by a bag. Destroying the root instance
-disconnects them, which for UI parented to a `PlayerGui` is enough, since Roblox
+`Events` connections are not owned by a bag. Destroying the root instance
+disconnects them, which is enough for UI parented to a `PlayerGui`, since Roblox
 removes it with the player.
 
-For anything longer-lived, or anything parented into the world, put the root in a
-[`Scope`](/reference/scope/) bag:
+For anything longer lived, or anything parented into the world, put the root in
+a [`Scope`](/reference/scope/) bag:
 
 ```luau
 local root = Tree.Build(spec, workspace)
+
 bag:Add(root)
 ```
 
 ## What this is not
 
-`Tree` builds instances once. It does not re-render them when your state moves,
-and it holds no view state of its own. Follow a value by subscribing to it and
-writing through a `Ref`, as above, or bring a UI library if you want
-reconciliation. Twill stays out of the way either way.
+`Tree` builds instances once. It does not re-render them when state moves, and
+it holds no view state. Follow a value by subscribing to it and writing through
+a `Ref`, or bring a UI library when reconciliation is wanted.

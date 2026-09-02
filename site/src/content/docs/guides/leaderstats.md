@@ -1,11 +1,11 @@
 ---
 title: Show stats in the player list
-description: Bind the Roblox player list to replicated state, and understand what it can and cannot sort.
+description: Bind the Roblox player list to replicated state, and understand what it can and cannot sort
 ---
 
 The Roblox player list is the one piece of interface every player sees and none
 of them opened deliberately. It is also a shared surface: what you write there
-replicates to everyone in the server, not just to the player it describes.
+replicates to everyone in the server, not only to the player it describes.
 
 That makes it worth binding rather than driving. Name the state a stat should
 follow, and let the write that already reaches the client update the list on its
@@ -59,12 +59,13 @@ Twill.Replication.Set("Wave", 1)
 ## What it can sort
 
 :::caution[`IntValue` and `NumberValue` only]
-Text is displayed but never sorted. This is a Roblox constraint, not a Twill one.
+Text is displayed but never sorted. This is a Roblox constraint, not a Twill
+one.
 :::
 
-The value object is chosen from the value itself, and replaced if the value later
-needs a different one, so a stat that outgrows its holder keeps showing rather
-than silently stopping.
+The value object is chosen from the value itself, and replaced if the value
+later needs a different one, so a stat that outgrows its holder keeps showing
+rather than silently stopping.
 
 | Value | Object | Sorts |
 | --- | --- | --- |
@@ -94,10 +95,10 @@ numbers. An ordinary number is written into its value object as it stands.
 
 ## Bind keys that change at human pace
 
-This is the one rule worth taking seriously here. A key written every frame writes
-the player list every frame, and the player list replicates to **everyone**. The
-cost is multiplied by the server population, and it is paid by players who are
-not even looking at it.
+This is the one rule worth taking seriously here. A key written every frame
+writes the player list every frame, and the player list replicates to everyone.
+The cost is multiplied by the server population, and it is paid by players who
+are not even looking at it.
 
 For a value that moves continuously, slow what leaves rather than what is
 written:
@@ -107,8 +108,8 @@ Twill.Replication.SetThrottle("Position", 1)
 ```
 
 Or publish a separate, coarser key for the list and keep the precise one for
-whatever actually needs precision. A stat nobody can read changing twice a second
-does not need to change sixty times a second.
+whatever actually needs precision. A stat nobody can read changing twice a
+second does not need to change sixty times a second.
 
 ## Force a refresh
 

@@ -9,6 +9,70 @@ at least three large changes landing together, reaching more than a quarter of
 what came before. A smaller change to an API lands in a minor version and brings
 a Migration section with it, so what has to be rewritten is always written down.
 
+## [1.8.0] - 2026-09-02
+
+Player data no longer sits on a bundled package. The store underneath it is
+Twill's own, and the console can now read a key's history and say who holds it.
+
+### Added
+
+- `Twill.Store`, the module `Data` is built on. It holds a DataStore key for one
+  server at a time, saves it while it is held, and gives it up on the way out.
+  Reach for it directly for keys that are not player data.
+- `Data.Inspect` reports who holds a scope, how many sessions its key has had,
+  and when it was last written.
+- `Data.Versions` walks back through what a scope held before, newest first.
+- `playerdata status` names the server holding each scope and what storage is
+  doing. `playerdata versions` reads up to five earlier versions of a scope.
+- `Store.OnTrouble`, `Store.OnStrained` and `Store.OnOverwrite` report storage
+  failing, failing repeatedly, and finding a key it cannot read.
+
+### Changed
+
+- The bundled `ProfileStore` package is gone. `Data` keeps the same public API,
+  and a key written by the old package still reads: its format is recognised and
+  raised to the current one on the first save.
+- Autosave runs every 180 seconds rather than every 300, and is set per store
+  rather than for every store at once.
+- `Token` now produces standard HMAC-SHA256. The bundled library byte-swaps a
+  digest that is already in the right order unless told not to, so every tag
+  Twill produced before this release was a keyed hash but not HMAC.
+
+### Fixed
+
+- A write that storage refused reported success. With packing enabled, a failure
+  to pack took exactly this path: nothing was stored, `LastSaved` was updated,
+  and `OnAfterSave` fired. Affected saving, writing back a read-only key, and
+  sending a change.
+- Nothing was saved on shutdown. The closing handler wrote to the frozen module
+  table on its first line and raised there.
+- Taking a key this server already held left the earlier handle looking alive.
+  It accepted writes that could never be stored, and said nothing until the
+  server closed.
+- Shutdown waited for every write with no limit, and each write kept its full
+  four attempts with backoff climbing to thirty seconds. Keys later in the queue
+  could not reach storage before the platform closed the server.
+- A save already in flight when a session ended reported that another server had
+  taken the key. It had not; this server released it.
+- Forgetting a key left this server's handle alive, and its next save wrote the
+  key back.
+- A public signal fired from inside a storage transform, where a listener that
+  yields breaks the write. An unreadable key was also retried for the full two
+  minutes rather than given up on at once.
+- Values captured inside a transform were read afterwards without accounting for
+  the transform running more than once.
+- `Twill.Random` raised on every draw from a committed round. The bundled
+  cryptography library changed its argument order and the caller was not updated,
+  so every auditable roll was broken.
+
+### Migration
+
+Nothing to do for `Data`. Its API, its behaviour, and the format of what it
+stores are unchanged.
+
+Tokens issued before this release will read as `forged`. Reissue anything still
+in circulation.
+
 ## [1.7.4] - 2026-08-28
 
 What a union could not tell apart, what a count could ask for, and a guard that

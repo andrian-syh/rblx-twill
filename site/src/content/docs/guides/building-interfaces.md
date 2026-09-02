@@ -1,6 +1,6 @@
 ---
 title: Build interfaces from data
-description: Describe a screen as a table, build it in one pass, and follow state without a view layer.
+description: Describe a screen as a table, build it in one pass, and follow state without a view layer
 ---
 
 Building UI by hand produces the same forty lines every time: create, set six
@@ -8,7 +8,7 @@ properties, parent, repeat, then hunt for the label again later with a chain of
 `FindFirstChild`.
 
 [`Tree`](/reference/tree/) takes the description instead. You write what the
-screen **is**, get back the pieces you named, and bind them to state yourself.
+screen is, get back the pieces you named, and bind them to state yourself.
 
 This is deliberately not a view layer. Twill has no reconciliation and no state
 binding of its own; what it has is a builder and a subscription, which together
@@ -73,8 +73,8 @@ label follows the server's own write.
 ## Bind a whole panel
 
 One subscription per field reads fine for two fields and repeats badly for ten.
-The repetition is always the same shape — a path, a ref, a property, a formatter
-— so write it down once, in your own controller:
+The repetition is always the same shape, a path, a ref, a property, and a
+formatter, so write it down once, in your own controller:
 
 ```luau
 local function bind(path: string, instance: Instance, property: string, show: ((any) -> any)?)
@@ -123,14 +123,12 @@ player or per character.
 }
 ```
 
-:::note[Initial writes never fire your handlers]
 Properties and attributes are set before anything is connected, so a
-`GetPropertyChangedSignal` handler passed through `Events` hears only the changes
-you make afterwards, not the ones the build itself performed.
+`GetPropertyChangedSignal` handler passed through `Events` hears only the
+changes you make afterwards, not the ones the build itself performed.
 
 Children are built after the events connect, so a handler that could fire
 immediately should not assume the rest of the tree exists yet.
-:::
 
 ## Reuse a spec
 
@@ -156,12 +154,10 @@ for index = 1, 9 do
 end
 ```
 
-:::tip[Refs come from the whole tree, so keep them unique]
 `Build` collects every `Ref` at any depth into one flat table. Two instances
 asking for the same name means the later one wins and the earlier one becomes
 unreachable. Where a spec is built repeatedly, put the index in the name, as
 above.
-:::
 
 ## Clean up
 
@@ -191,7 +187,7 @@ bag:Add(Twill.Replication.Subscribe("Data.Coins", onCoins))
 view state.
 
 That is fine for a HUD, where a handful of labels follow a handful of values. It
-stops being fine when the **shape** of the screen depends on state: a list whose
+stops being fine when the shape of the screen depends on state: a list whose
 length changes, a panel that swaps layouts, anything you would otherwise rebuild
 by destroying and recreating.
 

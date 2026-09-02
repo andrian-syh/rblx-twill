@@ -1,6 +1,6 @@
 ---
 title: Clean up connections and instances
-description: Pick the bag that matches how long something should live, and never write a teardown again.
+description: Pick the bag that matches how long something should live, and never write a teardown again
 ---
 
 ## Use the bag you were handed
@@ -15,8 +15,8 @@ function CombatService.OnPlayerReady(player, data, bag)
 end
 ```
 
-The bag closes when the player leaves. There is no `OnPlayerRemoving` teardown to
-write.
+The bag closes when the player leaves. There is no `OnPlayerRemoving` teardown
+to write.
 
 ## Pick the right lifetime
 
@@ -29,7 +29,7 @@ Twill.Scope.Alive(character)
 | Bag | Closes | Use it for |
 | --- | --- | --- |
 | `Player` | The player leaves. | Anything that belongs to the session. |
-| `Character` | The character is removed, which Roblox does at **respawn**, not at death. | Ragdoll, corpse effects, anything that should outlive the death. |
+| `Character` | The character is removed, which Roblox does at respawn, not at death. | Ragdoll, corpse effects, anything that should outlive the death. |
 | `Alive` | The humanoid dies, or the character is removed without dying. | Movement, abilities, input. Anything that must stop the instant they are dead. |
 
 The distinction between the last two is the one that causes bugs. A sprint loop
@@ -55,9 +55,9 @@ Twill.Loop.After(5, expire, bag)
 Twill.Watch.Tagged("Door", onDoor, bag)
 ```
 
-Leave the last argument out and the work goes to `Scope.Framework()`, which lives
-as long as the server does. That is correct for a global system and wrong for
-anything tied to a player.
+Leave the last argument out and the work goes to `Scope.Framework()`, which
+lives as long as the server does. That is correct for a global system and wrong
+for anything tied to a player.
 
 ## Anything with `Destroy` fits
 

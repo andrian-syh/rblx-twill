@@ -1,6 +1,6 @@
 ---
 title: Quick start
-description: Boot both sides, save a player's data, and watch a service run.
+description: Boot both sides, save a player's data, and watch a service run
 ---
 
 By the end of this page you will have a server that loads player data, boots a
@@ -72,10 +72,9 @@ Player1 has visited 1 time(s)
 Stop and play again. The count goes up, because the profile was saved and
 reloaded.
 
-:::note[The count is not increasing]
-Enable **Studio Access to API Services** in **Game Settings → Security**. Studio
-cannot reach a DataStore without it, and the profile is starting fresh every run.
-:::
+If the count is not increasing, enable **Studio Access to API Services** in
+**Game Settings → Security**. Studio cannot reach a DataStore without it, and
+the profile starts fresh every run.
 
 ## 4. Boot the client too
 
@@ -109,9 +108,9 @@ Twill.Lifecycle.Start(ReplicatedStorage.Client)
 
 Press **Play** again and `client booted` joins the output.
 
-The client gets discovery, ordering, and the two boot phases. It does not get the
-player pipeline, because on a client `PlayerAdded` means somebody else joined.
-Each side keeps its own boot list, so the two never interfere.
+The client gets discovery, ordering, and the two boot phases. It does not get
+the player pipeline, because on a client `PlayerAdded` means somebody else
+joined. Each side keeps its own boot list, so the two never interfere.
 
 ## What you now have
 
@@ -124,6 +123,6 @@ Each side keeps its own boot list, so the two never interfere.
 
 ## Next
 
-The Core Guides take each piece properly: [Write a
-service](/core-guides/services/) for the server side, [Write a
-controller](/core-guides/controllers/) for the client.
+The Core Guides take each piece properly:
+[Write a service](/core-guides/services/) for the server side,
+[Write a controller](/core-guides/controllers/) for the client.

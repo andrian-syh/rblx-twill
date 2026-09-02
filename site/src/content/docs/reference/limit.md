@@ -1,9 +1,11 @@
 ---
 title: Limit
-description: Metering, and knowing when to stop talking about it.
+description: Token bucket metering, per caller or per player, with reporting that does not flood
 ---
 
 ```luau
+local Limit = require("@game/ReplicatedStorage/Twill").Limit
+
 local allowance = Limit.PerPlayer(10)
 
 if not allowance:Take(player) then
@@ -13,22 +15,43 @@ end
 
 ## Token buckets
 
-A bucket refills at its rate and never holds more than its burst.
+A bucket refills at its rate and never holds more than its burst. It starts full,
+so the first call always passes.
 
-**A rate below one is how you spell a cooldown.** `Limit.new(0.25)` permits one
-call every four seconds.
+A rate below one is a cooldown. `Limit.new(0.25)` permits one call every four
+seconds.
 
-The burst never falls below a single token, so the first call is allowed however
-slow the refill is. A refused call costs nothing, so a caller being turned away
-does not push their own recovery further out.
+The burst never falls below one token however slow the refill, so a slow bucket
+still admits a single call rather than none. A refused call spends nothing, so
+being turned away does not push a caller's own recovery further out.
 
-## Throttling the log
+`Take` credits what the time since the last call earned back, then spends. There
+is no timer and no per-bucket work between calls.
 
-The path that refuses a flood is the path a flood runs down. A line written per
-refusal turns the limiter into an amplifier for the traffic it is rejecting.
+## Per player, per key
 
-`Throttle` answers that. It says how many were refused since it last spoke, and
-nothing at all in between. Writing the line stays with the caller.
+`PerPlayer` keeps a separate bucket for every player, and a separate one for
+every key of theirs.
+
+```luau
+local allowance = Limit.PerPlayer(4)
+
+allowance:Take(player, "BuyItem")
+allowance:Take(player, "Emote")
+```
+
+Both spend from their own bucket at the same rate. Leaving the key out uses one
+shared bucket per player.
+
+A player's buckets are created the moment they are first needed and forgotten
+when that player leaves. There is no window in which a caller is unmetered, and
+nothing accumulates for players who are gone.
+
+## Reporting a flood
+
+Logging once per refusal makes the log the flood. `Throttle` counts refusals
+instead, and answers with the count at most once per interval. Writing the line
+stays with the caller.
 
 ```luau
 local speak = Limit.Throttle(5)
@@ -38,6 +61,12 @@ if refused then
 	logger:Warn(`{player.Name} was refused {refused} time(s)`)
 end
 ```
+
+The count covers everything since the last time it spoke, including the call that
+is speaking now. Between reports it answers `nil`.
+
+Records are keyed the same way allowances are, so a player and a remote each get
+their own quiet period. A player's records are forgotten when they leave.
 
 ## API
 
@@ -77,17 +106,9 @@ Creates an allowance per player, forgotten when that player leaves.
 function Limit.PerPlayer(rate: number, burst: number?): Allowance
 ```
 
-**Parameters**
-
-| Name | Type | Description |
-| :--- | :--- | :--- |
-| `rate` | `number` | Units earned back per second, per player. Must be above zero. |
-| `burst` | `number?` | The most one player's allowance will hold. The rate itself when left out, and never less than one. |
-
 **Returns**
 
-`Allowance` - An allowance covering every player, created per player on first
-use.
+`Allowance` - An allowance covering every player.
 
 Throws when the rate is not a number above zero.
 
@@ -99,8 +120,6 @@ Creates a reporter that speaks at most once per interval and counts the rest.
 
 ```luau
 function Limit.Throttle(interval: number): Throttle
-
-export type Throttle = (key: any, subKey: any?) -> number?
 ```
 
 **Parameters**
@@ -111,95 +130,58 @@ export type Throttle = (key: any, subKey: any?) -> number?
 
 **Returns**
 
-`Throttle` - Answers how many went unreported, or `nil` to stay quiet.
+`Throttle` - A function answering how many went unreported, or `nil` to stay
+quiet.
 
 Throws when the interval is not a number above zero.
-
-Deciding when there is a line to write is all this does. Writing it stays with
-the caller. A throttle keyed by a player forgets that player when they leave.
 
 ### `Bucket:Take`
 
 `[Server]` | `[Client]`
 
-Spends from the allowance, first crediting whatever the time since the last call
-has earned back.
+Spends from the allowance, crediting what the time since the last call earned
+back.
 
 ```luau
-export type Bucket = {
-	Take: (self: Bucket, amount: number?) -> boolean,
-}
+function Bucket:Take(amount: number?): boolean
 ```
-
-**Parameters**
-
-| Name | Type | Description |
-| :--- | :--- | :--- |
-| `amount` | `number?` | How much to spend. One when left out. |
 
 **Returns**
 
-`boolean` - False when there was not enough left to spend.
+`boolean` - `false` when there was not enough left to spend. One unit when the
+amount is left out.
+
+A cost larger than the burst can never be met.
 
 ### `Allowance:Take`
 
 `[Server]` | `[Client]`
 
-Spends one unit of a player's allowance.
+Spends one unit of a player's allowance, with each key kept apart.
 
 ```luau
-export type Allowance = {
-	Take: (self: Allowance, player: Player, key: any?) -> boolean,
-}
+function Allowance:Take(player: Player, key: any?): boolean
 ```
-
-**Parameters**
-
-| Name | Type | Description |
-| :--- | :--- | :--- |
-| `player` | `Player` | Whose allowance to spend. |
-| `key` | `any?` | What they are spending it on. A shared one when left out. |
 
 **Returns**
 
-`boolean` - False when that player has nothing left to spend on that key.
+`boolean` - `false` when that player has nothing left to spend on that key.
 
-Each key gets its own separate standing, so someone exhausting one action has not
-exhausted the others.
+### `Throttle`
+
+`[Server]` | `[Client]`
 
 ```luau
-allowance:Take(player, "Emote")
-allowance:Take(player, "Chat")
+type Throttle = (key: any, subKey: any?) -> number?
 ```
 
-## Lifetime
+Answers the number of calls since it last spoke, or `nil` while it is staying
+quiet.
 
-Buckets and throttles keyed by a player forget that player when they leave.
+## Where Twill uses this
 
-**Build them once, where the system lives, not once per caller.** A bucket
-created inside the function it guards is a fresh bucket every call, and refuses
-nothing.
-
-```luau title="Do this"
-local allowance = Limit.PerPlayer(10)
-
-local function onFire(player)
-	if not allowance:Take(player) then return end
-end
-```
-
-```luau title="Not this"
-local function onFire(player)
-	local allowance = Limit.PerPlayer(10)
-	if not allowance:Take(player) then return end
-end
-```
-
-The second builds a new bucket, full, on every call, and therefore refuses
-nothing.
-
-## Already applied for you
-
-Every remote served through [`Net.Handle`](/reference/net/#rate) is metered
-through this module whether or not you pass a `Rate`. You only need `Limit`
-directly for things that are not remotes.
+| Caller | What it meters |
+| :--- | :--- |
+| [`Net`](/reference/net/) | Calls per player per remote, and total bytes per player. |
+| `Net` | Refusal reports, once per five seconds per player and remote. |
+| [`Store`](/reference/store/) | Reports of a peer sending something unreadable. |

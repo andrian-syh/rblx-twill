@@ -1,19 +1,17 @@
 ---
 title: Loop
-description: Work that repeats, waits, or is spread out.
+description: Work that repeats, waits, or is spread out
 ---
 
 ```luau
+local Loop = require("@game/ReplicatedStorage/Twill").Loop
+
 Loop.Every(1, onTick, Scope.Player(player))
 Loop.After(5, onTimeout, bag)
 Loop.Stagger(pets, 20, updateOnePet)
-
-if not Loop.Until(function() return roundHasStarted end, 30) then
-	logger:Warn("the round never started")
-end
 ```
 
-Everything here hands back a handle carrying `Destroy`, so a
+Every function here hands back a handle carrying `Destroy`, so a
 [bag](/reference/bag/) holds it like anything else.
 
 ```luau
@@ -24,12 +22,20 @@ export type Handle = {
 
 ## Ownership
 
-The last argument is the bag the work belongs to. Leave it out and it goes to
-`Scope.Framework()`, because nothing in Twill is allowed to start a connection
-nobody owns.
+The last argument is the bag the work belongs to. Left out, it goes to
+`Scope.Framework()`, because nothing in Twill starts a connection nobody owns.
 
-Passing the right bag is how a loop belonging to a player stops when that player
-leaves, without you writing the teardown.
+Passing the right bag is what makes a loop belonging to a player stop when that
+player leaves, with no teardown written by hand.
+
+## Missed runs are not made up
+
+`Every` accumulates the time since the last run and fires once when that passes
+the interval, reporting what actually passed. A frame that overshoots does not
+fire twice to catch up.
+
+Rate work out of `elapsed` rather than assuming the interval, and a stuttering
+server produces correct totals instead of a burst of catch-up work.
 
 ## API
 
@@ -51,22 +57,18 @@ function Loop.Every(
 
 | Name | Type | Description |
 | :--- | :--- | :--- |
-| `interval` | `number` | Seconds between runs. Must be above zero. |
-| `callback` | `(elapsed: number) -> ()` | Receives how long actually passed, which will not be exactly the interval. |
+| `interval` | `number` | Seconds between runs. Above zero. |
+| `callback` | `(elapsed: number) -> ()` | Receives how long actually passed, which is not exactly the interval. |
 | `owner` | `Scope.Bag?` | The bag it belongs to. The framework's own when left out. |
 
 **Returns**
 
 `Handle` - Stops the repeating early.
 
-Throws when the interval is not a number above zero.
+Throws when the interval is not a number above zero, or the callback is not a
+function.
 
-:::note[Missed runs are not made up]
-A frame that overshoots the interval reports the time that actually passed rather
-than firing twice to catch up. Work rates out of `elapsed` rather than assuming
-the interval, and a stuttering server produces correct totals instead of a burst
-of catch-up work.
-:::
+Runs on `Heartbeat`, so the callback runs after physics rather than before.
 
 ### `Loop.After`
 
@@ -90,18 +92,18 @@ function Loop.After(delay: number, callback: () -> (), owner: Scope.Bag?): Handl
 
 `Handle` - Cancels the wait early.
 
-Throws when the delay is not a number of zero or more.
+Throws when the delay is not a number of zero or more, or the callback is not a
+function.
 
 A bag that closes during the wait cancels it, which is what makes this safe to
-start for a player who may leave before it comes due. That is the reason to reach
-for this over `task.delay` for anything tied to a lifetime.
+start for a player who may leave before it comes due. Use it over `task.delay`
+for anything tied to a lifetime.
 
 ### `Loop.Stagger`
 
 `[Server]` | `[Client]`
 
-Walks an array a few entries per frame, over and over, so no single frame carries
-the whole set.
+Walks an array a few entries per frame, wrapping around forever.
 
 ```luau
 function Loop.Stagger<T>(
@@ -125,32 +127,21 @@ function Loop.Stagger<T>(
 
 `Handle` - Stops the walk early.
 
-Throws when given something other than an array, or fewer than one entry per
-frame.
+Throws when given a non-table, fewer than one entry per frame, or no step
+function.
 
-Every entry is touched once per lap. This is the one worth reading twice: a
-hundred pets updated in one frame is a hundred times the work in that frame. The
-same hundred at twenty a frame is five frames of a fifth of it, and no player can
-tell the difference.
+A hundred pets updated in one frame is a hundred times the work in that frame.
+The same hundred at twenty a frame is five frames of a fifth of it. Pick
+`perFrame` from how stale an entry may be, not from how many there are.
 
-**Example**
-
-```luau
-local pets: { Model } = {}
-
--- Twenty a frame, so a hundred pets each update every five frames. Pick the
--- number from how stale an entry may be, not from how many there are.
-Loop.Stagger(pets, 20, function(pet)
-	followOwner(pet)
-end)
-```
+An empty array costs a frame check and nothing else. A frame never carries more
+entries than the array holds, so a short array is not walked twice in one frame.
 
 ### `Loop.Until`
 
 `[Server]` | `[Client]`
 
-Yields until something becomes true, or until waiting for it stops being worth
-it.
+Yields until a predicate comes true, or until the waiting runs out.
 
 ```luau
 function Loop.Until(predicate: () -> boolean, timeout: number?, poll: number?): boolean
@@ -166,17 +157,23 @@ function Loop.Until(predicate: () -> boolean, timeout: number?, poll: number?): 
 
 **Returns**
 
-`boolean` - True when it came true, false when the time ran out. Yields.
+`boolean` - `true` when it came true, `false` when the time ran out. Yields.
 
 Throws when the predicate is not a function.
 
 This takes no bag, because it yields the calling thread rather than owning a
 connection.
 
-:::caution[The last resort, not a fallback]
-This is for state that offers no signal to wait on. Where there is a signal, wait
-on that instead: an attribute has `GetAttributeChangedSignal`, a property has
-`GetPropertyChangedSignal`, a tag has its own signals, and replicated state has
-[`Replication.WaitFor`](/reference/replication/#replicationwaitfor). Each of those
-costs nothing while it waits, and this costs a check per poll.
-:::
+Reach for it only where the state offers no signal to wait on. An attribute has
+`GetAttributeChangedSignal`, a property has `GetPropertyChangedSignal`, a tag
+has its own signals, and replicated state has
+[`Replication.WaitFor`](/reference/replication/#replicationwaitfor). Each of
+those costs nothing while it waits, and this costs a check per poll.
+
+## Limits
+
+| Limit | Value |
+| :--- | ---: |
+| Default `Until` timeout | 10 seconds |
+| Default `Until` poll | 0.1 seconds |
+| Smallest `Stagger` batch | 1 entry per frame |

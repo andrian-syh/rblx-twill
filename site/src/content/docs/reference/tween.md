@@ -1,6 +1,6 @@
 ---
 title: Tween
-description: Values moved over time, every one of them on a single loop.
+description: Values moved over time, every one of them on a single loop
 ---
 
 ```luau
@@ -14,19 +14,24 @@ A tween here is a table, not an `Instance`. Every tween in the game shares one
 connection that exists only while something is playing, so a frame costs the
 writes it makes and nothing else, and a place that tweens nothing pays nothing.
 
+The loop runs on `PreRender` on a client and on `PostSimulation` on a server.
+
 ## What it moves
 
 `TweenService` reaches properties. This reaches four things:
 
 | Written as | Moves |
-| --- | --- |
+| :--- | :--- |
 | `Transparency = 1` | A property of the instance. |
 | `["@Charge"] = 100` | An attribute, named with a leading `@`. |
 | `Pivot = cframe` | A `PVInstance`, through `PivotTo`. |
 | `Scale = 2` | A `Model`, through `ScaleTo`. |
 
-A plain table works as a target too, which is what makes a tween testable without
-a DataModel and what lets you drive a number nothing on screen owns yet.
+Nine types can be moved: `number`, `boolean`, `Vector2`, `Vector3`, `UDim`,
+`UDim2`, `CFrame`, `Color3`, and `NumberRange`.
+
+A plain table works as a target too, which is what makes a tween testable
+without a DataModel and what lets you drive a number nothing on screen owns yet.
 
 ```luau
 local counter = { Coins = 0 }
@@ -36,8 +41,8 @@ Twill.Tween.Play(counter, { Coins = 500 }, { Time = 2 })
 
 ## Curves the engine cannot draw
 
-A destination given as an array of two or three values is a curve through control
-points rather than a straight line.
+A destination given as an array of two or three values is a curve through
+control points rather than a straight line.
 
 ```luau
 Twill.Tween.Play(part, {
@@ -46,19 +51,20 @@ Twill.Tween.Play(part, {
 ```
 
 The first entry is where it ends and the rest are leaned towards on the way, a
-quadratic Bezier with one and a cubic with two. `Vector2`, `Vector3`, `UDim2` and
-`CFrame` can be curved; everything else travels straight.
+quadratic Bezier with one and a cubic with two. `Vector2`, `Vector3`, `UDim2`
+and `CFrame` can be curved; everything else travels straight.
 
 ## Colour crosses where the eye reads it
 
-A `Color3` is interpolated through Oklab rather than through raw RGB channels, so
-a blue reaching a yellow passes through the greens a person expects instead of
-sagging through grey. Nothing is asked of you for this.
+A `Color3` is interpolated through Oklab rather than through raw RGB channels,
+so a blue reaching a yellow passes through the greens a person expects instead
+of sagging through grey. Channels outside what a screen shows are brought back
+to what it does. Nothing is asked of you for this.
 
 ## A property belongs to one tween
 
-Starting a tween takes every property it moves away from whoever held it, and the
-older tween is cancelled rather than left fighting for the same field.
+Starting a tween takes every property it moves away from whoever held it, and
+the older tween is cancelled rather than left fighting for the same field.
 
 ```luau
 local slow = Twill.Tween.new(gui, { Position = there }, { Time = 4 })
@@ -68,29 +74,28 @@ slow:Play()
 fast:Play()   -- slow is cancelled, and Position is now fast's
 ```
 
-This is per property and per target, so two tweens moving different fields of the
-same instance never disturb each other.
+This is per property and per target, so two tweens moving different fields of
+the same instance never disturb each other.
 
 ## The server replicates every frame
 
-Tweening an `Instance` on the server sends every frame of it to every client, and
-Twill refuses it rather than letting that cost arrive unannounced.
+Tweening an `Instance` on the server sends every frame of it to every client,
+and Twill refuses it rather than letting that cost arrive unannounced.
 
 ```luau
 Twill.Tween.Play(part, { Transparency = 1 }, { AllowServer = true })
 ```
 
-Tween on the client where you can. Pass `AllowServer` when the replication is the
-point, which it is for a door every player has to agree about.
-
-:::note[A plain table is never refused]
-The guard is about replication, so tweening a table on the server is ordinary.
-:::
+Tween on the client where you can. Pass `AllowServer` when the replication is
+the point, which it is for a door every player has to agree about. The guard is
+about replication, so tweening a plain table on the server is ordinary and is
+never refused.
 
 ## Cleanup
 
-A tween belongs to the bag given as its last argument, and to the framework's own
-bag when that is left out, so nothing here is ever left running with no owner.
+A tween belongs to the bag given as its last argument, and to the framework's
+own bag when that is left out, so nothing here is ever left running with no
+owner.
 
 ```luau
 Twill.Tween.new(gui, { Position = there }, { Time = 1 }, Twill.Scope.Player(player))
@@ -109,7 +114,12 @@ call and forget.
 Builds a tween and leaves it standing, ready to be played.
 
 ```luau
-function Tween.new(target: Instance | Values, values: Values, options: Options?, owner: Scope.Bag?): Tween
+function Tween.new(
+	target: Instance | Values,
+	values: Values,
+	options: Options?,
+	owner: Scope.Bag?
+): Tween
 ```
 
 **Parameters**
@@ -125,9 +135,14 @@ function Tween.new(target: Instance | Values, values: Values, options: Options?,
 
 `Tween` - The tween, not yet playing.
 
-Throws when the target is neither an `Instance` nor a table, when a name is
-unknown, unwritable, or given the wrong type, and when a server was asked to
-tween an `Instance` without `AllowServer`.
+Throws when the target is neither an `Instance` nor a table, when no values were
+given, when a name is unknown, unwritable, or given the wrong type, when a value
+or control point is not finite, and when a server was asked to tween an
+`Instance` without `AllowServer`.
+
+Every destination is checked and every write is tried once at the starting value
+while the tween is built, so a tween that would fail fails here rather than
+mid-flight.
 
 ### `Tween.Play`
 
@@ -136,7 +151,12 @@ tween an `Instance` without `AllowServer`.
 Builds a tween, plays it at once, and tidies it away when it stops.
 
 ```luau
-function Tween.Play(target: Instance | Values, values: Values, options: Options?, owner: Scope.Bag?): Tween
+function Tween.Play(
+	target: Instance | Values,
+	values: Values,
+	options: Options?,
+	owner: Scope.Bag?
+): Tween
 ```
 
 **Returns**
@@ -145,7 +165,7 @@ function Tween.Play(target: Instance | Values, values: Values, options: Options?
 
 Takes and refuses exactly what `Tween.new` does.
 
-### Options
+### `Options`
 
 ```luau
 export type Options = {
@@ -161,23 +181,25 @@ export type Options = {
 ```
 
 | Field | Default | Meaning |
-| --- | --- | --- |
-| `Time` | 1 | Seconds one round takes. Must be above zero. |
+| :--- | :--- | :--- |
+| `Time` | 1 | Seconds one round takes. Finite and above zero. |
 | `EasingStyle` | `"Quad"` | A style name, or a curve of your own taking and returning a number. |
 | `EasingDirection` | `"Out"` | `In`, `Out`, `InOut`, or `OutIn`. |
-| `DelayTime` | 0 | Seconds to wait before the first move. |
-| `RepeatCount` | 0 | Extra rounds after the first. Below zero repeats forever. Must be finite. |
-| `Reverses` | false | Whether a round travels back before it counts as done. |
-| `FPS` | every frame | Write no more often than this many times a second. Must be finite and above zero. |
-| `AllowServer` | false | Whether an `Instance` may be tweened on a server. |
+| `DelayTime` | 0 | Seconds to wait before the first move. Finite, zero or more. |
+| `RepeatCount` | 0 | Extra rounds after the first. Below zero repeats forever. Finite. |
+| `Reverses` | `false` | Whether a round travels back before it counts as done. |
+| `FPS` | every frame | Write no more often than this many times a second. Finite and above zero. |
+| `AllowServer` | `false` | Whether an `Instance` may be tweened on a server. |
 
 Eleven easing styles are available: `Linear`, `Quad`, `Cubic`, `Quart`, `Quint`,
 `Sine`, `Exponential`, `Circular`, `Back`, `Elastic`, and `Bounce`. Each is
 written once as its `In` curve and the other three directions are derived from
 it, so a family is right or wrong in one place rather than in four.
 
-A curve of your own is sampled when it is given and refused there if it answers
-with anything but a finite number, rather than failing mid-flight.
+A curve of your own is sampled at five points when it is given, and refused
+there if any of them is not a finite number, rather than failing mid-flight. A
+curve may leave the range zero to one on the way, which is what `Back` and
+`Elastic` do.
 
 ```luau
 Twill.Tween.Play(gui, { Position = there }, {
@@ -187,7 +209,7 @@ Twill.Tween.Play(gui, { Position = there }, {
 })
 ```
 
-**`FPS` is for the deliberately stepped look**, a health bar ticking rather than
+`FPS` is for the deliberately stepped look, a health bar ticking rather than
 sliding, and for cutting the cost of a tween nobody is looking closely at. The
 final write always lands whatever the rate.
 
@@ -196,20 +218,41 @@ final write always lands whatever the rate.
 `[Server]` | `[Client]`
 
 Starts the tween, picking up where a pause left it, and starting over after an
-arrival. Throws when the tween has been destroyed.
+arrival.
+
+```luau
+function Tween:Play(): Tween
+```
+
+**Returns**
+
+`Tween` - The tween itself, so calls chain.
+
+Throws when the tween has been destroyed. Playing one that is already playing
+does nothing.
 
 ### `Tween:Pause`
 
 `[Server]` | `[Client]`
 
-Holds the tween where it is, so playing again carries on from there. `Stopped`
-does not fire, since the caller already knows.
+Holds the tween where it is, so playing again carries on from there.
+
+```luau
+function Tween:Pause(): Tween
+```
+
+`Stopped` does not fire, since the caller already knows.
 
 ### `Tween:Cancel`
 
 `[Server]` | `[Client]`
 
 Stops the tween and forgets how far it got, leaving the values where they are.
+
+```luau
+function Tween:Cancel(): Tween
+```
+
 `Stopped` fires with `cancelled`.
 
 ### `Tween:Reset`
@@ -218,18 +261,33 @@ Stops the tween and forgets how far it got, leaving the values where they are.
 
 Stops the tween and puts every value back where it started.
 
+```luau
+function Tween:Reset(): Tween
+```
+
+`Stopped` fires with `cancelled`.
+
 ### `Tween:IsPlaying`
 
 `[Server]` | `[Client]`
 
 Answers whether the tween is on the loop right now.
 
+```luau
+function Tween:IsPlaying(): boolean
+```
+
 ### `Tween:Destroy`
 
 `[Server]` | `[Client]`
 
-Ends the tween for good and lets go of everything it held. Does nothing the
-second time.
+Ends the tween for good and lets go of everything it held.
+
+```luau
+function Tween:Destroy()
+```
+
+Does nothing the second time.
 
 ### `Tween.Completed`
 
@@ -242,35 +300,39 @@ last round. It does not fire for a cancel, a pause, or a failure.
 
 `[Server]` | `[Client]`
 
-A [Signal](/reference/signal/) carrying why a tween stopped when the stop was not
-the caller's doing.
+A [Signal](/reference/signal/) carrying why a tween stopped when the stop was
+not the caller's doing.
 
 | Reason | Means |
-| --- | --- |
+| :--- | :--- |
 | `cancelled` | `Cancel` or `Reset` ran, or a newer tween claimed a property. |
 | `gone` | The target instance left the world. |
 | `faulted` | A write failed, and the tween was stopped so the rest keep running. |
+
+A fault is also written to the log at `Error` under `Twill.Tween`, carrying what
+went wrong.
 
 ### `Tween.Active`
 
 `[Server]` | `[Client]`
 
+Returns how many tweens are playing right now across the whole game.
+
 ```luau
 function Tween.Active(): number
 ```
 
-How many tweens are playing right now across the whole game, which is the number
-to watch when you suspect something is being left running.
+This is the number to watch when you suspect something is being left running.
 
 ### `Tween.Is`
 
 `[Server]` | `[Client]`
 
+Answers whether a value is one of these tweens.
+
 ```luau
 function Tween.Is(value: any): boolean
 ```
-
-Answers whether a value is one of these tweens.
 
 ## What this is not
 
@@ -281,3 +343,13 @@ rather than the frames.
 
 It does not sequence. Chaining is `Completed:Connect`, and that stays explicit
 rather than becoming a timeline format to learn.
+
+## Limits
+
+| Limit | Value |
+| :--- | ---: |
+| Control points on a curve | 1 or 2 |
+| Easing styles | 11 |
+| Types that can be moved | 9 |
+| Types that can be curved | 4 |
+| Samples taken from a custom curve | 5 |

@@ -1,6 +1,6 @@
 ---
 title: v1.2.0 — Subscription Troves & Schema Hardening
-description: Released August 14, 2026. One added argument, two defects, and a documentation pass over every module.
+description: Released August 14, 2026. One added argument, two defects, and a documentation pass over every module
 template: splash
 ---
 
@@ -49,10 +49,10 @@ that screens the arguments of every remote served by `Net.Handle`.
 player who left while the data gate still held them reached no service at all,
 and yet every service was told they were leaving.
 
-The second is worth dwelling on. Both
-[Services](/core-guides/services/) and [Architecture](/explanation/architecture/)
-have described the correct behaviour since v1.0.0. The documentation was right
-and the code was wrong, for ten months, because nobody read them side by side.
+The second is worth dwelling on. Both [Services](/core-guides/services/) and
+[Architecture](/explanation/architecture/) have described the correct behaviour
+since v1.0.0. The documentation was right and the code was wrong, for ten
+months, because nobody read them side by side.
 
 ## Documentation
 
@@ -62,7 +62,7 @@ inside function bodies moved to where a reader looks for it.
 
 Reading the two against each other turned up more than the `Lifecycle` defect.
 Three pages claimed Twill has no request path, which is true of `Replication`
-and of nothing else — `Net.Declare` has taken reply types since v1.0.0, and a
+and of nothing else. `Net.Declare` has taken reply types since v1.0.0, and a
 remote that replies is metered, ranked, and screened like any other. What is
 refused is the pull, not the question.
 

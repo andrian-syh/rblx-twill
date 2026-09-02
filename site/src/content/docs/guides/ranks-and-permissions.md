@@ -1,6 +1,6 @@
 ---
 title: Gate actions by rank
-description: Name your own permission levels, decide them on the server, and read them safely on both sides.
+description: Name your own permission levels, decide them on the server, and read them safely on both sides
 ---
 
 Sooner or later something in your game must be available to some players and not
@@ -10,7 +10,7 @@ the same place that draws the button.
 
 Twill splits those two questions. A rank is decided once on the server and
 published as a read-only attribute. The client may read it to decide what to
-**show**. The server decides what is **allowed**, again, every time.
+**show**. The server decides what is allowed, again, every time.
 
 ## Name the levels
 
@@ -30,11 +30,9 @@ return table.freeze({
 
 Higher means more.
 
-:::tip[Leave gaps between the numbers]
 Numbering by tens costs nothing now and means a level can be inserted later
 without renumbering the ones around it, and without a stored rank suddenly
 meaning something else.
-:::
 
 ## Decide them
 
@@ -116,15 +114,13 @@ if not Twill.Authorization.AtLeast(player, Ranks.Moderator) then
 end
 ```
 
-:::tip[Read the rank, do not store it]
 `GetRank` reads an attribute, so it is cheap enough to call at the point of the
-decision. Capturing a rank into a variable at the start of a long operation means
-acting on a rank the player may no longer hold.
-:::
+decision. Capturing a rank into a variable at the start of a long operation
+means acting on a rank the player may no longer hold.
 
 ## Read on the client
 
-The rank travels as a **player attribute**, so a controller reads it without a
+The rank travels as a player attribute, so a controller reads it without a
 remote and without waiting.
 
 ```luau title="ReplicatedStorage/Client/AdminController"
@@ -154,8 +150,8 @@ end
 return AdminController
 ```
 
-A client can read that attribute but cannot write it. Hiding a button this way is
-safe. Trusting a client's claim about its own rank is not, which is why the
+A client can read that attribute but cannot write it. Hiding a button this way
+is safe. Trusting a client's claim about its own rank is not, which is why the
 server checks again.
 
 ## Promote at runtime
@@ -179,4 +175,5 @@ answer for the rest of a player's session and drops it through
 lookup.
 
 Asking for every player at once still costs one lookup each. Resolve on join,
-which is what `Resolve` already does, rather than sweeping the server on a timer.
+which is what `Resolve` already does, rather than sweeping the server on a
+timer.

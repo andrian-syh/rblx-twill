@@ -1,15 +1,15 @@
 ---
 title: Issue redeemable codes
-description: Hand out codes that prove their own contents, and make sure each one is spent once.
+description: Hand out codes that prove their own contents, and make sure each one is spent once
 ---
 
 The obvious way to build a promo code is a DataStore of valid codes. It works,
 and it costs you a read on every attempt, including every attempt by someone
 typing rubbish into the box.
 
-[`Token`](/reference/token/) inverts that. A code carries its own payload and its
-own proof, so checking one touches no storage at all. What you still owe is a
-record of the codes that were **spent**, because a signature proves where a code
+[`Token`](/reference/token/) inverts that. A code carries its own payload and
+its own proof, so checking one touches no storage at all. What you still owe is
+a record of the codes that were spent, because a signature proves where a code
 came from, never whether it has been used.
 
 ## Install the secret
@@ -23,11 +23,11 @@ Twill.Token.Configure({
 ```
 
 :::danger[Never generate the secret at boot]
-`Random.Id(64)` is the right way to **make** one, but run it once, by hand, and
+`Random.Id(64)` is the right way to make one, but run it once, by hand, and
 paste the result into a server-side module.
 
-A secret generated at startup differs on every server and after every restart, so
-a code issued on one machine is refused everywhere else, and every code ever
+A secret generated at startup differs on every server and after every restart,
+so a code issued on one machine is refused everywhere else, and every code ever
 issued dies at the next deploy.
 :::
 
@@ -116,11 +116,9 @@ call for different replies.
 | `expired` | "That code has expired." | Genuine, and they may be annoyed. Be clear. |
 | `wrong audience` | "That is not a code." | A code from another feature. Worth logging. |
 
-:::tip[Do not tell an attacker which guess was closer]
-`forged` and `wrong audience` mean somebody is experimenting. Answer them exactly
-as you answer `malformed`, and put the detail in your log rather than in the
-reply.
-:::
+`forged` and `wrong audience` mean somebody is experimenting. Answer them
+exactly as you answer `malformed`, and put the detail in your log rather than in
+the reply.
 
 ## Per-player codes
 
@@ -144,7 +142,7 @@ end
 ## When a DataStore is still the right answer
 
 Tokens win where codes are handed out in bulk and checked often. They lose where
-you need to **revoke** one, count redemptions, or change what a code grants after
+you need to revoke one, count redemptions, or change what a code grants after
 issuing it. A signed code cannot be recalled: once issued it is valid until it
 expires, and the only lever you have left is the secret, which invalidates every
 code at once.

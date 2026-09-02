@@ -1,131 +1,113 @@
 ---
 title: Lifecycle
-description: Service discovery, boot order, and the player pipeline.
+description: Service discovery, boot order, and the pipeline a joining player passes through
 ---
 
-`Twill.Lifecycle` finds your service modules, boots them in a defined order, and
-announces each player once their data exists. It runs on both sides. The client
-gets discovery, ordering, and the two boot phases. It does not get the player
-pipeline, because there `PlayerAdded` means somebody else joined. Each side keeps
-its own boot list.
-
-This is the only module in Twill that is a framework in the strict sense. The
-rest are libraries you call.
-
-## Services
-
-A service is any `ModuleScript` that returns a table. Every field is optional, so
-a module with none of them is still a legal service.
-
 ```luau
-local ShopService = {}
+local MyService = {}
 
-ShopService.Priority = 10
-ShopService.Critical = true
+MyService.Priority = 50
 
-function ShopService.Init() end
-function ShopService.Start() end
-function ShopService.OnPlayerReady(player, data, bag) end
-function ShopService.OnPlayerRemoving(player) end
+function MyService.Init() end
+function MyService.Start() end
+function MyService.OnPlayerReady(player, data, bag) end
+function MyService.OnPlayerRemoving(player) end
 
-return ShopService
+return MyService
 ```
 
-Hooks are called dot-style, so they never receive `self`.
-
 ```luau
-export type Service = {
-	Priority: number?,
-	Critical: boolean?,
-	Init: (() -> ())?,
-	Start: (() -> ())?,
-	OnPlayerReady: ((player: Player, data: any, bag: Scope.Bag) -> ())?,
-	OnPlayerRemoving: ((player: Player) -> ())?,
-}
+-- Main
+Lifecycle.Start(ServerScriptService.Services)
 ```
 
-### Priority
+Hooks are called dot style and never receive `self`.
 
-Lower boots first. Services with the same priority break the tie by name, so the
-order is stable across runs rather than dependent on how Roblox happened to
-enumerate the folder.
+## Discovery
 
-A service that does not set one boots at **100**. That is the number to measure
-against: below it runs before everything that never asked, above it runs after.
+Every direct `ModuleScript` child of a folder passed to `Start` becomes a
+service. A module is discovered by being there, so adding one is adding a file.
 
-### Critical
-
-A `Critical` service whose `Init` or `Start` throws locks the server and refuses
-every player, rather than serving a game that is missing a system nobody notices
-until it is needed. Everyone present is kicked, everyone arriving afterwards is
-kicked on sight, and the reason reaches both the kick message and
-[`GetFailure`](#lifecyclegetfailure).
-
-Only the first failure counts, so a cascade reports the cause rather than
-whatever fell over last. On the client there is nobody to kick, so a failure is
-reported to the output and the boot stops there.
-
-A non-critical failure is logged. The rest of the boot continues.
-
-## What gets discovered
-
-A service must be a **direct child** of a folder passed to `Start`, must be a
-`ModuleScript`, and must return a table. Everything else is skipped, and the
-noisier cases say so:
+Three cases are reported and skipped rather than raised:
 
 | Case | What happens |
-| --- | --- |
-| A nested `Folder` | Warned. Nesting looks like organisation and behaves like exclusion, so pass the inner folder to `Start` as well. |
-| A name already registered | Warned and skipped. Services are looked up by name, so names are unique across every folder. |
-| A module that fails to load | Reported with the error. The rest of the boot continues. |
-| A module returning something other than a table | Skipped silently. This is what keeps a helper module sitting beside a service from booting as one. |
+| :--- | :--- |
+| A nested folder | Warned, with a note to pass it to `Start` as well. |
+| A duplicate service name | Warned, and the second one is skipped. |
+| A module that fails to load | Reported with its error. |
 
-## The two phases
+A module returning anything but a table is ignored without a word.
 
-The phases exist to remove boot-order guesswork.
+## Boot order
 
-| Phase | When | What belongs here |
-| --- | --- | --- |
-| `Init` | Sequentially, for every service, in boot order. | Your own state only. Do not call another service. |
-| `Start` | After every `Init` has finished. | Connect events, start loops, call other services freely. |
+Services boot by `Priority` ascending, ties broken by name. A service without a
+`Priority` gets 100, so anything that must go first takes a lower number and
+anything that must go last takes a higher one.
 
-A service that reads another service during `Init` is reading it before that
-service has set itself up. Move the call to `Start` and the problem disappears.
+Every `Init` finishes before any `Start` begins. `Init` runs in order on the
+calling thread; `Start` runs on its own thread per service, so one that yields
+does not hold up the rest.
 
-:::caution[`Start` hooks run apart from each other]
-Each `Start` runs on its own thread, so a service that yields there does not hold
-up the rest. Boot order decides when a `Start` is *begun*, not the order in which
-they finish. Do not write a `Start` that depends on another service's `Start`
-having already returned.
+Read another service in `Start` and after, not in `Init`. During `Init` the other
+service exists but has not set itself up.
 
-A `Critical` service that fails in `Start` still refuses everybody, but it does
-so when the failure happens rather than before anyone was let in.
-:::
+## Critical services
+
+A service marked `Critical` that raises in `Init` or `Start` locks the side.
+
+On the server this means refusing everybody: every player present is kicked, and
+so is everyone who joins afterwards.
+
+```text
+This server failed to start.
+
+Critical service 'DataService' failed Init.
+
+Please rejoin.
+```
+
+Only the first failure counts, and it is reported once. A service without
+`Critical` that raises is reported and stepped over, and the boot continues.
 
 ## The player pipeline
 
-`OnPlayerReady` waits for the gate, so no service sees a player before their data
-is loaded. Each service receives the player, whatever the gate released, and a
-[`Scope.Player`](/reference/scope/) bag already opened for it.
+The pipeline is server only. On a client, `PlayerAdded` means somebody else
+joined, so there is nothing to hold.
+
+A joining player waits behind the gate. When the gate releases them, every
+service is told in boot order, and each receives the player, whatever the gate
+released, and the bag that closes when they leave.
 
 ```luau
-function ShopService.OnPlayerReady(player, data, bag)
-	data.Visits += 1
-	bag:Connect(player.Chatted, onChatted)
+function MyService.OnPlayerReady(player, data, bag)
+	bag:Connect(player.CharacterAdded, onSpawn)
 end
 ```
 
-Without a gate, `OnPlayerReady` fires as soon as the player joins. Players who
-were already in the server when `Start` ran are put through the same pipeline, so
-it does not matter how early or late you boot.
+Leaving runs in reverse boot order, so a service reads what it depends on before
+that dependency has unwound. A player still held by the gate is skipped, though
+their bag still closes.
 
-`OnPlayerRemoving` fires in **reverse** boot order, so a service still sees the
-ones it was allowed to depend on. The player's bag closes only once every service
-has had its say, which is why `Lifecycle` claims player closing from
-[`Scope`](/reference/scope/#scopeownplayerclosing) on the server.
+`Start` calls [`Scope.OwnPlayerClosing`](/reference/scope/), so player bags close
+after the last `OnPlayerRemoving` rather than the moment the engine fires.
 
-A player who left while still waiting at the gate never reached ready, and is not
-announced as leaving.
+## The gate
+
+```luau
+Lifecycle.SetPlayerGate(Data.Gate)
+```
+
+A gate receives the player and a release callback. Nothing sees the player until
+release is called, and calling it twice does nothing.
+
+A gate that raises kicks the player rather than announcing them with no data:
+
+```text
+This server failed to load your session. Please rejoin.
+```
+
+Install the gate during `Init`. Set after `Start`, it warns, and players who
+already joined were never held.
 
 ## API
 
@@ -133,42 +115,15 @@ announced as leaving.
 
 `[Server]` | `[Client]`
 
-Discovers services in the given folders, sorts them, and runs both phases.
+Discovers services in the given folders and runs the boot sequence.
 
 ```luau
 function Lifecycle.Start(folders: Instance | { Instance })
 ```
 
-**Parameters**
+Takes one folder or a list. Calling it a second time warns and does nothing.
 
-| Name | Type | Description |
-| :--- | :--- | :--- |
-| `folders` | `Instance \| { Instance }` | One container, or a list of them. Only direct `ModuleScript` children are taken. |
-
-**Returns**
-
-`()` - Nothing.
-
-Call this once per side. Calling it again is warned about and ignored.
-
-**Example**
-
-```luau
--- ServerScriptService/YourGame/init.server.luau
-local ServerScriptService = game:GetService("ServerScriptService")
-
-local Twill = require("@game/ReplicatedStorage/Twill")
-
--- Init runs for every service before any Start does, so configuration
--- belongs here rather than inside a service.
-Twill.Data.Configure({ Store = "PlayerData", Template = { Coins = 0 } })
-Twill.Lifecycle.SetPlayerGate(Twill.Data.Gate)
-
-Twill.Lifecycle.Start({
-	ServerScriptService.YourGame.Services,
-	ServerScriptService.YourGame.Systems,
-})
-```
+Throws when given anything but instances.
 
 ### `Lifecycle.SetPlayerGate`
 
@@ -178,91 +133,40 @@ Installs the gate that holds joining players until whatever they need exists.
 
 ```luau
 function Lifecycle.SetPlayerGate(gate: PlayerGate?)
-
-export type PlayerGate = (player: Player, release: (data: any) -> ()) -> ()
 ```
-
-**Parameters**
-
-| Name | Type | Description |
-| :--- | :--- | :--- |
-| `gate` | `PlayerGate?` | Receives the player and a `release` callback. Whatever it passes to `release` becomes the `data` argument every `OnPlayerReady` sees. Pass `nil` to remove the gate. |
-
-**Returns**
-
-`()` - Nothing.
-
-Throws when called on the client. Only the first `release` counts, so a gate that
-calls it twice announces the player once.
-
-Install the gate during `Init`, before `Start`. Calling it afterwards is warned
-about, because players who already joined were never held.
-
-:::danger[A gate that throws costs that player their session]
-The player is kicked and asked to rejoin rather than let in without whatever the
-gate was fetching. That is the safe direction: a player let in without their data
-looks to them exactly like losing everything.
-:::
-
-In practice the gate is [`Data.Gate`](/reference/data/#datagate):
 
 ```luau
-Lifecycle.SetPlayerGate(Twill.Data.Gate)
+type PlayerGate = (player: Player, release: (data: any) -> ()) -> ()
 ```
+
+Pass `nil` to remove the gate. Throws on a client.
 
 ### `Lifecycle.Get`
 
 `[Server]` | `[Client]`
 
-Returns a booted service by module name.
+Returns a booted service by name.
 
 ```luau
 function Lifecycle.Get<T>(name: string): T
 ```
 
-**Parameters**
+The service table itself, not a copy. Safe from `Start` onwards, not before.
 
-| Name | Type | Description |
-| :--- | :--- | :--- |
-| `name` | `string` | The name the service module was discovered under. |
-
-**Returns**
-
-`T` - The service table itself, not a copy.
-
-Throws when no service was discovered under that name, which is what you want: a
-typo becomes a boot-time error rather than a `nil` index somewhere later.
-
-Safe from `Start` onwards. During `Init` a service may be registered but not yet
-initialised.
-
-**Example**
-
-```luau
-function CombatService.Start()
-	-- Safe here. The same call inside Init would reach a service
-	-- that has not set itself up yet.
-	local shop = Lifecycle.Get("ShopService")
-
-	shop.RegisterCategory("Weapons")
-end
-```
+Throws when no service was discovered under that name.
 
 ### `Lifecycle.GetBootOrder`
 
 `[Server]` | `[Client]`
 
-Returns every service name currently registered, in the order they boot.
+Returns every registered service name, in the order they boot.
 
 ```luau
 function Lifecycle.GetBootOrder(): { string }
 ```
 
-**Returns**
-
-`{ string }` - A fresh list, safe to keep or reorder.
-
-Useful when a priority number is not doing what you expected.
+A fresh list, safe to keep or reorder. The console reads this through
+[`twill boot`](/reference/admin/).
 
 ### `Lifecycle.GetFailure`
 
@@ -274,12 +178,17 @@ Returns why this side refused to boot.
 function Lifecycle.GetFailure(): string?
 ```
 
-**Returns**
+`nil` while the side is healthy.
 
-`string?` - The first failure reported, or `nil` while this side is healthy.
+## Service
 
-## Notes
+Every field is optional. A module with none of them still counts as a service.
 
-Both sides run the same `Lifecycle` module, but each keeps its own list. A
-service folder given to the server is not visible to the client, and neither
-side's boot order affects the other.
+| Field | Type | Meaning |
+| :--- | :--- | :--- |
+| `Priority` | `number?` | Boot position, ascending. 100 when left out. |
+| `Critical` | `boolean?` | Whether failing to boot locks the side. |
+| `Init` | `(() -> ())?` | Set up. Every `Init` finishes before any `Start`. |
+| `Start` | `(() -> ())?` | Run. Each on its own thread. |
+| `OnPlayerReady` | `((player, data, bag) -> ())?` | Server only. Called in boot order once the gate releases. |
+| `OnPlayerRemoving` | `((player) -> ())?` | Server only. Called in reverse boot order. |

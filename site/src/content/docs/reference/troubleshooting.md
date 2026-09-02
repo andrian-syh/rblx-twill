@@ -1,13 +1,13 @@
 ---
 title: Troubleshooting
-description: Every message Twill writes, paired with what caused it and how to resolve it.
+description: Every message Twill writes, paired with what caused it and how to resolve it
 ---
 
 This page is a directory of what Twill reports. Each message it writes is quoted
-below exactly as it appears in the Output, so pasting the line you are looking at
-into search lands you on its cause and its fix.
+below exactly as it appears in the Output, so pasting the line you are looking
+at into search lands you on its cause and its fix.
 
-Entries in **bold** are either a message quoted word for word or a symptom
+A bold entry is either a message quoted word for word or a symptom
 described plainly, and the paragraph under each one is the reason and what to do
 about it.
 
@@ -25,6 +25,7 @@ about it.
 | [Installation and requires](#installation-and-requires) | Missing folders, server-only modules, silent no-ops |
 | [Boot and Lifecycle](#boot-and-lifecycle) | Service discovery, `Init` and `Start`, critical failures |
 | [Player data](#player-data) | Sessions, saving, offline edits, migrations |
+| [Storage](#storage) | What `Store` reports about keys and the DataStore itself |
 | [Networking](#networking) | Declarations, handlers, rates, ranks, decoding |
 | [Replication](#replication) | Subscriptions, patches, paths, published state |
 | [Permissions](#permissions) | Ranks, resolvers, group lookups |
@@ -37,7 +38,7 @@ about it.
 ## Reading Twill's output
 
 Every line carries the scope that wrote it, and anything at warning level or
-above also names the nearest line **outside** Twill.
+above also names the nearest line outside Twill.
 
 ```text
 [Twill.Data] (from MyGame.Services.Shop:42) Edit refused: unsupported value
@@ -48,15 +49,13 @@ That second part is usually enough to skip opening a stack trace at all. When it
 is absent, the call came from inside the framework or through too many layers of
 native code to attribute honestly.
 
-:::tip[Turn the volume up while diagnosing]
 The default level is `Info`, so `Debug` lines are hidden. Raise it and the
-framework becomes much more talkative, including full error traces from
+framework says more, including full error traces from
 [`Error.Install`](/reference/error/).
 
 ```luau
 Twill.Log.SetLevel("Debug")
 ```
-:::
 
 ## Installation and requires
 
@@ -64,15 +63,15 @@ Twill.Log.SetLevel("Debug")
 
 `ServerScriptService.TwillServer` is absent or renamed. Both folders are
 required, and the names matter because Twill finds its own server half by name.
-The module named in the message is simply whichever one was needed first. See
+The module named in the message is whichever one was needed first. See
 [Installing Twill](/getting-started/installation/).
 
 **`[Twill] 'X' is not a Twill module. It may be a server-only module.`**
 
 Either the name is misspelled, or you reached a server-only module from the
 client. Anything holding saved data, purchases, filtering, unpredictable draws,
-or signed secrets never exists on a client. The
-[module reference](/reference/) marks which is which.
+or signed secrets never exists on a client. The [module reference](/reference/)
+marks which is which.
 
 **`[Twill] Net.Handle is server only`** and the same for
 `Authorization.Configure`, `Authorization.SetRank`, `GetGroupStanding`,
@@ -96,7 +95,7 @@ often bites on the client: see the replication and admin console entries below.
 
 **A service never boots, and nothing is reported**
 
-It must be a **direct child** of a folder passed to `Start`, must be a
+It must be a direct child of a folder passed to `Start`, must be a
 `ModuleScript`, and must return a table. A module returning anything else is
 skipped silently, which is what keeps a helper module sitting beside a service
 from booting as one.
@@ -117,7 +116,7 @@ Twill.Lifecycle.Start({
 
 **`duplicate service name 'X' at Y; skipped`**
 
-Services are looked up by name, so names must be unique across **every** folder
+Services are looked up by name, so names must be unique across every folder
 passed to `Start`. The second one found is ignored.
 
 **`failed to load X: ...`**
@@ -129,6 +128,11 @@ Luau error: read the message after the colon.
 
 The hook threw. The rest of the boot carries on unless the service is marked
 `Critical`.
+
+**`SetPlayerGate called after Start; players already joined were not held`**
+
+The gate was installed too late to hold the players already on the server. Set
+it during `Init`.
 
 **`Start called more than once; ignoring`**
 
@@ -142,7 +146,7 @@ You called it from `Init`. Move the call to `Start`, which runs only after every
 
 **A `Start` hook depends on another `Start` having finished, and sometimes fails**
 
-Each `Start` runs on its own thread, so boot order decides when one **begins**,
+Each `Start` runs on its own thread, so boot order decides when one begins,
 never the order in which they finish. Have the later one ask for what it needs
 rather than assume it exists.
 
@@ -153,9 +157,9 @@ occasionally a service that failed to load earlier in the same run.
 
 **Everyone is kicked with `This server failed to start.`**
 
-A service marked `Critical` threw in `Init` or `Start`. The reason is in the kick
-message and in `Lifecycle.GetFailure()`. Players arriving afterwards are kicked
-on sight until the server is replaced.
+A service marked `Critical` threw in `Init` or `Start`. The reason is in the
+kick message and in `Lifecycle.GetFailure()`. Players arriving afterwards are
+kicked on sight until the server is replaced.
 
 **`boot failed: ...` on the client, and nothing else runs**
 
@@ -167,7 +171,7 @@ stops there.
 **Players are kicked with `Your saved data could not be loaded.`**
 
 The session would not open. Usually the DataStore API is having trouble, or a
-migration step threw. Look for `[Twill.Data]` lines just before it.
+migration step threw. Look for the `[Twill.Data]` lines above it.
 
 **Players are kicked with `Your data session was claimed by another server.`**
 
@@ -206,8 +210,8 @@ of its keys. See [Store Roblox values safely](/guides/storing-roblox-values/).
 
 **`Data.Edit` answers `"unknown"`**
 
-No scope answers to that name. The primary profile is `"main"`, **not** `"Data"`;
-`Data` is the replication key, which is a different thing.
+No scope answers to that name. The primary profile is `"main"`, not
+`"Data"`; `Data` is the replication key, which is a different thing.
 
 **`Data.Edit` answers `"blocked"`**
 
@@ -222,7 +226,7 @@ lands.
 
 **`applied a queued edit to 'X'`**
 
-Informational. An edit aimed at this player from elsewhere has just arrived.
+Informational. An edit aimed at this player from elsewhere has arrived.
 
 **`could not read 123: ...`** or **`stored data for 123 could not be upgraded: ...`**
 
@@ -234,11 +238,66 @@ Informational. An edit aimed at this player from elsewhere has just arrived.
 The branch session would not open. Every caller waiting on that load is answered
 with `nil` rather than left waiting.
 
+**`stored data is at version N, past the M this server upgrades to; its version is left alone`**
+
+The profile was written by a newer server than this one. It is read as it stands
+and its version is not moved backwards. Roll the place forward rather than
+migrating down.
+
 **Data changes are not saving**
 
 Check three things in order: that you mutated the table `Data.Get` returned
-rather than a copy of it, that `Data.IsReady(player)` is true, and that **Studio
-Access to API Services** is enabled.
+rather than a copy of it, that `Data.IsReady(player)` is true, and that Studio
+Access to API Services is enabled.
+
+## Storage
+
+These come from [`Store`](/reference/store/), underneath `Data`. Most of them
+name a key rather than a player.
+
+**`'X' was taken again here, so what was held before it can no longer be written`**
+
+The same key was opened twice on this server, and the earlier handle is now
+inert. Whatever held it should let it go; the newer session owns the key.
+
+**`'X' in 'Y' could not be written: ...`**
+
+A save was refused, and the reason says which of the two applies: another server
+holds the key now, or the key no longer holds anything this store wrote. Neither
+is retried, because retrying would write over whoever holds it.
+
+**`'X' could not be taken within N seconds`**
+
+The session did not open inside `StartTimeout`. The usual cause is a server that
+has not yet released the key, and the usual outcome for a player is the load
+failing rather than waiting longer.
+
+**`'X' holds something this store cannot read, and was left alone`**
+
+The key holds a value that is neither a Twill envelope nor a ProfileStore one.
+Nothing is overwritten, because overwriting is how data is lost. Read it with
+`playerdata versions` before deciding what it was.
+
+**`storage is failing repeatedly; the last of it was '...'`**
+
+The DataStore has refused several requests in a row. Twill backs off and keeps
+trying. Check the Roblox status page before changing anything.
+
+**`storage cannot be written from here (...); nothing will be saved`**
+
+The reach probe answered that this place cannot write. In Studio this is Studio
+Access to API Services being off.
+
+**`storage never said whether it could be reached; carrying on as though it can`**
+
+The probe itself did not answer in time. Saving is attempted anyway, because
+refusing to try is worse than trying and failing.
+
+**`N key(s) were still being written when this server closed`**
+
+Shutdown ran out of patience with writes still in flight. Those writes may or
+may not have landed. It points at a save that takes too long, usually a profile
+that has grown.
 
 ## Networking
 
@@ -249,18 +308,18 @@ refusal is what stops one caller from serialising through another's types.
 
 **`Net.Get has no remote named 'X' yet`**
 
-`Net.Get` ran before whatever declares that name. Declaring is idempotent, so the
-usual fix is to declare it in a shared module both sides require.
+`Net.Get` ran before whatever declares that name. Declaring is idempotent, so
+the usual fix is to declare it in a shared module both sides require.
 
 **`'X' already has a handler`**
 
-One handler per remote. `Net.IsHandled` lets a module check rather than claim and
-be refused.
+One handler per remote. `Net.IsHandled` lets a module check rather than claim
+and be refused.
 
 **`'X' replies to the caller, so it needs a Reject option`**
 
-A remote that replies must say what a refused caller is told, otherwise a refusal
-leaves them waiting forever.
+A remote that replies must say what a refused caller is told, otherwise a
+refusal leaves them waiting forever.
 
 **`Rate for 'X' must be above zero`**
 
@@ -293,11 +352,23 @@ Your handler threw. A remote that replies answers with `Reject`; one that does
 not drops the call. Either way the failure never reaches the calls behind it in
 the same message.
 
-**`'X' was declared here but the server never declared it`**
+**`'X' was declared here but the server never declared it; calls on it go nowhere`**
 
 A name declared on this client that no server module declares. Calls on it are
-dropped locally rather than reaching the wire. Usually a misspelling, or a shared
-remotes module the server never requires.
+dropped locally rather than reaching the wire. Usually a misspelling, or a
+shared remotes module the server never requires.
+
+**`'X' was called before the network was up more often than it holds`**
+
+Calls made before the wire ids arrive are held and sent once they do, and that
+hold has a ceiling. Reaching it means a client is calling a remote far ahead of
+the network being ready.
+
+**`an unreliable call was larger than one unreliable message carries, and was dropped`**
+
+An unreliable remote was given more than fits in a single unreliable message.
+There is no second chance for one of those, by definition. Send less, or declare
+the remote reliable.
 
 **`a call this side could not read`**
 
@@ -310,9 +381,9 @@ declarations have drifted apart.
 
 **The client never receives anything**
 
-The client announces itself the first time its half of the module is required. If
-no client code ever requires `Twill.Replication`, the server has nothing to send
-to. Requiring it once anywhere in your client boot is enough.
+The client announces itself the first time its half of the module is required.
+If no client code ever requires `Twill.Replication`, the server has nothing to
+send to. Requiring it once anywhere in your client boot is enough.
 
 **`the server never registered replication; nothing will arrive`**
 
@@ -334,8 +405,8 @@ and can never match.
 
 **`path 'X' inside 'Y' is blocked by a non-table`**
 
-A step along the path is held by something that cannot be descended into. Nothing
-was written, and `SetPath` answered `false`.
+A step along the path is held by something that cannot be descended into.
+Nothing was written, and `SetPath` answered `false`.
 
 **`'X.Y' is not a number`**
 
@@ -355,8 +426,8 @@ something moved. To hear real changes, subscribe from the client.
 
 **A value read on the server does not match what the client has**
 
-Something wrote into the value returned by `Get` or `GetFor`. Those hand back the
-published value itself, not a copy. Publish through `Set`, `SetPath`, or
+Something wrote into the value returned by `Get` or `GetFor`. Those hand back
+the published value itself, not a copy. Publish through `Set`, `SetPath`, or
 `Mutate` instead.
 
 ## Permissions
@@ -379,7 +450,7 @@ them.
 
 **`could not read group 123 for 'X': ...`**
 
-The group lookup failed. It is **not** remembered, so it is retried rather than
+The group lookup failed. It is not remembered, so it is retried rather than
 settled wrongly. Treat `nil` from `GetGroupStanding` as unknown, never as "not a
 member".
 
@@ -392,27 +463,27 @@ read it back in `Resolve` to make it permanent.
 
 **F2 does nothing**
 
-Nothing loaded Cmdr. It takes **two** requires: a server one that calls
+Nothing loaded Cmdr. It takes two requires: a server one that calls
 `Twill.Admin.Configure`, and a client one that requires
-`@game/ReplicatedStorage/Twill/Admin` **by path**.
+`@game/ReplicatedStorage/Twill/Admin` by path.
 
 **`attempt to yield across metamethod/C-call boundary`**
 
-You reached `Twill.Admin` through the root table on a client. The module waits for
-Cmdr's client half to replicate, and the lazy accessor on the root table is not
-allowed to wait. Require the path directly. Once loaded, `Twill.Admin` works
+You reached `Twill.Admin` through the root table on a client. The module waits
+for Cmdr's client half to replicate, and the lazy accessor on the root table is
+not allowed to wait. Require the path directly. Once loaded, `Twill.Admin` works
 normally.
 
 **`[Twill] CmdrClient never appeared; the server has to require Twill.Admin before a client can.`**
 
-The client waited for Cmdr's client half and it never arrived, because the server
-never required `Twill.Admin`. The server require is what moves it into
+The client waited for Cmdr's client half and it never arrived, because the
+server never required `Twill.Admin`. The server require is what moves it into
 `ReplicatedStorage`.
 
 **Every command answers `Admin commands are closed`**
 
-`Twill.Admin.Configure` has not been called. The gate refuses everything until it
-is told who may do what, which is the only safe direction for that mistake.
+`Twill.Admin.Configure` has not been called. The gate refuses everything until
+it is told who may do what, which is the only safe direction for that mistake.
 
 **`Admin commands are not ready yet`**
 
@@ -435,9 +506,9 @@ many attempts went unreported.
 
 **A ban of `7d` lasts seven seconds**
 
-Not from Twill's own `moderation` command, which reads durations exactly. This is
-Cmdr's built-in `duration` type, which resolves units by fuzzy match. Check which
-type your own command declares.
+Not from Twill's own `moderation` command, which reads durations exactly. This
+is Cmdr's built-in `duration` type, which resolves units by fuzzy match. Check
+which type your own command declares.
 
 **`A big: value is whole digits, such as big:1500`**
 
@@ -448,10 +519,10 @@ optional leading minus. Anything else is refused rather than stored as the text
 
 **`You cannot grant rank N; your own is M`**
 
-From `rank set`. The console decides who may run what by rank, so granting one at
-or above your own would hand out your own authority. The most anyone can create
-is somebody strictly below themselves. `rank` also refuses to change your own
-rank and to touch anybody already at your rank or above.
+From `rank set`. The console decides who may run what by rank, so granting one
+at or above your own would hand out your own authority. The most anyone can
+create is somebody strictly below themselves. `rank` also refuses to change your
+own rank and to touch anybody already at your rank or above.
 
 **`No store is configured, so there is nothing to save`**
 
@@ -461,15 +532,15 @@ Not a fault; a game without saved data has nothing for this command to do.
 **`That is not a seed a round could have revealed`**
 
 From `verifyroll`. The seed is not thirty-two bytes of hexadecimal, so it cannot
-be one [`Random.Commit`](/reference/random/) produced. Check it was pasted whole.
-A seed that is well formed but wrong reports a mismatch instead, which is a
-different answer.
+be one [`Random.Commit`](/reference/random/) produced. Check it was pasted
+whole. A seed that is well formed but wrong reports a mismatch instead, which is
+a different answer.
 
 **`'X.Y' names a path. This action takes a whole key`**
 
-From `repl freeze`, `unfreeze`, or `throttle`. Those name a whole replicated key,
-and a dotted path is refused rather than acted on as if it were one. `repl get`
-reads inside a key, and takes the path.
+From `repl freeze`, `unfreeze`, or `throttle`. Those name a whole replicated
+key, and a dotted path is refused rather than acted on as if it were one. `repl
+get` reads inside a key, and takes the path.
 
 **`Nothing is held at 'X' for everybody`**
 
@@ -486,8 +557,8 @@ console.
 **A moderation command refuses with `X ranks as high as you do`**
 
 Deliberate. Nobody may act on themselves or on anyone standing as high as they
-do. The check covers targets present on this server, since somebody elsewhere has
-no rank to compare.
+do. The check covers targets present on this server, since somebody elsewhere
+has no rank to compare.
 
 ## Monetization
 
@@ -503,8 +574,8 @@ retried rather than lost.
 
 **`purchase 123 was not confirmed saved; Roblox will retry it`**
 
-The reward was written but the save was not confirmed in time. The record of what
-was granted is what makes that retry safe.
+The reward was written but the save was not confirmed in time. The record of
+what was granted is what makes that retry safe.
 
 **`product 123 already has a handler`**
 
@@ -518,7 +589,7 @@ with `ForgetPasses`, but check first that the purchase actually completed.
 
 **`could not check pass 123 for 'X': ...`**
 
-The ownership check failed. It reads as not owned and is **not** remembered, so
+The ownership check failed. It reads as not owned and is not remembered, so
 it is asked again rather than settled against the player.
 
 ## Leaderstats
@@ -526,13 +597,13 @@ it is asked again rather than settled against the player.
 **A stat never appears**
 
 The key it watches is not replicated, or the value is one no value object can
-hold. A value that cannot be shown leaves the stat as it was rather than clearing
-it.
+hold. A value that cannot be shown leaves the stat as it was rather than
+clearing it.
 
 **`leaderstat 'X' is already bound`**
 
-Two systems bound a stat under the same name. Binding **adds** to the list rather
-than replacing it, so names have to be unique across every caller.
+Two systems bound a stat under the same name. Binding adds to the list
+rather than replacing it, so names have to be unique across every caller.
 
 **`Leaderstats.Bind expects a list of entries: ...`**
 
@@ -541,49 +612,52 @@ The list is malformed. The reason names the field that failed.
 **A big number shows but never sorts**
 
 The player list sorts `IntValue` and `NumberValue` only. See
-[Count past the number limit](/guides/unbounded-currency/) for the way around it.
+[Count past the number limit](/guides/unbounded-currency/) for the way around
+it.
 
 ## Filtering
 
 **`Filter` returns `nil`**
 
-The filter could not be reached. That is the designed behaviour: it never returns
-the text that went in. Decide what to show instead, and never write
+The filter could not be reached. That is the designed behaviour: it never
+returns the text that went in. Decide what to show instead, and never write
 `Filter.ForBroadcast(text, id) or text`.
 
 **`could not check text from 123: ...`** or **`could not read filtered text from 123: ...`**
 
-The platform call failed, or reading the result failed after the check succeeded.
-Both answer `nil`.
+The platform call failed, or reading the result failed after the check
+succeeded. Both answer `nil`.
 
 **Filtering is being rate limited**
 
-Filter once when text is submitted, store the result, and show the stored result.
-Filtering on every draw exhausts the per-user limit and achieves nothing.
+Filter once when text is submitted, store the result, and show the stored
+result. Filtering on every draw exhausts the per-user limit and achieves
+nothing.
 
 ## Studio and tooling
 
 **Edits to a module appear to have no effect**
 
 The Edit-mode VM caches modules between executions. After editing a module's
-source, verify through a **playtest**, not through the command bar.
+source, verify through a playtest, not through the command bar.
 
 **Studio disconnects repeatedly while testing**
 
 Test code that connects to a global service and then destroys its own folder
-leaves the connection alive. `:Destroy()` on a parent does **not** disconnect a
-connection to `Players`. Close and reopen the place to clear the Edit VM, and put
-the connection in a [`Scope`](/reference/scope/) bag.
+leaves the connection alive. `:Destroy()` on a parent does not disconnect a
+connection to `Players`. Close and reopen the place to clear the Edit VM, and
+put the connection in a [`Scope`](/reference/scope/) bag.
 
 **Data does not persist between playtests**
 
-Enable **Studio Access to API Services** in **Game Settings → Security**. Without
-it Studio cannot reach a DataStore, and every session starts from the template.
+Enable Studio Access to API Services under Game Settings, Security.
+Without it Studio cannot reach a DataStore, and every session starts from the
+template.
 
 **Purchases cannot be tested**
 
-They cannot be simulated in Studio. Publish to a private test place and buy with a
-real account.
+They cannot be simulated in Studio. Publish to a private test place and buy with
+a real account.
 
 ## When nothing here matches
 

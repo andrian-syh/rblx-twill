@@ -1,6 +1,6 @@
 ---
 title: Send large payloads
-description: Fit a big value through MessagingService, MemoryStore, or a DataStore, without risking a silent truncation.
+description: Fit a big value through MessagingService, MemoryStore, or a DataStore, without risking a silent truncation
 ---
 
 Every transport Roblox gives you has a ceiling, and the way you find it is
@@ -25,8 +25,8 @@ MessagingService:PublishAsync("WorldEvent", packed)
 local original = Twill.Compress.Decode(packed)
 ```
 
-The result is text, so it survives every transport that carries JSON: DataStores,
-MessagingService, MemoryStore, attributes, and remotes.
+The result is text, so it survives every transport that carries JSON:
+DataStores, MessagingService, MemoryStore, attributes, and remotes.
 
 Roblox values are handled natively. You do not need
 [`Serialize`](/reference/serialize/) first.
@@ -36,9 +36,9 @@ Roblox values are handled natively. You do not need
 `Encode` computes both forms and picks the smaller: plain JSON where the value
 can survive it, the compressed form otherwise.
 
-So there is no size below which you should avoid it. Small values simply come
-back as JSON, because packing eight bits into a character JSON accepts always
-costs more than the byte it replaced.
+So there is no size below which you should avoid it. Small values come back as
+JSON, because packing eight bits into a character JSON accepts always costs more
+than the byte it replaced.
 
 Compression takes over once it earns its keep. A few thousand repetitive rows
 land near a fifth of their JSON.
@@ -57,7 +57,7 @@ end
 `Decode` never throws. It answers `nil` for a payload that was truncated, was
 never a Compress payload, or had its length header altered.
 
-A truncated payload is **refused, not read as a smaller value**. The byte count
+A truncated payload is refused, not read as a smaller value. The byte count
 travels with the data precisely so that a transport with a size ceiling cannot
 hand you a half-table that looks complete.
 
@@ -87,11 +87,11 @@ Reach for `Serialize` when a person or another system reads the field, and for
 ## Do not use MessagingService for player data
 
 To write to a player on another server, use
-[`Data.Edit`](/reference/data/#writing-to-anybody). It routes through
-ProfileStore and never writes over a session it does not own.
+[`Data.Edit`](/reference/data/#writing-to-anybody). It routes through Store and
+never writes over a session it does not own.
 
-MessagingService has no such guarantee, and a cross-server write built on it will
-eventually race with the owning server and lose progress.
+MessagingService has no such guarantee, and a cross-server write built on it
+will eventually race with the owning server and lose progress.
 
 ## Transport ceilings still apply
 

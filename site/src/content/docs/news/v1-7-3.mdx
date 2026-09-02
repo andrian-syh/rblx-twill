@@ -1,6 +1,6 @@
 ---
 title: v1.7.3 — Four Quiet Wrongs
-description: Released August 27, 2026. A rollback no longer replays migrations, and three other failures that never said a word.
+description: Released August 27, 2026. A rollback no longer replays migrations, and three other failures that never said a word
 template: splash
 ---
 
@@ -27,11 +27,11 @@ Publishing a version and taking it back an hour later is an ordinary day. What
 was not ordinary is what it did to the players who logged in during that hour.
 
 A profile carries the version it was last raised to. A server reading a profile
-from a version it had never heard of ran no upgrade — correctly, there were none
-to run — and then stamped its own, lower version onto it anyway. The profile now
-claimed to be older than it was. When that player next reached a server on the
-newer version, every migration in between ran a second time, on data that had
-already had them.
+from a version it had never heard of ran no upgrade, correctly, since there were
+none to run, and then stamped its own lower version onto it anyway. The profile
+now claimed to be older than it was. When that player next reached a server on
+the newer version, every migration in between ran a second time, on data that
+had already had them.
 
 ```text
 join a rolled-back server   version 3 → marked 2
@@ -42,17 +42,17 @@ Whether that is survivable depends entirely on what the migration does. One that
 renames a field is harmless the second time. One that doubles a currency doubles
 it again. One that reads a field the rename already removed writes a zero.
 
-A version a server does not understand is now left exactly as it is, and reported
-once so the mismatch is visible rather than inferred later from a support thread.
-The upgrade path itself is unchanged: a profile behind the server still climbs,
-one step at a time, in order.
+A version a server does not understand is now left exactly as it is, and
+reported once so the mismatch is visible rather than inferred later from a
+support thread. The upgrade path itself is unchanged: a profile behind the
+server still climbs, one step at a time, in order.
 
 ## A decoder that promised never to throw
 
 [`Compress.Decode`](/reference/compress/#compressdecode) is documented to answer
 `nil` for anything it cannot read, which is a promise callers act on by not
 wrapping it. Its length header catches a payload cut short, but the module says
-plainly that bytes altered in place still read — that is the trade, and it is the
+plainly that bytes altered in place still read. That is the trade, and it is the
 right one for transports that lose a tail without rewriting a middle.
 
 Such bytes reached the entropy coder, and one arrangement of them reached a line
@@ -89,7 +89,7 @@ that is [`BigNumber`](/reference/bignumber/) carried as text.
 
 [`Tween.Stopped`](/reference/tween/#tweenstopped) carries `gone` for a tween
 whose target left the world. It fired for a target reparented away, and stayed
-silent for one that was destroyed — which is the far more common of the two, and
+silent for one that was destroyed, which is the far more common of the two, and
 the one the documentation used as its example.
 
 Both report it now.

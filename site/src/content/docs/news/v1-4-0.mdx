@@ -1,6 +1,6 @@
 ---
 title: v1.4.0 — Networking Is Twill's Own
-description: Released August 20, 2026. A built-in wire format, and a corrupt call that costs only itself.
+description: Released August 20, 2026. A built-in wire format, and a corrupt call that costs only itself
 template: splash
 ---
 
@@ -24,14 +24,15 @@ import NewsPagination from '../../../components/NewsPagination.astro';
 ## One field changes what a bad message costs
 
 Twill used to encode remotes through a bundled library. It no longer does.
-`Twill.Net` carries its own wire format, and the whole design turns on one field:
+`Twill.Net` carries its own wire format, and the whole design turns on one
+field:
 **every call carries the length of its own body.**
 
 That field is four bytes per call, and it buys three things at once.
 
 A corrupt call stops at its own frame. The reader steps to where the body ended
-whether or not reading it worked, so a call that arrives mangled costs itself and
-nothing else:
+whether or not reading it worked, so a call that arrives mangled costs itself
+and nothing else:
 
 ```text
 1 = payload1  |  2 = refused  |  3 = payload3
@@ -54,19 +55,19 @@ local buy = Net.Declare("BuyItem", { Types.String(32) }, { Types.Boolean })
 local aim = Net.DeclareUnreliable("Aim", { Types.Vector3F32 })
 ```
 
-Both sides compile the same declaration, so nothing describing a type is sent.
-A struct sends its values and not its field names. A thousand booleans is a
+Both sides compile the same declaration, so nothing describing a type is sent. A
+struct sends its values and not its field names. A thousand booleans is a
 hundred and twenty-five bytes.
 
-`Types.String(32)` is a ceiling, and it is enforced **at the sender**:
+`Types.String(32)` is a ceiling, and it is enforced at the sender:
 
 ```text
 Twill.Net: BuyItem argument 1 is 300 bytes, past its ceiling of 32
 ```
 
 Previously a string past 255 bytes wrapped its length prefix and quietly
-corrupted everything written after it. A sender's own mistake now surfaces at the
-sender.
+corrupted everything written after it. A sender's own mistake now surfaces at
+the sender.
 
 ## Things that used to be silent
 
@@ -103,7 +104,7 @@ there is no server thread a peer's message can reach. The number identifying a
 question is the asker's own and is looked up only in the asker's own table.
 
 An `Instance` from a client is still allowed, and still the client's choice. The
-decoder proves its shape — that it exists, that it is the class you named. It
+decoder proves its shape: that it exists, that it is the class you named. It
 does not prove the caller may touch it. That belongs in `Validate`, where it is
 visible.
 
@@ -121,9 +122,9 @@ arriving in the same frame.
 
 ## Boot order is not load bearing
 
-A remote declared on a client is given its number by the server, and that arrives
-a moment later. A call made before then is **held and sent once the number
-arrives**.
+A remote declared on a client is given its number by the server, and that
+arrives a moment later. A call made before then is held and sent once the number
+arrives.
 
 ```luau
 Net.OnReady(function()

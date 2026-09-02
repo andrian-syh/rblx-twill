@@ -1,12 +1,12 @@
 ---
 title: Filter player-written text
-description: Make anything one player typed safe to show another, and fail correctly when the filter is down.
+description: Make anything one player typed safe to show another, and fail correctly when the filter is down
 ---
 
-The moment your game lets one player type something another player will read, you
-have taken on a moderation obligation that Roblox enforces. Most of the work is
-one function call. The part that goes wrong is what happens when that call fails,
-because the tempting fallback is the one that gets games taken down.
+The moment your game lets one player type something another player will read,
+you have taken on a moderation obligation that Roblox enforces. Most of the work
+is one function call. The part that goes wrong is what happens when that call
+fails, because the tempting fallback is the one that gets games taken down.
 
 ## When this is required
 
@@ -53,7 +53,7 @@ every draw.
 ## Handle failure correctly
 
 Every function in [`Filter`](/reference/filter/) answers `nil` when the filter
-cannot be reached. **It never returns the text that went in.**
+cannot be reached. It never returns the text that went in.
 
 ```luau title="Do this"
 local shown = Twill.Filter.ForBroadcast(text, userId)
@@ -74,11 +74,11 @@ it. A filter outage becomes an unfiltered broadcast.
 | Function | Result | Cost |
 | --- | --- | --- |
 | `ForBroadcast` | One string safe for everybody. | One call. |
-| `ForUser` | Tailored to a single recipient. | One call **per recipient**. |
+| `ForUser` | Tailored to a single recipient. | One call per recipient. |
 
-`ForBroadcast` is what almost every use wants. Reach for `ForUser` only where the
-recipient genuinely matters, such as a direct message, and never in a loop over
-the whole server.
+`ForBroadcast` is what almost every use wants. Reach for `ForUser` only where
+the recipient genuinely matters, such as a direct message, and never in a loop
+over the whole server.
 
 ## Refuse rather than mangle
 

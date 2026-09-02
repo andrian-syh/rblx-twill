@@ -1,11 +1,12 @@
 ---
 title: Walk NPCs around the world
-description: Drive one agent, then chase a moving target, then do it for a hundred without the server noticing.
+description: Drive one agent, then chase a moving target, then do it for a hundred without the server noticing
 ---
 
 ## One agent
 
-An agent wraps a model. Give it a bag and its cleanup is somebody else's problem.
+An agent wraps a model. Give it a bag and its cleanup is somebody else's
+problem.
 
 ```luau title="ServerScriptService/Services/GuardService"
 local Twill = require("@game/ReplicatedStorage/Twill")
@@ -65,11 +66,9 @@ Half a second, not every frame, and only when the target has left the area the
 last route was aimed at. A hundred agents doing this is a hundred cheap distance
 checks and very few routes.
 
-:::tip[A moving target can be given directly]
 `GoTo` accepts a `Model` or a `BasePart`, and reads its position at the moment
 the route is worked out. That is enough for a target that strolls. The pattern
 above is for one that runs.
-:::
 
 ## Clean up by giving it a bag
 
@@ -114,8 +113,8 @@ model actually is, which is the same test for every kind of agent.
 
 ## Cross ground you would rather avoid
 
-Pathfinding costs are passed straight through. Label the parts, price the labels,
-and routes bend around them.
+Pathfinding costs are passed straight through. Label the parts, price the
+labels, and routes bend around them.
 
 ```luau
 Twill.Navigation.new(npc, {
@@ -162,8 +161,8 @@ if (npcAt - nearestPlayer).Magnitude > 250 then
 end
 ```
 
-Raising the budget makes the server work harder. Asking for fewer routes makes it
-work less. Reach for the second one first.
+Raising the budget makes the server work harder. Asking for fewer routes makes
+it work less. Reach for the second one first.
 
 ## What the client should be told
 

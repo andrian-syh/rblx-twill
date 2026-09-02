@@ -1,20 +1,17 @@
 ---
 title: Platform limits
-description: The Roblox ceilings Twill is shaped around, and how it helps you stay clear of them.
+description: The Roblox ceilings Twill is shaped around, and how to stay clear of them
 ---
 
-The limits on this page belong to Roblox, not to Twill, and **Roblox changes
-them**. This page describes the shape of each limit and links to the page that
-carries the current number. Read that page before designing right up against one.
+The limits on this page belong to Roblox, not to Twill, and Roblox changes
+them. This page describes the shape of each limit and links to the page that
+carries the current number. Read that page before designing right up against
+one.
 
-:::caution[Most budgets scale with the player count]
-This is the single most useful thing to know about Roblox quotas. Nearly every
-request budget is a base plus a per-player term, so a system that runs perfectly
-in an empty test place can be over budget on a full server, and comfortably
-inside it again the moment players leave.
-
-Test at population, not alone.
-:::
+Most budgets scale with the player count. Nearly every request budget is a base
+plus a per-player term, so a system that runs perfectly in an empty test place
+can be over budget on a full server, and inside it again the moment players
+leave. Test at population, not alone.
 
 ## DataStore
 
@@ -29,15 +26,16 @@ What matters most is the shape of the data, not its size.
 - **Numbering cannot have gaps.** `{ [1] = "a", [3] = "b" }` comes back with
   string keys.
 
-`Serialize.FindUnstorable` catches all five. `Data.Edit` runs it for you and
-answers [`"unsupported"`](/reference/data/#outcome).
+`Serialize.FindUnstorable` catches all of these, and a key that is neither a
+string nor a number besides. `Data.Edit` runs it for you and answers
+[`"unsupported"`](/reference/data/#outcome).
 
 Beyond the shape, three ceilings are worth knowing about:
 
 | Ceiling | Why it matters |
 | --- | --- |
 | Value size per key | Generous, but a profile that grows without bound will reach it. Reach for [`Compress`](/reference/compress/) before redesigning. |
-| Requests per minute | Scales with concurrent players, and is shared with Open Cloud. ProfileStore already batches and paces its own writes. |
+| Requests per minute | Scales with concurrent players, and is shared with Open Cloud. `Store` paces its own writes and queues them per key. |
 | Throughput per key | A separate budget from the request count, measured in bytes per minute. A large profile saved often can exhaust this while staying well inside the request budget. |
 
 That last one is the trap, because it is invisible until a profile grows. Two
@@ -50,20 +48,20 @@ joined values is the usual way to overrun that.
 is what makes an accidental [`Data.Reset`](/reference/data/#datareset)
 recoverable. It is a window, not an archive.
 
-Current numbers: [Data store error codes and
-limits](https://create.roblox.com/docs/cloud-services/data-stores/error-codes-and-limits).
+Current numbers: [Data store error codes and limits][datastores].
+
+[datastores]: https://create.roblox.com/docs/cloud-services/data-stores/error-codes-and-limits
 
 ## MessagingService
 
-:::danger[Delivery is best effort, not guaranteed]
-Roblox states this plainly, and it is the constraint to design around. A message
-that never arrives must not leave your game in a broken state.
+Delivery is best effort, not guaranteed. Roblox states this plainly, and it is
+the constraint to design around. A message that never arrives must not leave
+your game in a broken state.
 
 This is why cross-server player writes go through
 [`Data.Edit`](/reference/data/#writing-to-anybody) instead. It routes through
-ProfileStore, which lands the change in the player's saved data whether or not
-any server was listening, and never writes over a session it does not own.
-:::
+`Store`, which lands the change in the player's saved data whether or not any
+server was listening, and never writes over a session it does not own.
 
 - **The message size ceiling is around a kilobyte**, far smaller than a
   DataStore value. This is the limit `Compress.Encode` exists to help with, and
@@ -79,7 +77,7 @@ Current numbers:
 
 ## MemoryStore
 
-Fast, shared across servers, and **temporary**. Three structures are offered: a
+Fast, shared across servers, and temporary. Three structures are offered: a
 sorted map, a queue, and a hash map.
 
 - **Everything expires.** There is a default lifetime and you can set your own.
@@ -91,8 +89,8 @@ sorted map, a queue, and a hash map.
   A loop that looks like one call per tick can be several.
 - Values must be JSON-serialisable, so the same shape notes as DataStore apply.
 
-Current numbers: [Memory
-stores](https://create.roblox.com/docs/cloud-services/memory-stores).
+Current numbers:
+[Memory stores](https://create.roblox.com/docs/cloud-services/memory-stores).
 
 ## Attributes
 
@@ -104,21 +102,23 @@ restricted to alphanumeric characters with a few separators, and `RBX` is
 reserved.
 
 [`Authorization`](/reference/authorization/) uses an attribute for a player's
-rank precisely because attributes replicate on their own and cannot be written by
-a client. For anything with structure, use
+rank precisely because attributes replicate on their own and cannot be written
+by a client. For anything with structure, use
 [`Replication`](/reference/replication/) instead.
 
-Current details: [Instance
-attributes](https://create.roblox.com/docs/studio/properties#instance-attributes).
+Current details: [Instance attributes][attributes].
+
+[attributes]: https://create.roblox.com/docs/studio/properties#instance-attributes
 
 ## The player list
 
 **It sorts `IntValue` and `NumberValue` only.** Text is displayed but never
 sorted.
 
-The direct consequence: a [`BigNumber`](/reference/bignumber/) reads correctly and
-ranks nowhere, because no value object can hold it as a number. See
-[Count past the number limit](/guides/unbounded-currency/) for the way around it.
+The direct consequence: a [`BigNumber`](/reference/bignumber/) reads correctly
+and ranks nowhere, because no value object can hold it as a number. See
+[Count past the number limit](/guides/unbounded-currency/) for the way around
+it.
 
 ## Web quota
 
@@ -133,8 +133,9 @@ Twill guards the two paths that are easiest to abuse:
 - [`Authorization`](/reference/authorization/) remembers group answers per player
   and drops them through `Scope.Player`.
 
-[`Filter`](/reference/filter/) has a rate limit of its own per user. Filter when
-text is submitted, not every time it is drawn.
+[`Filter`](/reference/filter/) adds no limit of its own, so the platform's
+per-user limit is the one you meet. Filter when text is submitted, not every
+time it is drawn.
 
 ## The general rule
 

@@ -1,11 +1,13 @@
 ---
 title: Serialize
-description: Roblox values in a shape a DataStore will accept.
+description: Roblox values in a shape a DataStore will accept
 ---
 
 ```luau
+local Serialize = require("@game/ReplicatedStorage/Twill").Serialize
+
 data.Home = Serialize.Encode(spawnPoint.Position)
--- ...
+
 local home = Serialize.Decode(data.Home)
 ```
 
@@ -20,25 +22,20 @@ A DataStore holds JSON and nothing else, so a `Vector3`, a `CFrame`, or a
 It fails late and it fails quietly. The value is passed along by reference at
 every step without complaint, and survives all the way to the write itself.
 
-## What Encode does
+## The encoded shape
 
-`Encode` walks a whole tree and replaces what it recognises with plain tables
-marked by a type field. `Decode` puts them back.
+`Encode` walks a whole tree and replaces what it recognises with a plain table
+carrying two fields: `__twillType`, the name of the type, and `V`, its numbers.
+`Decode` puts them back.
 
-Anything it does not recognise is returned untouched, so running either over
-ordinary data costs a walk and changes nothing.
+Nine types are recognised: `Vector3`, `Vector2`, `CFrame`, `Color3`, `UDim`,
+`UDim2`, `BrickColor`, `NumberRange`, and `EnumItem`. Anything else is carried
+through untouched, both ways.
 
-Recognised: `Vector3`, `Vector2`, `CFrame`, `Color3`, `UDim`, `UDim2`,
-`BrickColor`, `NumberRange`, and `EnumItem`.
-
-### Why the shape looks the way it does
-
-The encoded form keeps its numbers in a **nested array** rather than alongside
-the type field.
-
-A table holding both array keys and string keys is exactly what a DataStore
-cannot round-trip: the numbers come back as the strings `"1"`, `"2"`, `"3"`, and
-every decoder reads `nil`. The encoded shape avoids the very fault
+The numbers sit in a nested array rather than alongside the type field. A table
+holding both array keys and string keys is what a DataStore cannot round-trip:
+the numbers come back as the strings `"1"`, `"2"`, `"3"`, and every decoder
+reads `nil`. The encoded shape avoids the fault
 [`FindUnstorable`](#serializefindunstorable) exists to report.
 
 ## API
@@ -74,8 +71,11 @@ function Serialize.Decode(value: any): any
 
 `any` - A fresh tree with its Roblox values restored.
 
-Data that was never encoded passes through unchanged, so this is safe to run over
-a mix of both without knowing which is which.
+Data that was never encoded passes through unchanged, so this is safe to run
+over a mix of both without knowing which is which.
+
+An `EnumItem` whose family or name no longer exists decodes to `nil` rather than
+raising, since the engine decides what those are.
 
 ### `Serialize.FindUnstorable`
 
@@ -100,18 +100,25 @@ function Serialize.FindUnstorable(value: any, path: string?): (string?, string?)
 
 `string?` - What made it unstorable.
 
-Clean means storable **as it stands**, without encoding. It refuses five things:
+Clean means storable as it stands, without encoding. Six faults are reported:
 
-| Refused | Why |
-| --- | --- |
-| Userdata a DataStore cannot hold | `Vector3`, `CFrame`, and friends. Encode them. |
-| NaN and infinity | Neither is valid JSON. |
-| Invalid UTF-8 | A DataStore rejects the write. |
-| Mixed named and numbered keys | `{ 1, 2, Name = "x" }` encodes to `[1,2]`. The string key is **lost with no error**. |
-| Gaps in a numbering | `{ [1] = "a", [3] = "b" }` comes back with string keys. |
+| Reported as | Raised by |
+| :--- | :--- |
+| The type name, such as `Vector3` | A value a DataStore cannot hold. Encode it. |
+| `not a finite number` | NaN or infinity. Neither is valid JSON. |
+| `text that is not valid UTF-8` | A string a DataStore rejects. |
+| `both named and numbered keys` | `{ 1, 2, Name = "x" }` encodes to `[1,2]`. The string key is lost with no error. |
+| `gaps in its numbering` | `{ [1] = "a", [3] = "b" }` comes back with string keys. |
+| `an index that is not a whole number from one` | A fractional or zero-based index. |
 
-The last two are silent losses rather than failed saves, which is why they are
-worth naming before the write rather than discovering afterwards.
+A key that is neither a string nor a number is reported by its own type name.
+
+The path is dotted, such as `Stats.Wins`. It is empty text when the offender is
+the value handed in, so test the first return against `nil` rather than for
+emptiness.
+
+The last three faults are silent losses rather than failed saves, which is why
+they are worth naming before the write.
 
 **Example**
 
@@ -126,8 +133,8 @@ end
 ## This is not run for you
 
 [`Data`](/reference/data/) does not encode on your behalf. It would then have to
-guess on the way back out, and a save that quietly rewrites what you handed it is
-worse than one that refuses.
+guess on the way back out, and a save that quietly rewrites what you handed it
+is worse than one that refuses.
 
 `Data.Edit` runs `FindUnstorable`, answers
 [`"unsupported"`](/reference/data/#outcome), and sends you here.
@@ -136,8 +143,8 @@ worse than one that refuses.
 
 The two answer different questions.
 
-| | [`Serialize`](/reference/serialize/) | [`Compress`](/reference/compress/) |
-| --- | --- | --- |
+| | `Serialize` | [`Compress`](/reference/compress/) |
+| :--- | :--- | :--- |
 | Result | Readable, exact | Opaque, smaller |
 | Lossy | No | Yes, in named ways |
 | Reach for it when | A person or another system reads the field | Only size matters |

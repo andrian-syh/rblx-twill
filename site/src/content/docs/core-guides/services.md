@@ -1,6 +1,6 @@
 ---
 title: Write a service
-description: The shape of a service, what belongs in each boot phase, and how a player reaches it.
+description: The shape of a service, what belongs in each boot phase, and how a player reaches it
 ---
 
 A **service** is a server-side `ModuleScript` that returns a table. That is the
@@ -25,7 +25,7 @@ return WelcomeService
 
 ## Where services live
 
-`Lifecycle.Start` takes the folder to search. Only **direct children** are taken,
+`Lifecycle.Start` takes the folder to search. Only direct children are taken,
 and each must be a `ModuleScript` returning a table.
 
 ```text
@@ -38,8 +38,9 @@ ServerScriptService
 └── Main
 ```
 
-Nesting a folder inside `Services` does not extend the search. Twill warns rather
-than boot what it never found, so pass the inner folder to `Start` as well:
+Nesting a folder inside `Services` does not extend the search. Twill warns
+rather than boot what it never found, so pass the inner folder to `Start` as
+well:
 
 ```luau
 Twill.Lifecycle.Start({
@@ -74,7 +75,7 @@ produces a bug that only appears when boot order changes.
 
 | | `Init` | `Start` |
 | --- | --- | --- |
-| Runs | Sequentially, for every service | After **every** `Init` has finished |
+| Runs | Sequentially, for every service | After every `Init` has finished |
 | Put here | Your own state, your own configuration | Connections, loops, calls to other services |
 | Reaching another service | Not safe. It may not be set up yet | Safe |
 
@@ -95,10 +96,10 @@ end
 
 :::caution[`Start` hooks run apart from each other]
 Each one runs on its own thread, so a service that yields in `Start` does not
-hold up the rest. Boot order decides when a `Start` **begins**, never the order
-in which they finish. Do not write a `Start` that assumes another service's
-`Start` has already returned; if you need that guarantee, have the later one ask
-for what it needs rather than assume it exists.
+hold up the rest. Boot order decides when a `Start` begins, never the order in
+which they finish. Do not write a `Start` that assumes another service's `Start`
+has already returned; if you need that guarantee, have the later one ask for
+what it needs rather than assume it exists.
 :::
 
 ## Two services that need each other
@@ -175,15 +176,13 @@ The third argument is why most services never touch [`Scope`](/reference/scope/)
 directly. Anything you put in that bag is released when the player leaves,
 whether they left cleanly or the server is shutting down.
 
-`OnPlayerRemoving` runs in **reverse** boot order, so a service still sees the
-ones it was allowed to depend on. The bag closes only after every service has had
-its say, which means you can still read your own state there.
+`OnPlayerRemoving` runs in reverse boot order, so a service still sees the ones
+it was allowed to depend on. The bag closes only after every service has had its
+say, which means you can still read your own state there.
 
-:::note[A player who never arrived never leaves]
 `OnPlayerRemoving` fires only for players who reached ready. Someone who
 disconnected while still waiting at the gate was never announced, so no service
 has state to unwind for them.
-:::
 
 ## A service that guards a remote
 

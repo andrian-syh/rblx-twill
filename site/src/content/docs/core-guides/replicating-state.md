@@ -1,6 +1,6 @@
 ---
 title: Replicate state to clients
-description: Push server state to one player or to everyone, and read it on the other side.
+description: Push server state to one player or to everyone, and read it on the other side
 ---
 
 ## Publish
@@ -14,7 +14,7 @@ Twill.Replication.IncrementFor(player, "Loadout", "Ammo", -1)
 ```
 
 Every name has a `For` twin. Without it the value is shared by everybody. With
-it, the value belongs to one player and **no one else ever receives it**.
+it, the value belongs to one player and no one else ever receives it.
 
 ## Subscribe
 
@@ -65,9 +65,9 @@ waits forever.
 Twill.Replication.SetPathFor(player, "Data", "Stats.Coins", 250)
 ```
 
-Only that field travels. Replication keeps a private copy of what each player was
-last sent and diffs against it, so a deep write inside a large table costs one
-field, not the table.
+Only that field travels. Replication keeps a private copy of what each player
+was last sent and diffs against it, so a deep write inside a large table costs
+one field, not the table.
 
 `SetPath` returns `false` if the path does not exist, rather than creating the
 intermediate tables and hiding a typo.

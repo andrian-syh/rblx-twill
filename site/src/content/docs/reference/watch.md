@@ -1,21 +1,18 @@
 ---
 title: Watch
-description: A set of instances, followed as it changes.
+description: A set of instances, followed as it changes
 ---
 
 ```luau
+local Watch = require("@game/ReplicatedStorage/Twill").Watch
+
 Watch.Tagged("KillBrick", function(part, bag)
 	bag:Connect(part.Touched, onTouched)
 end)
-
-Watch.Players(function(player, bag)
-	bag:Connect(player.CharacterAdded, onCharacter)
-end)
 ```
 
-Three ways to name a set, one contract behind all of them:
-
-> Connect first, then sweep what is already there, and never call twice.
+Three ways to name a set, one contract behind all of them: connect first, sweep
+what is already there second, and never call twice.
 
 For the patterns this enables, see
 [Bind behaviour to tagged instances](/guides/tagged-instances/).
@@ -24,21 +21,25 @@ For the patterns this enables, see
 
 Sweeping first misses anything that arrives while the sweep runs.
 
-Connecting first without remembering what was seen calls twice for anything that
-arrives during it. `PlayerAdded` is a deferred event, which makes that window
-wide enough to actually hit rather than theoretical. Twill has shipped that bug
-once already.
+Connecting first without a record of what was seen calls twice for anything that
+arrives during the sweep. `PlayerAdded` is deferred, which makes that window
+wide enough to hit rather than theoretical. Twill shipped that bug once already.
 
-Doing both, in that order, with a record of what has been handled, is the only
-arrangement that is correct in both directions. That is what this module is.
+Connecting first, sweeping second, and keeping a record of what has been handled
+is the one arrangement correct in both directions.
 
 ## Per-instance bags
 
-Every instance gets its own [bag](/reference/bag/), closed the moment it
-leaves the set. Nothing bound to an instance has to be unbound by hand.
+Every member gets its own [bag](/reference/bag/), closed the moment it leaves
+the set. Nothing bound to a member is unbound by hand.
 
 The binding itself belongs to the bag given as the last argument, or to
-`Scope.Framework()` when there is none.
+`Scope.Framework()` when there is none. Destroying the binding closes every
+member's bag with it.
+
+An instance already in the set when the watch starts is announced through the
+same path as one arriving later, so the callback sees no difference between
+them.
 
 ## API
 
@@ -68,12 +69,10 @@ function Watch.Players(
 
 Throws when no callback is given.
 
-:::tip[Inside a service, prefer the hook]
-[`OnPlayerReady`](/reference/lifecycle/#the-player-pipeline) does the same thing
-and additionally waits for the player's data to load. Reach for `Watch.Players`
-in code that is not a service, or where you deliberately want the player before
-their data exists.
-:::
+Inside a service, [`OnPlayerReady`](/reference/lifecycle/#the-player-pipeline)
+does the same and additionally waits for the player's data. Reach for
+`Watch.Players` in code that is not a service, or where the player is wanted
+before their data exists.
 
 ### `Watch.Tagged`
 
@@ -93,7 +92,7 @@ function Watch.Tagged(
 
 | Name | Type | Description |
 | :--- | :--- | :--- |
-| `tag` | `string` | The `CollectionService` tag to follow. Must not be empty. |
+| `tag` | `string` | The `CollectionService` tag to follow. Not empty. |
 | `onAdded` | `(instance: Instance, bag: Scope.Bag) -> ()` | Called once per instance, with a bag that closes when the tag goes. |
 | `owner` | `Scope.Bag?` | The bag the binding belongs to. The framework's own when left out. |
 
@@ -103,15 +102,15 @@ function Watch.Tagged(
 
 Throws when the tag is empty or no callback is given.
 
-This is how behaviour binds to instances without knowing where they live, so
-moving or renaming a folder cannot break it. Removing the tag closes that
-instance's bag, which makes untagging a complete off switch.
+This binds behaviour to instances without naming where they live, so moving or
+renaming a folder cannot break it. Removing the tag closes that instance's bag,
+which makes untagging a complete off switch.
 
 ### `Watch.Children`
 
 `[Server]` | `[Client]`
 
-Follows the direct children of one instance, including the ones already there.
+Follows the direct children of one instance, including those already there.
 
 ```luau
 function Watch.Children(
@@ -147,4 +146,4 @@ export type Binding = {
 ```
 
 Destroying the binding stops the watch and closes every per-instance bag it
-opened, so one call unwinds everything the watch ever set up.
+opened, so one call unwinds everything the watch set up.

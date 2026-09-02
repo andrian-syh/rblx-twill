@@ -1,15 +1,16 @@
 ---
 title: Random
-description: Draws a player cannot predict, and rolls they can check.
+description: Draws a player cannot predict, and rolls they can check
 ---
 
-**Server only**, because an outcome a client can draw is an outcome it can
-choose.
-
 ```luau
+local Random = require("@game/ServerScriptService/TwillServer/Random")
+
 local prize = Random.Pick(lootTable)
 local code = Random.Id(16)
 ```
+
+Server only, because an outcome a client can draw is an outcome it can choose.
 
 Every draw comes from a cryptographic generator rather than from `math.random`,
 so knowing every earlier result says nothing about the next one.
@@ -29,20 +30,27 @@ local prize = round:Pick(lootTable)
 announce(round:Reveal())
 ```
 
-Anyone checks it with `Random.Verify(commitment, seed)` and then replays the same
-draws with `Random.Replay(seed)`.
+Anyone checks it with `Random.Verify(commitment, seed)` and then replays the
+same draws with `Random.Replay(seed)`.
 
-Draws are keyed Blake3 over the seed, so **any implementation of Blake3
-reproduces them** and nothing has to be taken on trust.
+A round holds 32 seed bytes. Its commitment is the SHA256 of those bytes, and
+its reveal is the same bytes as hexadecimal. Draws come from keyed Blake3 over
+the seed, 64 bytes of stream at a time, so any implementation of Blake3
+reproduces them.
 
-:::caution[Replay in the same order]
 The stream is ordered. Replaying a different sequence of calls produces a
-different sequence of results, and the audit fails for a reason that has nothing
-to do with honesty.
-:::
+different sequence of results, and the audit then fails for a reason that has
+nothing to do with honesty.
 
 For the full flow, see
 [Run a draw a player can audit](/guides/provably-fair-draws/).
+
+## Even draws only
+
+`Pick` and `Shuffle` treat every entry as equally likely. For a table where some
+entries come up more often than others, use [`Chance`](/reference/chance/),
+which takes a round from here and draws from its stream, so a weighted outcome
+is as auditable as an even one.
 
 ## API
 
@@ -59,6 +67,8 @@ function Random.Bytes(count: number): buffer
 **Returns**
 
 `buffer` - That many unpredictable bytes.
+
+Throws when the count is not a whole number of zero or more.
 
 ### `Random.Int`
 
@@ -77,10 +87,10 @@ function Random.Int(min: number, max: number): number
 Throws on fractional bounds, an inverted pair, or a span wider than 32 bits.
 `min == max` is legal and returns that value.
 
-Values that do not divide evenly into the generator's word are drawn again rather
-than folded, because folding would make the low outcomes fractionally likelier
-than the high ones. That is exactly the bias a loot table must not have, and it is
-why the span is bounded.
+Values that do not divide evenly into the generator's word are drawn again
+rather than folded, because folding makes the low outcomes likelier than the
+high ones. That is the bias a loot table must not have, and it is why the span
+is bounded.
 
 ### `Random.Number`
 
@@ -103,6 +113,8 @@ function Random.Number(min: number?, max: number?): number
 
 `number` - A value between the bounds.
 
+Throws when either bound is given and is not finite.
+
 ### `Random.Pick`
 
 `[Server]`
@@ -117,10 +129,7 @@ function Random.Pick<T>(list: { T }): T
 
 `T` - One of them.
 
-Throws when there is nothing to choose between.
-
-Weighting is not done here. A list where some entries appear more often, or a
-weighted draw, is the caller's own arrangement.
+Throws when the list is empty.
 
 ### `Random.Shuffle`
 
@@ -136,15 +145,15 @@ function Random.Shuffle<T>(list: { T }): { T }
 
 `{ T }` - That same list, reordered.
 
-:::danger[This reorders in place]
-The list handed in is the list handed back, so anything else holding it sees the
-new order too. Shuffling a shared loot table permanently rearranges it for every
-later reader. Copy it first when the original order matters:
+Throws when given something other than a table.
+
+This reorders in place. The list handed in is the list handed back, so anything
+else holding it sees the new order too. Shuffling a shared loot table rearranges
+it for every later reader. Copy it first when the original order matters:
 
 ```luau
 local order = Random.Shuffle(table.clone(LOOT))
 ```
-:::
 
 ### `Random.Id`
 
@@ -158,13 +167,12 @@ function Random.Id(length: number): string
 
 **Returns**
 
-`string` - Text of that length, drawn from letters and digits.
+`string` - Text of that length, drawn from an alphabet of 62 letters and digits.
 
 Throws when the length is not a whole number above zero.
 
-Length is the only thing that decides how hard it is to guess, so ask for enough
-of it. Use it for redeem codes, session ids, and the
-[`Token`](/reference/token/) secret.
+Length is the only thing that decides how hard it is to guess. Use it for redeem
+codes, session ids, and the [`Token`](/reference/token/) secret.
 
 ```luau
 Twill.Token.Configure({ Secret = Random.Id(64) })
@@ -209,7 +217,7 @@ function Random.Replay(seed: string): Round
 
 `Round` - A round that draws exactly what the original drew.
 
-Throws when the seed is not one a round could have revealed.
+Throws when the seed is not hexadecimal, or not 32 bytes of it.
 
 ### `Random.Verify`
 
@@ -223,14 +231,14 @@ function Random.Verify(commitment: string, seed: string): boolean
 
 **Returns**
 
-`boolean` - True only when the seed matches the commitment.
+`boolean` - `true` only when the seed matches the commitment.
 
 Anything malformed answers `false` rather than raising, because this reads
-untrusted input: the whole point is that a player can hand you a seed to check.
+untrusted input: the point is that a player can hand you a seed to check.
 
-The [`verifyroll` command](/reference/admin/#built-in-commands) puts this in the
-admin console, so a moderator can settle a dispute in front of the player without
-either of them having to trust the other.
+The [`verifyroll` command](/reference/admin/#verifyroll) puts this in the admin
+console, so a moderator settles a dispute in front of the player without either
+of them having to trust the other.
 
 ### `Round:Int`
 
@@ -262,14 +270,14 @@ function round:NextNumber(): number
 
 `number` - A value from zero, up to but never reaching one.
 
-Named to match the method an ordinary `Random` carries, so anything that draws
-from one draws from a round without knowing which it was handed.
+Named to match the method an ordinary `Random` carries, so anything drawing from
+one draws from a round without knowing which it was handed.
 [`Chance`](/reference/chance/) is what this exists for.
 
-Two words of the stream are taken per call rather than one, so the fraction is as
-fine as an ordinary generator's. That matters when replaying: a round drawing
-fractions consumes its stream twice as fast as one drawing whole numbers, which
-is invisible unless you interleave the two and expect a particular sequence.
+Two words of the stream are taken per call rather than one, giving 53 bits of
+fraction. A round drawing fractions therefore consumes its stream twice as fast
+as one drawing whole numbers, which matters only when replaying an interleaved
+sequence.
 
 ### `Round:Pick`
 
@@ -285,7 +293,7 @@ function round:Pick<T>(list: { T }): T
 
 `T` - One of them, every entry equally likely.
 
-Throws when there is nothing to choose between.
+Throws when the list is empty.
 
 ### `Round:Reveal`
 
@@ -299,16 +307,18 @@ function round:Reveal(): string
 
 **Returns**
 
-`string` - The seed, in a form safe to publish as text.
+`string` - The seed as hexadecimal, safe to publish as text.
 
-:::danger[Only after the round is over]
-Revealing it earlier tells everybody what is coming, because the stream is fixed
-by the seed.
-:::
+Reveal only after the round is over. Revealing it earlier tells everybody what
+is coming, because the stream is fixed by the seed.
 
-## Weighted draws
+## Limits
 
-`Pick` and `Shuffle` treat every entry as equally likely. For a table where some
-entries should come up more often than others, use
-[`Chance`](/reference/chance/), which takes a round from here and draws from its
-stream, so a weighted outcome is as auditable as an even one.
+| Limit | Value |
+| :--- | ---: |
+| Seed | 32 bytes |
+| Revealed seed as text | 64 hexadecimal characters |
+| Widest span `Int` draws | 2^32 values |
+| Stream block | 64 bytes |
+| `Id` alphabet | 62 characters |
+| `NextNumber` precision | 53 bits |

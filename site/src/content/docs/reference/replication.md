@@ -1,185 +1,192 @@
 ---
 title: Replication
-description: Publishing server state to clients, and reading it on the other side.
+description: The server publishes state, the client reads a local copy of it
 ---
 
-One require path, two very different jobs. On the server `Twill.Replication` is
-the publisher. On the client it is the local view.
-
-The server half lives outside `ReplicatedStorage`, so its source never reaches a
-player. **A client has no way to ask for replicated state.** Everything a client
-holds here arrived because the server decided to send it.
-
-Asking the server a question is a different job, and [`Net`](/reference/net/)
-does it: declare a remote with reply types and the client gets an answer, metered
-and screened like every other call.
-
-## Keys and paths
-
-Everything is addressed as a key, then a path inside it.
-
 ```luau
-Replication.SetPathFor(player, "Data", "Stats.Coins", 250)
---                             ^key    ^path
-Replication.Subscribe("Data.Stats.Coins", onCoins)
---                     ^key  ^path
+-- Server
+Replication.SetFor(player, "Wallet", { Coins = 250 })
+
+-- Client
+Replication.Subscribe("Wallet.Coins", function(coins)
+	coinLabel.Text = tostring(coins)
+end, bag)
 ```
 
-:::caution[Key names cannot contain dots]
-The first dot separates the key from the path. A key named `"Player.Data"` can
-never be matched by a subscription, because the subscription reads it as key
-`Player`, path `Data`.
-:::
+## Two halves, one require
+
+`Twill.Replication` resolves to a different module on each side. The server gets
+the publisher; the client gets the local view.
+
+The publisher lives outside `ReplicatedStorage`, so its source never reaches a
+player. A client cannot ask the server for state and cannot write any. Reads on
+the client answer from what has already arrived, so they never yield and answer
+`nil` for anything that has not.
+
+Where a client has a real question, [`Net`](/reference/net/) answers it with a
+remote that replies.
 
 ## Shared keys and player keys
 
-Every publisher function has a `For` twin.
+A key set with `Set` reaches every player. A key set with `SetFor` reaches one.
 
-| Form | Who receives it |
-| --- | --- |
-| `Set("RoundEndsAt", t)` | Everybody. |
-| `SetFor(player, "Data", profile)` | That player, and nobody else, ever. |
+Both can use the same name. A player who has a value of their own under a key
+sees that value; everyone else sees the shared one. This is how a scoreboard and
+a private balance can share a key name without the private one leaking.
 
-A player key is never sent to anyone but its owner. This is what makes it safe to
-replicate a player's own inventory without leaking it to the lobby.
+Anything after the first dot is a path inside the key, so a key name cannot
+contain a dot.
 
-Where a player has a key of their own, it takes precedence over the shared key of
-the same name for that player alone.
+## Sending
 
-## How little travels
+Writes are collected and sent on an interval rather than per write. Setting one
+key several times in a frame costs one message.
 
-Replication keeps a private copy of what each player was last sent and diffs
-against it, so touching one field deep inside a large table sends that field
-rather than the table. That copy is the memory price of small messages.
+What is sent is a difference, not the whole value. Each player has a private
+record of what they were last sent, and only the fields that moved travel. A
+first message carries everything the player can see.
 
-Writes are collected and sent on an interval, so setting the same key several
-times in one frame costs one message.
+Three controls sit on top of that:
 
-## Reading is not copying
+| Control | Effect |
+| :--- | :--- |
+| `SetThrottle` | Holds a key to at most one message per interval. Nothing is lost, only delayed. |
+| `Freeze` | Stops sending a key while it is rearranged. Writes still land. |
+| `Unfreeze` | Resumes, and everything the key missed goes out together. |
 
-`Get`, `GetFor`, and the value handed to a `Subscribe` callback are the held
-value itself, not a copy. Readings are therefore free however often they are
-taken.
+## Guards
 
-:::danger[Treat what you read as read only]
-Writing into a value you read from this module changes what that side believes
-without any of it reaching anybody. On the server the published state and the
-clients quietly stop agreeing; on the client, the next thing to arrive overwrites
-your change without warning. Publish through the functions below instead.
-:::
+`SetValidator` refuses writes to a key unless a test passes. One guard per key.
 
-## Server API
+Every way of writing a key answers to it: `Set` and `SetFor`, and the path forms
+`SetPath`, `SetPathFor`, `Increment` and `IncrementFor`. A path write is tried on
+a copy first, so a refusal leaves nothing behind.
 
-### `Replication.Set`
+Clearing a key is always allowed. A guard that raises counts as a refusal and is
+reported.
+
+## API
+
+### Server: shared keys
+
+#### `Replication.Set`
 
 `[Server]`
 
-Publishes a whole value under a key.
+Publishes a value every player can see.
 
 ```luau
 function Replication.Set(key: string, value: any)
-function Replication.SetFor(player: Player, key: string, value: any)
 ```
 
-**Parameters**
+Nothing is sent at once. Pass `nil` to clear the key.
 
-| Name | Type | Description |
-| :--- | :--- | :--- |
-| `player` | `Player` | `For` twin only. The only player who will receive it. A player who is not here is quietly dropped, so a write racing someone's departure needs no guard. |
-| `key` | `string` | The key to publish under. Must not be empty, and must not contain a dot. |
-| `value` | `any` | The value to publish. `nil` clears the key. |
+Throws when the key is empty.
 
-**Returns**
-
-`()` - Nothing.
-
-Publishing does not send anything at once. What actually leaves is worked out on
-the next interval, and only the parts that moved.
-
-### `Replication.SetPath`
+#### `Replication.SetPath`
 
 `[Server]`
 
-Writes one field inside a key.
+Writes one field inside a shared key, building the tables along the way.
 
 ```luau
 function Replication.SetPath(key: string, path: string, value: any): boolean
-function Replication.SetPathFor(player: Player, key: string, path: string, value: any): boolean
 ```
-
-**Parameters**
-
-| Name | Type | Description |
-| :--- | :--- | :--- |
-| `player` | `Player` | `For` twin only. The owner of the key. |
-| `key` | `string` | The key holding the table. A key holding something that cannot be descended into is replaced with a fresh table. |
-| `path` | `string` | Dot separated, such as `"Stats.Coins"`. |
-| `value` | `any` | What to write. `nil` clears the field. |
 
 **Returns**
 
-`boolean` - False when a step along the path is blocked by something that is not
-a table, when the key's guard refuses what the write would have made of it, or,
-for the `For` twin, when the player is not here.
+`boolean` - `false` when a step along the path is blocked by something that is
+not a table, or when the guard refused.
 
-Tables along the path are **built as needed**, so a field can be published before
-its parents exist.
-
-**Example**
-
-```luau
--- Neither Stats nor Coins has to exist first.
-Replication.SetPathFor(player, "Data", "Stats.Coins", 250)
-```
-
-### `Replication.Increment`
+#### `Replication.Increment`
 
 `[Server]`
 
-Adds to a number inside a key.
+Adds to a number inside a shared key, starting from zero when there is none.
 
 ```luau
 function Replication.Increment(key: string, path: string, amount: number): number?
-function Replication.IncrementFor(player: Player, key: string, path: string, amount: number): number?
 ```
-
-**Parameters**
-
-| Name | Type | Description |
-| :--- | :--- | :--- |
-| `player` | `Player` | `For` twin only. The owner of the key. |
-| `key` | `string` | The key holding the table. |
-| `path` | `string` | Dot separated path to the number. |
-| `amount` | `number` | How much to add. Negative subtracts. |
 
 **Returns**
 
-`number?` - The new value, or `nil` when it could not be applied.
+`number?` - The new value, or `nil` when the field holds something that is not a
+number, or the write was refused.
 
-Counting starts from zero when there is nothing at the path yet, so a counter
-needs no setting up. A field already holding something that is not a number is
-refused rather than overwritten.
-
-### `Replication.Mutate`
+#### `Replication.Mutate`
 
 `[Server]`
 
-Replaces a key with whatever the given function returns.
+Replaces a shared key with whatever the given function returns.
 
 ```luau
 function Replication.Mutate<T>(key: string, transform: (current: T?) -> T)
-function Replication.MutateFor<T>(player: Player, key: string, transform: (current: T?) -> T)
+```
+
+### Server: player keys
+
+#### `Replication.SetFor`
+
+`[Server]`
+
+Publishes a value only one player receives.
+
+```luau
+function Replication.SetFor(player: Player, key: string, value: any)
+```
+
+Does nothing for a player who is not on this server.
+
+#### `Replication.SetPathFor`
+
+`[Server]`
+
+Writes one field inside a player's own key.
+
+```luau
+function Replication.SetPathFor(player: Player, key: string, path: string, value: any): boolean
 ```
 
 **Returns**
 
-`()` - Nothing.
+`boolean` - `false` when the player is not here, the path is blocked, or the
+guard refused.
 
-Use it when the new value depends on the old one in a way `SetPath` and
-`Increment` cannot express. The `For` twin does not run the transform at all for
-a player who is not here.
+#### `Replication.IncrementFor`
 
-### `Replication.SetValidator`
+`[Server]`
+
+Adds to a number inside a player's own key.
+
+```luau
+function Replication.IncrementFor(player: Player, key: string, path: string, amount: number): number?
+```
+
+#### `Replication.MutateFor`
+
+`[Server]`
+
+Replaces one player's own key with whatever the given function returns.
+
+```luau
+function Replication.MutateFor<T>(player: Player, key: string, transform: (current: T?) -> T)
+```
+
+#### `Replication.GetFor`
+
+`[Server]`
+
+Returns what one player sees under a key.
+
+```luau
+function Replication.GetFor<T>(player: Player, full: string): T?
+```
+
+The published value itself, not a copy. Treat it as read only.
+
+### Server: control
+
+#### `Replication.SetValidator`
 
 `[Server]`
 
@@ -189,31 +196,9 @@ Refuses writes to a key unless the given test passes.
 function Replication.SetValidator(key: string, validator: ((value: any) -> boolean)?)
 ```
 
-**Parameters**
+Pass `nil` to remove the guard.
 
-| Name | Type | Description |
-| :--- | :--- | :--- |
-| `key` | `string` | The key to guard. |
-| `validator` | `((value: any) -> boolean)?` | Receives the offered value. Pass `nil` to remove the guard. |
-
-**Returns**
-
-`()` - Nothing.
-
-This guards against your own mistakes, not against a client, which cannot publish
-anything at all. One guard per key, and installing a second replaces the first.
-
-**The guard covers every way of writing that key**, the whole value and one field
-inside it alike, so `SetPath` and `Increment` answer to it as `Set` does. A field
-written into a guarded key is tried on a copy of it first, so a refusal leaves
-nothing behind, not even the tables the write would have needed. That copy is the
-cost of guarding a key written by path, and it is paid only where a guard exists.
-
-A validator that throws is read as a refusal, since a test that cannot decide
-must not be read as consent. Clearing a key is always allowed: a guard describes
-what may be published, not what may be withdrawn.
-
-### `Replication.SetThrottle`
+#### `Replication.SetThrottle`
 
 `[Server]`
 
@@ -223,122 +208,78 @@ Holds one key to at most one message per interval.
 function Replication.SetThrottle(key: string, interval: number?)
 ```
 
-**Parameters**
+Pass `nil` to remove the limit.
 
-| Name | Type | Description |
-| :--- | :--- | :--- |
-| `key` | `string` | The key to slow down. |
-| `interval` | `number?` | Seconds between messages. Pass `nil` to remove the limit. |
-
-**Returns**
-
-`()` - Nothing.
-
-Writes still land here at full speed. Only what leaves is slowed, and nothing is
-lost, merely delayed. Useful for a key that changes far more often than a player
-could notice.
-
-### `Replication.Freeze`
+#### `Replication.Freeze`
 
 `[Server]`
 
-Stops sending a key while it is being rearranged.
+Stops sending a key while it is rearranged.
 
 ```luau
 function Replication.Freeze(key: string)
-function Replication.Unfreeze(key: string)
 ```
 
-**Returns**
-
-`()` - Nothing.
-
-Writes still land while a key is frozen. Only sending stops, so a half finished
-rearrangement is never seen. `Unfreeze` sends everything that changed meanwhile
-as one change rather than as the steps it was made in.
-
-### `Replication.OnChanged`
+#### `Replication.Unfreeze`
 
 `[Server]`
 
-Returns a signal that fires whenever a key is written here.
+Resumes a key that was held back.
 
 ```luau
-function Replication.OnChanged(key: string): ChangedSignal
-
-export type ChangedSignal = Signal.Signal<(value: any, player: Player?) -> ()>
+function Replication.Unfreeze(key: string)
 ```
 
-**Returns**
+#### `Replication.OnChanged`
 
-`ChangedSignal` - Carries the new value, and the owning player when the key
-belongs to one.
+`[Server]`
 
-Fires on the **server**, as the write happens, ahead of anything leaving for a
-client. `player` is set for a player key and `nil` for a shared one.
+Returns a signal fired whenever a key is written.
 
-This is how one system reacts to another's state without the two naming each
-other. The publisher does not know who is listening, and a listener needs only
-the key.
+```luau
+function Replication.OnChanged(key: string): Signal<(value: any, player: Player?) -> ()>
+```
 
-This reports publishes, not differences. A key republished on an interval fires
-on that interval even when nothing moved. To hear real changes, subscribe from
-the client.
+Fires on every write, which is not the same as every change. The second argument
+is the owning player for a player key, and `nil` for a shared one.
 
-### `Replication.GetStats`
+#### `Replication.GetStats`
 
 `[Server]`
 
 Returns how much has gone out since this server started.
 
 ```luau
-function Replication.GetStats(): Stats
-
-export type Stats = {
-	Messages: number,
-	Keys: number,
-}
+function Replication.GetStats(): { Messages: number, Keys: number }
 ```
 
-**Returns**
+A snapshot, safe to keep. It does not follow later counting.
 
-`Stats` - A snapshot, safe to keep. It does not follow later counting.
+### Either side
 
-Both numbers are running totals for the lifetime of the server: messages sent,
-and keys carried across all of them. Worth watching while you tune throttles, and
-worth reading twice a few seconds apart rather than once.
+#### `Replication.Get`
 
-### `Replication.GetFor`
+`[Server]` | `[Client]`
 
-`[Server]`
-
-Returns what one player currently sees under a key, or a field inside it.
+Returns what this side holds for a key, or one field inside it.
 
 ```luau
-function Replication.GetFor<T>(player: Player, full: string): T?
+function Replication.Get<T>(full: string): T?
 ```
 
-**Returns**
+The held value itself, not a copy. On the client this reads the local view and
+never asks the server.
 
-`T?` - The value, or `nil` when they see nothing there.
+### Client
 
-This is their own value where they have one and the shared value otherwise, which
-is the reading that matches what actually reached them.
-
-## Client API
-
-### `Replication.Subscribe`
+#### `Replication.Subscribe`
 
 `[Client]`
 
 Calls back whenever a key, or one field inside it, moves.
 
 ```luau
-function Replication.Subscribe<T>(
-	full: string,
-	callback: (value: T?) -> (),
-	owner: Scope.Bag?
-): Subscription
+function Replication.Subscribe<T>(full: string, callback: (value: T?) -> (), owner: Bag?): Subscription
 ```
 
 **Parameters**
@@ -347,33 +288,20 @@ function Replication.Subscribe<T>(
 | :--- | :--- | :--- |
 | `full` | `string` | A key, optionally followed by a dot separated path. |
 | `callback` | `(value: T?) -> ()` | Receives the new value, or `nil` when it is cleared. |
-| `owner` | `Scope.Bag?` | A bag to put the subscription in. The caller keeps it when left out. |
+| `owner` | `Bag?` | A bag to put the subscription in. The caller keeps it when left out. |
 
 **Returns**
 
-`Subscription` - Carries `Disconnect` and `Destroy`, so a
-[`Scope`](/reference/scope/) bag holds it like anything else.
+`Subscription` - Carries `Disconnect` and `Destroy`, so a bag holds it like
+anything else.
 
-A subscription to a path is only woken when something at or below that path
-actually moved, so a label bound to one field is not woken by every unrelated
-write. The current value is delivered once if there already is one, so the
-callback may run before anything changes.
+The current value arrives once at the moment of subscribing, if there already is
+one. A subscription to a path is woken only when that path actually moved, not
+whenever anything in the key did.
 
-```luau
-Replication.Subscribe("Data.Stats.Coins", function(coins)
-	label.Text = Format.Comma(coins or 0)
-end, bag)
-```
+Throws when the key is empty or no callback is given.
 
-Pass `owner` **or** bag the return value, never both: two bags holding one
-subscription is two things trying to close it.
-
-A subscription with no bag at all lives until the session ends. That is right for
-a controller's own HUD, which lives just as long, and wrong for anything built
-per player or per character — those close a closure that holds the whole tree it
-was drawing into.
-
-### `Replication.WaitFor`
+#### `Replication.WaitFor`
 
 `[Client]`
 
@@ -383,55 +311,19 @@ Yields until a key, or a field inside it, holds a value.
 function Replication.WaitFor<T>(full: string, timeout: number?): (T?, boolean)
 ```
 
-**Parameters**
-
-| Name | Type | Description |
-| :--- | :--- | :--- |
-| `full` | `string` | A key, optionally followed by a dot separated path. |
-| `timeout` | `number?` | Seconds to wait before giving up. Ten when left out. |
-
 **Returns**
 
 `T?` - The value, or `nil` when the wait ran out.
 
-`boolean` - False when the wait ran out.
+`boolean` - `false` when the wait ran out. Yields.
 
-Returns at once when a value is already held. Giving up is reported rather than
-raised, so the caller decides for itself whether waiting longer was worth it.
+Giving up is reported through the second return, never raised.
 
-## Both sides
+## Limits
 
-### `Replication.Get`
-
-`[Server]` | `[Client]`
-
-Returns what this side currently holds for a key, or for one field inside it.
-
-```luau
-function Replication.Get<T>(full: string): T?
-```
-
-**Returns**
-
-`T?` - The value, or `nil` when nothing is held there.
-
-On the server this reads the shared value alone, and what one particular player
-sees may differ: use [`GetFor`](#replicationgetfor) for that. On the client it
-reads the local view and never asks the server, so it answers at once and answers
-`nil` for anything that has not arrived yet.
-
-## Client readiness
-
-The client sends one readiness signal the first time its half of the module is
-required. If no client code ever requires `Twill.Replication`, the server has
-nothing to send to and the client receives nothing.
-
-Requiring it once anywhere in your client boot is enough. Asking twice does
-nothing, so a client cannot make the server rebuild and resend its whole view.
-
-:::note[A patch that arrives before its value is dropped]
-The client refuses to apply a change to part of a key it has never held, and
-reports it, because applying it would build a value the server never published.
-In practice this means the readiness signal was missed, not that a message was
-lost.
-:::
+| Limit | Value |
+| :--- | ---: |
+| Time between messages | 0.1 seconds |
+| `WaitFor` default timeout | 10 seconds |
+| Wait for the server to register | 30 seconds |
+| Requests for a full view | 2 per second, per player |

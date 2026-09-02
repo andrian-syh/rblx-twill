@@ -1,6 +1,6 @@
 ---
 title: v1.6.0 — Nothing Waits Forever
-description: Released August 20, 2026. Twill's own signal, where every listener runs and no waiting thread is ever stranded.
+description: Released August 20, 2026. Twill's own signal, where every listener runs and no waiting thread is ever stranded
 template: splash
 ---
 
@@ -24,7 +24,7 @@ import NewsPagination from '../../../components/NewsPagination.astro';
 ## The thread nobody could find
 
 Every signal library Twill looked at shares one ending. A thread parked in
-`Wait` is resumed by the next fire — and if that fire never comes, nothing else
+`Wait` is resumed by the next fire, and if that fire never comes, nothing else
 ever resumes it.
 
 ```luau
@@ -51,8 +51,8 @@ compared offered except one.
 ## Every listener runs
 
 Each listener is called inside its own `xpcall`. One that throws is reported
-through [`Log`](/reference/log/) — with the traceback from where it broke, not
-from the dispatcher — and stepped over.
+through [`Log`](/reference/log/), with the traceback from where it broke rather
+than from the dispatcher, and stepped over.
 
 ```luau
 signal:Connect(function() print("one") end)
@@ -74,12 +74,12 @@ listener yet. Firing from inside a listener runs there and then, nested.
 These are `BindableEvent`'s answers, and now they are Twill's, so there is one
 set of rules to remember rather than one per library.
 
-Getting there took one idea: **every connection records which firing it was made
-during**, and the dispatcher skips anything younger than the firing it is in.
-That single integer comparison replaced the preserved-tail bookkeeping the
-previous library needed for the same guarantee — and it removed the firing flag
-entirely, so the class of bug where a signal silently locks itself forever is
-not guarded against, it is unrepresentable.
+Getting there took one idea: every connection records which firing it was made
+during, and the dispatcher skips anything younger than the firing it is in. That
+single integer comparison replaced the preserved-tail bookkeeping the previous
+library needed for the same guarantee, and it removed the firing flag entirely,
+so the class of bug where a signal silently locks itself forever is not guarded
+against, it is unrepresentable.
 
 ## Named arguments, checked at the call
 
@@ -100,8 +100,8 @@ library it replaces, because it was the best idea in it.
 raising from inside the dispatcher. Threads are now checked before reuse.
 
 **A destroyed signal** used to be emptied and stripped of its methods, so calling
-one afterwards raised `attempt to index nil`. It now keeps its methods and raises
-a sentence naming what happened.
+one afterwards raised `attempt to index nil`. It now keeps its methods and
+raises a sentence naming what happened.
 
 **Counting** is new. `Count`, `IsEmpty`, and `IsDestroyed` exist so a listener
 that outlived its owner is something a test can assert against:
@@ -117,8 +117,8 @@ Measured in a real place, best of five:
 
 | | Twill.Signal | Previous |
 | --- | --- | --- |
-| Fire 1 listener, 20 000 times | **7.6 ms** | 14.0 ms |
-| Fire 100 listeners, 200 times | 2.0 ms | **0.9 ms** |
+| Fire 1 listener, 20 000 times | 7.6 ms | 14.0 ms |
+| Fire 100 listeners, 200 times | 2.0 ms | 0.9 ms |
 
 The common case got roughly twice as fast, because dispatch no longer routes
 every firing through the task scheduler to buy a traceback that `xpcall` already
@@ -128,8 +128,8 @@ crowd.
 
 ## Upgrading
 
-Nothing to do. `new`, `wrap`, `Connect`, `Once`, `Wait`, `Fire`, `DisconnectAll`,
-and `Destroy` keep their names and their meanings, and the
+Nothing to do. `new`, `wrap`, `Connect`, `Once`, `Wait`, `Fire`,
+`DisconnectAll`, and `Destroy` keep their names and their meanings, and the
 `Signal<(value: any) -> ()>` type spelling is unchanged.
 
 The immediate-mode twins are gone, because there is now only one meaning to
@@ -150,8 +150,8 @@ have:
 | `signal:CancelAllMutations()` | nothing to cancel |
 
 `Twill.Signal` is now a Twill module with a Twill stability promise, rather than
-a bundled library on the root table. With it, **nothing third-party remains
-reachable from the root**. See [Signal](/reference/signal/) for the full surface.
+a bundled library on the root table. With it, nothing third-party remains
+reachable from the root. See [Signal](/reference/signal/) for the full surface.
 
 <NewsPagination />
 

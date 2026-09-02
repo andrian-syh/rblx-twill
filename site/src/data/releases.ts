@@ -18,6 +18,16 @@ export interface Release {
 
 export const releases: Release[] = [
 	{
+		version: 'v1.8.0',
+		title: 'The Store Underneath',
+		date: 'September 2, 2026',
+		tagline: "Player data now sits on Twill's own store, and the console can read a key's history.",
+		summary:
+			'Data no longer leans on a bundled package. Store holds a DataStore key for one server at a time, saves it while it is held, and gives it up on the way out, with the public API and the stored format unchanged. Eight faults came out of the audit that followed: a refused write reporting success, nothing saved on shutdown, and a handle that kept accepting writes it could never store. The console gained status and versions.',
+		slug: '/news/v1-8-0/',
+		icon: 'star',
+	},
+	{
 		version: 'v1.7.4',
 		title: 'Told Apart, or Not Sent',
 		date: 'August 28, 2026',

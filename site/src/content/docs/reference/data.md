@@ -1,127 +1,119 @@
 ---
 title: Data
-description: Player data on top of ProfileStore, with versioning, branches, and offline writes.
+description: Player data with versioning, branches, and writes that reach any user
 ---
 
 **Server only.** Requiring this from a client fails at the require, naming the
 module.
-
-`Twill.Data` wraps [ProfileStore](/reference/bundled-packages/) with a template,
-a version number, migrations, and a gate that holds a joining player until their
-data exists.
-
-## Configure
-
-Call once during `Init`, then wire the gate.
 
 ```luau
 local Data = require("@game/ReplicatedStorage/Twill").Data
 
 Data.Configure({
 	Store = "PlayerData",
-	Version = 2,
-	Template = { Coins = 0, Inventory = {} },
-	Migrations = {
-		[2] = function(data)
-			data.Coins = data.Money or 0
-			data.Money = nil
-		end,
-	},
+	Version = 1,
+	Template = { Coins = 0, Stats = { Wins = 0 } },
 })
 
 Lifecycle.SetPlayerGate(Data.Gate)
 ```
 
-```luau
-export type Config = {
-	Store: string,
-	Template: { [string]: any },
-	Version: number?,
-	Migrations: { [number]: (data: { [string]: any }) -> () }?,
-	Branches: { [string]: Branch }?,
-	Replicate: { string }?,
-}
+`Data` puts a template, a version number, migrations, and a joining gate over
+[`Store`](/reference/store/). `Store` holds the key; `Data` decides what the key
+contains and who waits for it.
+
+## Configure and the gate
+
+`Configure` runs once, during `Init`. Calling it twice throws.
+
+`Data.Gate` holds a joining player until their data exists. Wire it into
+[`Lifecycle`](/reference/lifecycle/) and no service sees a player before their
+data is there.
+
+A load that fails after its retries kicks the player rather than handing back the
+template. Data that could not be read is not data that should be overwritten.
+
+```text
+Your saved data could not be loaded.
+
+You have not lost anything. Please rejoin.
 ```
 
-| Field | Meaning |
-| --- | --- |
-| `Store` | The DataStore name. |
-| `Template` | The shape a new profile starts as. Missing fields are filled in on load. |
-| `Version` | The version a loaded profile should end up at. |
-| `Migrations` | Keyed by the version they produce. |
-| `Branches` | Separate stores that are not loaded on join. |
-| `Replicate` | Field names the owning player should see on their client. |
+A session claimed by another server kicks as well, with a different message.
+Nothing is lost either way: the other server holds the data.
 
-Configuring twice is refused rather than allowed to change the shape underneath a
-running server.
+## Versions and migrations
 
-:::note[Reserved field names]
-Twill keeps its own bookkeeping in the profile under names beginning `__twill`:
-the schema version, the queued-edit marker, and the record of granted purchases.
-Do not use that prefix for your own fields.
-:::
-
-## Migrations
-
-A migration is keyed by the version it **produces**, so `[2]` upgrades a version
-1 profile to version 2. They run in ascending order, and only on profiles that
-already hold data. A brand new profile starts at the current version and skips
-them all.
-
-```luau
-Migrations = {
-	[2] = function(data) data.Coins = data.Money or 0 end,
-	[3] = function(data) data.Inventory = data.Inventory or {} end,
-}
-```
-
-A player returning after several updates arrives through every step rather than
-the latest one. A migration that throws prevents the session from opening, and
-the player is kicked rather than served a profile that is half-upgraded.
-
-## Reading and writing
-
-`Data.Get` returns the live table. Mutate it directly and it saves on its own.
-
-```luau
-function ShopService.OnPlayerReady(player, data)
-	data.Coins += 100
-end
-```
-
-There is no `Set` and no commit step. ProfileStore already flushes everything on
-shutdown, so **no save call belongs in `BindToClose`**. Where the platform offers
-warning of a scheduled restart, `Configure` also asks for an early save on it.
-
-## Replication
-
-`Replicate` names the fields a player should see on their own client. They arrive
-under the `Data` key, and follow direct mutation, so nothing has to be mirrored
-by hand.
+`Version` is the shape the running server expects. `Migrations` are keyed by the
+version each one produces.
 
 ```luau
 Data.Configure({
-	-- ...
-	Replicate = { "Coins", "Stats" },
+	Store = "PlayerData",
+	Version = 3,
+	Template = { Coins = 0, Level = 1 },
+	Migrations = {
+		[2] = function(data) data.Coins = data.Money or 0 end,
+		[3] = function(data) data.Level = 1 end,
+	},
 })
 ```
 
+Steps run in ascending order, from the version the data carries to the version
+the server wants. A missing step is skipped. A step that raises stops the load,
+and the player is kicked rather than saved with a half migrated shape.
+
+Data already at a version past the server's own is left exactly as it is, and
+reported once. This is what stops a rollback running every migration a second
+time on data that has already had them.
+
+After migration, anything the template gained and the data lacks is filled in.
+Existing values are left alone.
+
+## Branches
+
+A branch is a separate store under the same user, with its own template, its own
+version, and its own migrations. Use one for data that is large, rarely read, or
+both.
+
 ```luau
--- client
-Replication.Subscribe("Data.Coins", function(coins)
-	label.Text = Format.Comma(coins or 0)
-end)
+Data.Configure({
+	Store = "PlayerData",
+	Template = { Coins = 0 },
+	Branches = {
+		pets = { Version = 1, Template = { Owned = {}, Slots = 3 } },
+	},
+})
+
+local pets = Data.LoadBranch(player, "pets")
 ```
 
-Only the named fields travel, and only to their owner. The view is rebuilt on an
-interval, so `Replication.OnChanged("Data")` reports that interval rather than a
-real change. A message is only sent to the client when something actually moved.
+Branches are not loaded with the player. `LoadBranch` opens one, and two callers
+asking at once both wait on the same load rather than starting two.
 
-:::caution[`Data` here is a replication key, not a scope name]
-The key the client subscribes to is `"Data"`. The scope name used by
-[`Edit`](#dataedit), [`Reset`](#datareset), and the admin console is `"main"`.
-They are different words for different things.
-:::
+`UnloadBranch` closes one early, for data only needed during part of a session.
+Anything still open closes when the player leaves.
+
+A branch cannot be named `main`.
+
+## Writing to anybody
+
+`Edit` and `Reset` work on any user, wherever they are. When this server holds
+the data, the change lands here. When it does not, the change is written into the
+key itself and applied by whichever server next holds it.
+
+That difference is what `Outcome` reports.
+
+| Outcome | Meaning |
+| :--- | :--- |
+| `applied` | Written here and saved. |
+| `queued` | Left on the key. It lands when a server holds them. |
+| `blocked` | Something along that path is not a table. |
+| `unknown` | No scope by that name. |
+| `unsupported` | The value would not survive being saved. |
+| `failed` | The change could not be sent. |
+
+`queued` is not `applied`. For a user who never returns, it never lands.
 
 ## API
 
@@ -132,36 +124,45 @@ They are different words for different things.
 Prepares the store, the template, and the upgrade path.
 
 ```luau
-function Data.Configure(newConfig: Config)
+function Data.Configure(config: Config)
 ```
 
-**Returns**
+**Config**
 
-`()` - Nothing.
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `Store` | `string` | The DataStore name. |
+| `Template` | `{ [string]: any }` | What a player starts with. |
+| `Version` | `number?` | The shape this server expects. `1` when left out. |
+| `Migrations` | `{ [number]: (data) -> () }?` | Keyed by the version each step produces. |
+| `Branches` | `{ [string]: Branch }?` | Separate stores under the same user. |
+| `Replicate` | `{ string }?` | Field names the player's own client should see. |
 
-Call once, during `Init`, before anything can ask for a player's data. Throws on
-a second call, on a missing `Store` or `Template`, and on a branch named `main`.
+Throws on a second call, on a missing or empty `Store`, on a `Template` that is
+not a table, and on a branch named `main`.
 
-Each branch gets its own DataStore, named for the main store and the branch
-together, so a branch is visible separately in the DataStore console.
+### `Data.IsConfigured`
+
+`[Server]`
+
+Reports whether a store has been configured.
+
+```luau
+function Data.IsConfigured(): boolean
+```
 
 ### `Data.Gate`
 
 `[Server]`
 
-The [`Lifecycle`](/reference/lifecycle/) player gate. Loads the profile and
-releases the player once it exists.
+Holds a joining player until their data exists, then releases them with it.
 
 ```luau
 function Data.Gate<T>(player: Player, ready: (data: T) -> ())
 ```
 
-**Returns**
-
-`()` - Nothing. Yields.
-
-A profile that cannot be loaded results in a kick, rather than a session that
-would silently discard progress. Calling this before `Configure` throws.
+Kicks the player when the session could not be opened. Yields. Throws when used
+before `Configure`.
 
 ### `Data.Get`
 
@@ -173,12 +174,9 @@ Returns a player's live data.
 function Data.Get<T>(player: Player): T?
 ```
 
-**Returns**
+Write to it directly. There is no `Set` and no commit step.
 
-`T?` - Their live data, or `nil` when no session is open.
-
-Write to it directly and the change is saved on its own. `nil` covers every
-moment before the player is released and after they leave.
+Answers `nil` when no session is open. Throws when given anything but a `Player`.
 
 ### `Data.IsReady`
 
@@ -190,32 +188,6 @@ Reports whether a player's data is loaded and their session still holds.
 function Data.IsReady(player: Player): boolean
 ```
 
-**Returns**
-
-`boolean` - True while their data is live and writable.
-
-A session can be lost mid play, so this answers more than whether they have
-finished loading. Check it after any yield, because a player can leave while you
-were waiting.
-
-### `Data.IsConfigured`
-
-`[Server]`
-
-Reports whether a store has been configured, which everything else here needs.
-
-```luau
-function Data.IsConfigured(): boolean
-```
-
-**Returns**
-
-`boolean` - True once `Configure` has run.
-
-A game that never calls `Configure` is a normal game, not a broken one, so this
-answers rather than raising. It exists because an empty branch list reads the
-same whether the store has no branches or no store was ever opened.
-
 ### `Data.GetOffline`
 
 `[Server]`
@@ -226,29 +198,12 @@ Reads any user's data, whether or not they are on this server.
 function Data.GetOffline(userId: number, branch: string?): { [string]: any }?
 ```
 
-**Parameters**
+Answers the live table for a user this server holds, and a read-only copy for
+anyone else. Migrations and template filling are applied to the copy, so it has
+the shape this server expects.
 
-| Name | Type | Description |
-| :--- | :--- | :--- |
-| `userId` | `number` | The user to read. |
-| `branch` | `string?` | A branch name, or `nil` for the main store. |
-
-**Returns**
-
-`{ [string]: any }?` - Their data, or `nil` when there is none or it could not be
-read. Yields.
-
-Someone on this server is read live, and everyone else is read from storage
-**without taking their session** from the server they are playing on.
-
-:::caution[Only the live reading may be written to]
-For a player on this server you get their live table, and writing to it writes
-their data. For everyone else you get a copy, and writing to it changes nothing
-anywhere. If you do not know which you have, do not write to it: use
-[`Edit`](#dataedit), which routes correctly either way.
-:::
-
-Throws when no branch answers to the name given.
+Yields. Throws when used before `Configure` and when no branch answers to that
+name.
 
 ### `Data.Save`
 
@@ -260,12 +215,7 @@ Requests an early save for one player.
 function Data.Save(player: Player)
 ```
 
-**Returns**
-
-`()` - Nothing.
-
-Returns before the write lands. Routine play does not need this: data is saved on
-its own and on the way out.
+Returns before the write lands.
 
 ### `Data.SaveNow`
 
@@ -274,39 +224,24 @@ its own and on the way out.
 Saves a player and waits until the write is confirmed.
 
 ```luau
-function Data.SaveNow(
-	player: Player,
-	verify: ((saved: { [string]: any }) -> boolean)?,
-	timeout: number?
-): boolean
+function Data.SaveNow(player: Player, verify: ((saved: { [string]: any }) -> boolean)?, timeout: number?): boolean
 ```
 
 **Parameters**
 
 | Name | Type | Description |
 | :--- | :--- | :--- |
-| `player` | `Player` | The player whose data should be written. |
-| `verify` | `((saved: { [string]: any }) -> boolean)?` | Given the data that landed. Return true when it holds the change you were waiting for. Any save counts when left out. |
-| `timeout` | `number?` | Seconds to wait before giving up. Thirty when left out. |
+| `player` | `Player` | Whose data to write. |
+| `verify` | `((saved) -> boolean)?` | Given the data that landed. Answer `true` when it holds the change. |
+| `timeout` | `number?` | Seconds to wait. 30 when left out. |
 
 **Returns**
 
-`boolean` - True when the write landed and was accepted. Yields.
+`boolean` - `true` when the write landed and `verify` accepted it. Yields.
 
-For the few moments worth waiting on, such as granting something bought with real
-money. This is what [`Monetization`](/reference/monetization/) uses before telling
-Roblox a purchase was granted.
-
-**Example**
-
-```luau
-data.Gems += 500
-
--- Do not report success until the gems are actually in storage.
-local landed = Data.SaveNow(player, function(saved)
-	return saved.Gems >= 500
-end)
-```
+This is what a Developer Product grant waits on. Granting in memory and
+answering `PurchaseGranted` before the write lands loses the purchase if the
+server stops in between.
 
 ### `Data.SaveAll`
 
@@ -318,39 +253,9 @@ Requests an early save for every open session, branches included.
 function Data.SaveAll()
 ```
 
-**Returns**
-
-`()` - Nothing. Returns before the writes land, so this is a nudge and not a
-flush.
-
-The [`saveall` command](/reference/admin/#built-in-commands) calls it from the
-console, for the moment before something risky. Shutdown already flushes on its
-own, so this does not belong in `BindToClose`.
-
-## Branches
-
-A branch is a separate store for data that does not need to be loaded every
-time: a settings blob, a large collection, a rarely-read history.
-
-```luau
-Branches = {
-	Pets = {
-		Template = { Owned = {} },
-		Version = 1,
-	},
-}
-```
-
-```luau
-export type Branch = {
-	Template: { [string]: any },
-	Version: number?,
-	Migrations: { [number]: (data: { [string]: any }) -> () }?,
-}
-```
-
-A branch is a full session of its own, with its own template, version, and
-migrations. It is released when the player leaves, alongside the main one.
+Returns before the writes land. Everything open is flushed on shutdown anyway,
+so no save call belongs in `BindToClose`. Where the platform gives warning of a
+scheduled restart, `Configure` asks for an early save on it.
 
 ### `Data.LoadBranch`
 
@@ -362,14 +267,8 @@ Opens a branch for a player, or hands back the one already open.
 function Data.LoadBranch<T>(player: Player, name: string): T?
 ```
 
-**Returns**
-
-`T?` - The branch's live data, or `nil` when it could not be opened. Yields.
-
-Callers that arrive while a load is still running wait for that one rather than
-starting a second, and every one of them is answered even when the load fails.
-Throws when given something that is not a player, when given something that is
-not a branch name, and when no branch answers to the name given.
+Two callers asking at once wait on the same load. Yields. Throws when no branch
+answers to that name, and when given anything but a `Player`.
 
 ### `Data.GetBranch`
 
@@ -381,40 +280,25 @@ Returns an already open branch without loading anything.
 function Data.GetBranch<T>(player: Player, name: string): T?
 ```
 
-**Returns**
-
-`T?` - The branch's live data, or `nil` when it is not open. Does not yield.
-
 ### `Data.IsBranchLoaded`
 
 `[Server]`
 
-Reports whether a branch is open for a player and its session still holds.
+Reports whether a branch is open and its session still holds.
 
 ```luau
 function Data.IsBranchLoaded(player: Player, name: string): boolean
 ```
 
-**Returns**
-
-`boolean` - True while that branch is live and writable.
-
 ### `Data.UnloadBranch`
 
 `[Server]`
 
-Closes a branch early, for data only needed during part of a session.
+Closes a branch early.
 
 ```luau
 function Data.UnloadBranch(player: Player, name: string)
 ```
-
-**Returns**
-
-`()` - Nothing.
-
-The session is not free the instant this returns, so reopening the same branch
-immediately may find it still held.
 
 ### `Data.ListBranches`
 
@@ -426,36 +310,13 @@ Lists the branch names this store was configured with.
 function Data.ListBranches(): { string }
 ```
 
-**Returns**
-
-`{ string }` - A fresh list in a settled order, safe to keep or reorder.
-
-## Writing to anybody
-
-`Data.Edit` and `Data.Reset` write to any user id at all, online or not.
-
-```luau
-Data.Edit(userId, "main", "Stats.Coins", 500)
-Data.Reset(userId, "Pets", "Owned")
-```
-
-`scope` is `"main"` for the main profile, or a branch name.
-
-Three routes, chosen automatically:
-
-1. **This server holds the session.** The write is applied directly and saved.
-2. **Another server holds it.** The write is sent as a message that server
-   applies.
-3. **Nobody holds it.** The write waits in their saved data until they next log
-   in.
-
-**Nothing ever writes over a session it does not own.**
+A fresh list in a settled order, safe to keep or reorder.
 
 ### `Data.Edit`
 
 `[Server]`
 
-Writes one field of a user's data, wherever in the experience that user is.
+Writes one field of a user's data, wherever that user is.
 
 ```luau
 function Data.Edit(userId: number, scope: string, path: string, value: any): Outcome
@@ -466,65 +327,78 @@ function Data.Edit(userId: number, scope: string, path: string, value: any): Out
 | Name | Type | Description |
 | :--- | :--- | :--- |
 | `userId` | `number` | Whose data to edit. |
-| `scope` | `string` | `"main"`, or the name of a branch. |
-| `path` | `string` | Dot separated, such as `"Stats.Coins"`. Must not be empty. |
+| `scope` | `string` | `"main"`, or a branch name. |
+| `path` | `string` | Dot separated, such as `Stats.Coins`. |
 | `value` | `any` | What to write. `nil` removes the field. |
 
-**Returns**
+A value storage would refuse is refused here instead, and answers `unsupported`.
+Run it through [`Serialize.Encode`](/reference/serialize/) first.
 
-`Outcome` - Where the write ended up, or why it went nowhere. Yields.
-
-Tables along the path are built as needed. Delivery to another server is not
-immediate and is not confirmed here.
+Yields. Throws when used before `Configure`, and on a missing user id or path.
 
 ### `Data.Reset`
 
 `[Server]`
 
-Puts a user's data back to the template it was built from.
+Puts a field, or a whole scope, back to its template.
 
 ```luau
 function Data.Reset(userId: number, scope: string, path: string?): Outcome
 ```
 
-**Parameters**
+Leave `path` out to restore the whole scope.
 
-| Name | Type | Description |
-| :--- | :--- | :--- |
-| `userId` | `number` | Whose data to restore. |
-| `scope` | `string` | `"main"`, or the name of a branch. |
-| `path` | `string?` | One field to restore, or `nil` for everything in that scope. |
+There is no confirmation step and no undo. Restoring a scope rewrites the live
+table in place, so anything holding it keeps working and sees the template.
+`Data.Versions` reads earlier versions if the old data is needed back.
+
+### `Data.Inspect`
+
+`[Server]`
+
+Reports who holds a user's scope and what the key records about it.
+
+```luau
+function Data.Inspect(userId: number, scope: string): { [string]: any }?
+```
 
 **Returns**
 
-`Outcome` - Where the reset ended up, or why it went nowhere. Yields.
+`{ [string]: any }?` - `Holder`, `Created`, `Updated`, `Loads` and `Users`, or
+`nil` when the key holds nothing or no scope answers to that name. Yields.
 
-:::danger[There is no confirmation step and no undo]
-Put this behind something that has already asked whether the caller meant it.
-Restoring a whole scope rewrites the live table in place, so anything holding it
-keeps working and sees the template. ProfileStore keeps version history if you
-need the old data back.
-:::
+`Holder` is `nil` when no server holds the key. `Created` and `Updated` are
+`os.time` readings, and `Updated` is `0` on a key that was never written.
 
-### Outcome
+### `Data.Versions`
+
+`[Server]`
+
+Walks back through what a user's scope held before.
 
 ```luau
-export type Outcome = "applied" | "queued" | "blocked" | "unknown" | "unsupported" | "failed"
+function Data.Versions(userId: number, scope: string): any
 ```
 
-| Value | Meaning |
-| --- | --- |
-| `applied` | Written on this server and saved. |
-| `queued` | Handed to the owning server, or left for next login. |
-| `blocked` | A step along the path is held by something that is not a table. |
-| `unknown` | No scope answers to that name. |
-| `unsupported` | The value cannot survive a DataStore. See below. |
-| `failed` | The edit could not be sent onward. |
+**Returns**
 
-`unsupported` means [`Serialize.FindUnstorable`](/reference/serialize/) refused
-the value. Encode it first, or fix the shape of its keys. Data does not encode it
-for you, because it would then have to guess on the way back out, and a save that
-quietly rewrites what you handed it is worse than one that refuses.
+`any` - A walk, or `nil` when no scope answers to that name. `NextAsync` on it
+answers one version at a time, newest first, then `nil`.
+
+```luau
+local walk = Data.Versions(userId, "main")
+
+while true do
+	local older = walk:NextAsync()
+	if not older then
+		break
+	end
+
+	print(older.Updated, older.Data.Coins)
+end
+```
+
+Reading a version changes nothing. Write a value back with `Data.Edit`.
 
 ### `Data.Migrate`
 
@@ -533,30 +407,48 @@ quietly rewrites what you handed it is worse than one that refuses.
 Raises stored data to a version by applying each upgrade in turn.
 
 ```luau
-function Data.Migrate(
-	stored: { [string]: any },
-	version: number,
-	steps: { [number]: (data: { [string]: any }) -> () }
-)
+function Data.Migrate(stored: { [string]: any }, version: number, steps: { [number]: (data) -> () })
 ```
 
-**Returns**
+Changes `stored` in place. Data already current is left untouched, and data past
+that version is left as it is rather than marked back down to it.
 
-`()` - Nothing. The table is changed in place.
+Throws when a step raises, naming the version it was reaching.
 
-The migration runner, exposed so it can be tested directly. You do not normally
-call this: `Configure` runs it for every profile that loads. Data already at the
-version is left untouched, and a step that throws stops the whole thing and
-raises, naming the version it was reaching.
+### `Outcome`
 
-**Data past the version is left exactly as it is**, including the version it
-carries, and reported once. This is what a rollback looks like from the older
-server's side, and marking the data back down would mean every migration in
-between ran again the next time that player reached a newer server.
+```luau
+export type Outcome = "applied" | "queued" | "blocked" | "unknown" | "unsupported" | "failed"
+```
 
-## Failure messages
+## Replication
 
-| Kick message | Cause |
-| --- | --- |
-| `Your saved data could not be loaded.` | The session would not open, or a migration threw. |
-| `Your data session was claimed by another server.` | The player moved servers faster than the old session was released. Normal. |
+`Replicate` names the fields a player's own client should see. Those fields are
+published to that player alone, under the key `Data`, and brought back in line
+on an interval.
+
+```luau
+Data.Configure({
+	Store = "PlayerData",
+	Template = { Coins = 0, Secret = "" },
+	Replicate = { "Coins" },
+})
+```
+
+```luau
+-- Client
+Replication.Subscribe("Data.Coins", function(coins)
+	label.Text = tostring(coins)
+end, bag)
+```
+
+A field left out of `Replicate` never leaves the server.
+
+## Limits
+
+| Limit | Value |
+| :--- | ---: |
+| Time between replication refreshes | 0.1 seconds |
+| `SaveNow` default timeout | 30 seconds |
+| Key size | 4 MB |
+| Autosave, set by `Store` | 180 seconds |

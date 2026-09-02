@@ -1,6 +1,6 @@
 ---
 title: Count past the number limit
-description: Hold a currency that grows without ceiling, and keep it exact through a save.
+description: Hold a currency that grows without ceiling, and keep it exact through a save
 ---
 
 A Luau number holds whole values exactly to about nine quadrillion. Past that it
@@ -14,10 +14,10 @@ accepts, so one coin still means one coin at `1e100`.
 ## Decide before you ship
 
 Migrating a live currency from a number to a `BigNumber` means touching every
-place that reads it, and doing it while players hold both shapes. Deciding at the
-start costs nothing.
+place that reads it, and doing it while players hold both shapes. Deciding at
+the start costs nothing.
 
-Ask one question: **can this value compound?** A currency with multipliers,
+Ask one question: can this value compound? A currency with multipliers,
 rebirths, or offline earnings compounds. A wins counter does not.
 
 ## Store it
@@ -81,8 +81,8 @@ Twill.Replication.Subscribe("Data.Coins", function(coins)
 end)
 ```
 
-`Format` abbreviates for display. `ToString` gives every digit, which is what you
-want when a value has to be written somewhere as text and read back.
+`Format` abbreviates for display. `ToString` gives every digit, which is what
+you want when a value has to be written somewhere as text and read back.
 
 :::caution[`ToNumber` is a display tool, not a storage one]
 It is lossy above the range that made you reach for this module, and returns
@@ -95,8 +95,8 @@ result back into saved data.
 The Roblox player list sorts `IntValue` and `NumberValue` only, so a big number
 shows correctly and ranks nowhere.
 
-Where ranking matters more than exactness, keep a clamped plain number beside the
-exact one and bind that:
+Where ranking matters more than exactness, keep a clamped plain number beside
+the exact one and bind that:
 
 ```luau
 -- The exact value stays the source of truth. This exists only to sort.

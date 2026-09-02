@@ -1,11 +1,12 @@
 ---
 title: Store Roblox values safely
-description: Get a Vector3 or a CFrame into saved data, and find the shapes that fail quietly.
+description: Get a Vector3 or a CFrame into saved data, and find the shapes that fail quietly
 ---
 
-A DataStore holds JSON and nothing else. Write a `Vector3` into a player's profile
-and the save fails, but it fails late and it fails quietly: the value travels
-through every step by reference, without complaint, until the write itself.
+A DataStore holds JSON and nothing else. Write a `Vector3` into a player's
+profile and the save fails, but it fails late and it fails quietly: the value
+travels through every step by reference, without complaint, until the write
+itself.
 
 [`Serialize`](/reference/serialize/) turns those values into something storage
 accepts, and finds the shapes that would be lost on the way back.
@@ -51,11 +52,9 @@ The reason is that guessing on the way in means guessing on the way back out. A
 save that quietly rewrites your value would hand you back something else later,
 and you would find out long after the write.
 
-:::tip[Encode at the boundary, not everywhere]
-Encode when a value enters saved data and decode when it leaves. Keeping profiles
-encoded in memory means every reader has to remember to decode, and one that
-forgets reads a table where it expected a `Vector3`.
-:::
+Encode when a value enters saved data and decode when it leaves. Keeping
+profiles encoded in memory means every reader has to remember to decode, and one
+that forgets reads a table where it expected a `Vector3`.
 
 ## What can be encoded
 
@@ -63,13 +62,13 @@ forgets reads a table where it expected a `Vector3`.
 `NumberRange`, and `EnumItem`.
 
 Anything else is not a storage problem to solve here. An `Instance` cannot be
-saved at all; save something that identifies it, such as a name or an id, and find
-it again on load.
+saved at all; save something that identifies it, such as a name or an id, and
+find it again on load.
 
 ## The shapes that fail quietly
 
-Failing to save is loud. Saving something that comes back wrong is not, and those
-are the shapes worth knowing.
+Failing to save is loud. Saving something that comes back wrong is not, and
+those are the shapes worth knowing.
 
 ```luau
 local where, what = Twill.Serialize.FindUnstorable(data)
@@ -106,16 +105,16 @@ data.Favourite = "sword"
 ```
 
 :::caution[Removing from the middle makes a gap]
-`table.remove` closes the gap; assigning `nil` does not. An inventory that clears
-a slot by writing `nil` into it saves the entries before the gap and silently
-loses the rest.
+`table.remove` closes the gap; assigning `nil` does not. An inventory that
+clears a slot by writing `nil` into it saves the entries before the gap and
+silently loses the rest.
 :::
 
 ## Check it before you ship it
 
-`FindUnstorable` is cheap enough to run in Studio against a profile you have been
-playing with, which is the fastest way to catch a shape that only appears after a
-few sessions.
+`FindUnstorable` is cheap enough to run in Studio against a profile you have
+been playing with, which is the fastest way to catch a shape that only appears
+after a few sessions.
 
 ```luau
 function DataAuditService.Start()
@@ -141,14 +140,15 @@ end
 
 ## Serialize or compress
 
-Two modules answer different questions, and reaching for the wrong one is common.
+Two modules answer different questions, and reaching for the wrong one is
+common.
 
 | Use | When |
 | --- | --- |
 | [`Serialize`](/reference/serialize/) | A person or another system reads the field, or the value must stay exact. |
 | [`Compress`](/reference/compress/) | Only size matters, and the field is opaque anyway. |
 
-`Compress` is lossy by design and produces something unreadable. `Serialize` keeps
-the value exact and keeps the profile legible in the DataStore console, which
-matters the day you have to look at one by hand. See
+`Compress` is lossy by design and produces something unreadable. `Serialize`
+keeps the value exact and keeps the profile legible in the DataStore console,
+which matters the day you have to look at one by hand. See
 [Send large payloads](/guides/large-payloads/) for the other half.

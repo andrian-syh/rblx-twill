@@ -1,6 +1,6 @@
 ---
 title: Bind behaviour to tagged instances
-description: Attach code to instances by tag, so moving or renaming a folder cannot break it.
+description: Attach code to instances by tag, so moving or renaming a folder cannot break it
 ---
 
 A killbrick needs code. So does every door, every checkpoint, every vendor. The
@@ -30,7 +30,7 @@ function HazardService.Start()
 end
 ```
 
-The second argument is a bag belonging to **that instance**. It closes the moment
+The second argument is a bag belonging to that instance. It closes the moment
 the instance loses the tag or leaves the game, so nothing bound to it has to be
 unbound by hand.
 
@@ -46,15 +46,14 @@ CollectionService:AddTag(part, "Killbrick")
 
 > connect first, then sweep what is already there, and never call twice
 
-Sweeping first misses anything that arrives while the sweep runs. Connecting first
-without remembering what was seen calls twice for anything that arrives during it.
-Neither failure shows up in a quiet test place; both show up on a full server.
+Sweeping first misses anything that arrives while the sweep runs. Connecting
+first without remembering what was seen calls twice for anything that arrives
+during it. Neither failure shows up in a quiet test place; both show up on a
+full server.
 
-:::note[This is not hypothetical]
 `PlayerAdded` is a deferred event, which makes that window wide enough to hit
-rather than theoretical. Twill has already shipped that bug once, which is why the
-guarantee is written into the module rather than left to each caller.
-:::
+rather than theoretical. Twill has already shipped that bug once, which is why
+the guarantee is written into the module rather than left to each caller.
 
 ## The three sets
 
@@ -67,8 +66,8 @@ All three take the same callback and give the same guarantee.
 | `Watch.Children(parent, onAdded, owner?)` | Direct children of one instance. |
 
 `Watch.Players` is for systems that are not services and therefore never receive
-`OnPlayerReady`. Inside a service, prefer the hook: it waits for the player's data,
-which `Watch.Players` does not.
+`OnPlayerReady`. Inside a service, prefer the hook: it waits for the player's
+data, which `Watch.Players` does not.
 
 ## Configure per instance with attributes
 
@@ -113,15 +112,13 @@ function ArenaService.OnPlayerReady(player, data, bag)
 end
 ```
 
-Left out, the binding goes to `Scope.Framework()`, because nothing in Twill starts
-a connection nobody owns.
+Left out, the binding goes to `Scope.Framework()`, because nothing in Twill
+starts a connection nobody owns.
 
-:::tip[Bind once, not once per player]
 A tag binding set up inside `OnPlayerReady` runs its callback again for every
 player, so ten players means ten `Touched` connections on the same killbrick.
 Bind server-wide behaviour in `Start`, and use the player bag only for bindings
 that genuinely belong to one player.
-:::
 
 ## Untagging is the off switch
 

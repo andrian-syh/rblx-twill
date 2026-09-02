@@ -1,6 +1,6 @@
 ---
 title: Testing and verification
-description: What Twill's own test suite covers, what it does not, and how to verify a change in Studio without fooling yourself.
+description: What Twill's own test suite covers, what it does not, and how to verify a change in Studio without fooling yourself
 ---
 
 ## Playtests only prove the paths you walked
@@ -10,14 +10,14 @@ modules afterwards turned up seven defects, none of which a playtest had caught:
 a join reward granted twice, a `false` that read as `nil`, a rate limiter that
 flooded its own log.
 
-None of them were exotic. They simply were not on the path anyone had walked.
+None of them were exotic. They were not on the path anyone had walked.
 
 A playtest proves the path you took. An assertion proves the contract.
 
 ## The suite that ships
 
-`ServerScriptService.TwillTests` holds the assertions. There is no test framework
-and there are no fixtures.
+`ServerScriptService.TwillTests` holds the assertions. There is no test
+framework and there are no fixtures.
 
 - Gated behind `RunService:IsStudio()`, so it never runs in production.
 - Runs itself on every playtest, with no command to remember.
@@ -43,8 +43,8 @@ end
 check("a bucket refuses once the burst is gone", not bucket:Take())
 ```
 
-The name of a check is a sentence stating what should be true. When it fails, the
-name alone tells you what broke, without anyone reading the test.
+The name of a check is a sentence stating what should be true. When it fails,
+the name alone tells you what broke, without anyone reading the test.
 
 That is the whole reason for not using a framework here. A framework would give
 better reporting and a worse habit: naming tests after the function they call
@@ -67,9 +67,9 @@ while the assertion is watching. They are not skipped because they are
 unimportant; they are skipped because a single-process assertion cannot reach
 them.
 
-Closing them needs an **integration harness**: a Studio-only `Script` and
-`LocalScript` pair that runs real remotes round-trip and waits for replication to
-actually arrive. Until that exists, the claims about those four paths rest on
+Closing them needs an integration harness: a Studio-only `Script` and
+`LocalScript` pair that runs real remotes round-trip and waits for replication
+to actually arrive. Until that exists, the claims about those four paths rest on
 reading rather than on running.
 
 Saying so is more useful than a coverage percentage that counts the easy parts.
@@ -79,7 +79,7 @@ Saying so is more useful than a coverage percentage that counts the easy parts.
 ### Inject a real script, do not use the command bar
 
 The command bar and external tooling keep their own module cache. A `require`
-there hands you a **fresh instance with empty state**, so a module the game has
+there hands you a fresh instance with empty state, so a module the game has
 already configured reappears as though it had not been.
 
 Worse, that fresh instance runs its own initialisation and connects to the same
@@ -105,8 +105,8 @@ sandbox:Destroy()
 ```
 
 `:Destroy()` on a parent does not disconnect a connection to a global service.
-Running that seven times leaves seven live connections, and a Studio session that
-gets steadily stranger.
+Running that seven times leaves seven live connections, and a Studio session
+that gets steadily stranger.
 
 ### Turn the log level up first
 
@@ -122,10 +122,10 @@ leave a record with their trace, rather than a single red line with no context.
 
 ### Test at population, not alone
 
-Roblox request budgets are mostly a base plus a per-player term, so a system that
-is comfortable in an empty test place can be over budget on a full server. Two
-clients is the minimum for anything touching replication, and one client cannot
-prove isolation between players at all.
+Roblox request budgets are mostly a base plus a per-player term, so a system
+that is comfortable in an empty test place can be over budget on a full server.
+Two clients is the minimum for anything touching replication, and one client
+cannot prove isolation between players at all.
 
 ## Before saying something works
 
