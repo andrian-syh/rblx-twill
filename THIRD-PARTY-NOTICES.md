@@ -102,31 +102,11 @@ and Blake3, behind `Random` and `Token`.
 
 ---
 
-## ProfileStore — Apache-2.0
-
-**Author:** loleris, MAD STUDIO
-**Source:** https://github.com/MadStudioRoblox/ProfileStore
-**Location in Twill:** `ServerScriptService/TwillServer/Packages/ProfileStore`
-
-Licensed under the Apache License, Version 2.0. The full text is at
-http://www.apache.org/licenses/LICENSE-2.0 and **must be included** with any
-redistribution that carries ProfileStore.
-
-This is the strictest component in the bundle. Redistributing it obliges you to:
-
-- ship a copy of the Apache-2.0 licence text
-- retain all copyright, patent, trademark and attribution notices
-- state prominently if you modified the file
-
-**Twill makes no modifications to ProfileStore.** If you ever do, say so here.
-
----
-
 ## A note on scope
 
 None of the above is copyleft. Bundling them does not force Twill's own code to
 adopt their licences, which is why Twill is MIT. What they do require is that
-their notices and terms travel with their code — which is what this file exists
+their notices and terms travel with their code, which is what this file exists
 to satisfy.
 
 This is a practical engineering summary, not legal advice. If Twill ever ships

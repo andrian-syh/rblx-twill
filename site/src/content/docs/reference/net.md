@@ -161,7 +161,7 @@ Reports every remote declared so far, mapped to its number and type signature.
 function Net.List(): { [string]: string }
 ```
 
-This is the audit of what a client is able to send. Read it once everything has
+This is the audit of what has been declared. Read it once everything has
 finished declaring.
 
 ### `Net.IsReady`
@@ -181,7 +181,7 @@ function Net.IsReady(): boolean
 Runs a callback once this side can send, at once when it already can.
 
 ```luau
-function Net.OnReady(callback: () -> (), bag: any?)
+function Net.OnReady(callback: () -> (), bag: Scope.Bag?)
 ```
 
 Pass a [`Scope`](/reference/scope/) bag and the wait is given up with it.
@@ -352,10 +352,13 @@ implementation drops to zero, both infinities, and a NaN that stays a NaN.
 | `String` | `Types.String(maximum)` sets the ceiling. 65536 bytes when unset. |
 | `Buffer` | The same, for a `buffer`. |
 
+A reliable message carries at most 60 KB, so a value near the unset ceiling
+does not fit in one. Set a ceiling below that.
+
 The ceiling is enforced on the sender, naming the field:
 
 ```text
-Twill.Net: BuyItem argument 1 is 300 bytes, past its ceiling of 32
+BuyItem argument 1 is 300 bytes, past its ceiling of 32
 ```
 
 Every string carries its length, so any byte is safe to send, including a zero
@@ -376,7 +379,7 @@ byte.
 skews, or mirrors is refused rather than silently flattened:
 
 ```text
-Twill.Net: a CFrameRot is not a plain rotation, so it needs the full CFrame type
+a CFrameRot is not a plain rotation, so it needs the full CFrame type
 ```
 
 ### Everything else
@@ -432,7 +435,7 @@ A table that reaches itself is refused rather than encoded. A value no format
 carries is refused with the path to it:
 
 ```text
-Twill.Net: value.Inventory[3].onClick is a function, which Any cannot carry
+value.Inventory[3].onClick is a function, which Any cannot carry
 ```
 
 Pass `Types.Any({ OnUnencodable = "skip" })` to leave such a field out instead.

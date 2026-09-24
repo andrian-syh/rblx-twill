@@ -48,8 +48,8 @@ export default defineConfig({
 				SiteTitle: './src/components/SiteTitle.astro',
 				// Prefixes hero action links with `base`.
 				Hero: './src/components/Hero.astro',
-				// Renders nothing. The site is dark only, so a theme selector would
-				// offer a choice with no effect. See design.md and custom.css.
+				// A light and dark toggle. Follows the device theme until the reader
+				// picks one. See DESIGN-DARK.md, DESIGN-LIGHT.md, and custom.css.
 				ThemeSelect: './src/components/ThemeSelect.astro',
 				// Starlight's footer, plus a site footer with link columns and the
 				// copyright line.

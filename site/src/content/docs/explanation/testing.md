@@ -69,7 +69,7 @@ them.
 
 Closing them needs an integration harness: a Studio-only `Script` and
 `LocalScript` pair that runs real remotes round-trip and waits for replication
-to actually arrive. Until that exists, the claims about those four paths rest on
+to actually arrive. Until that exists, the claims about those six paths rest on
 reading rather than on running.
 
 Saying so is more useful than a coverage percentage that counts the easy parts.

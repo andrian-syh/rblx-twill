@@ -34,9 +34,11 @@ every link has to be root-relative.
 
 ## Before changing how it looks
 
-Read [DESIGN-DARK.md](./DESIGN-DARK.md) (the Factory specification for dark theme) and [DESIGN-LIGHT.md](./DESIGN-LIGHT.md) (the clean monochromatic specification for light theme).
-`src/styles/custom.css` maps its tokens onto Starlight's, and the site is dark
-only by decision, so there is no theme selector.
+Read [DESIGN-DARK.md](./DESIGN-DARK.md), the specification for the dark theme,
+and [DESIGN-LIGHT.md](./DESIGN-LIGHT.md), the specification for the light theme.
+`src/styles/custom.css` maps both sets of tokens onto Starlight's.
+`src/components/ThemeSelect.astro` switches between them, following the device
+theme until the reader picks one.
 
 Code blocks are the one surface the design system stops at. They are left close
 to how Expressive Code ships them, because styling the frame from `custom.css`

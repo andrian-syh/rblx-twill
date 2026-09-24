@@ -174,8 +174,8 @@ wrong one.
 
 ## Metering must not amplify
 
-The path that refuses a flood is the path a flood runs down. A log line per
-refusal turns a rate limiter into an amplifier for the traffic it is rejecting.
+A log line per refusal turns a rate limiter into an amplifier for the traffic it
+is rejecting.
 
 `Limit.Throttle` answers how many were held back since it last spoke, and
 nothing in between. Writing the line stays with the caller, so the decision is
