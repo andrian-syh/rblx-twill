@@ -111,9 +111,29 @@ Every field is optional and falls back to the default.
 | `Attempts` | `4` | Tries per storage call before it is reported failed. |
 | `Compress` | `false` | Whether the data travels packed. |
 | `Messaging` | `true` | Whether a holder listens for a request to release. |
+| `Validate` | none | A check `(data) -> (boolean, string?)` every write must pass. |
 
 Packing multiplies what fits under the key size ceiling and makes the stored
 value unreadable in the DataStore browser and in Open Cloud.
+
+### `Store:Check`
+
+`[Server]`
+
+Runs the store's `Validate` check on some data, without writing anything.
+
+```luau
+function Store:Check(data: { [string]: any }): (boolean, string?)
+```
+
+**Returns**
+
+`boolean` - `true` when the data may be written, and always when the store has
+no check.
+
+`string?` - Why it may not, when it may not.
+
+A check that raises is read as a refusal.
 
 ### `Store:StartSessionAsync`
 
@@ -322,8 +342,12 @@ Saves now, rather than waiting for when the key would be saved anyway.
 function Keep:Save(): boolean
 ```
 
-Answers `false` when the handle is no longer active, and when the write was
-refused. Yields. Throws on a key that was only read.
+Answers `false` when the handle is no longer active, when the write was
+refused, and when `Validate` refused the data. Yields. Throws on a key that was
+only read.
+
+A save asked for while another is still waiting to read the key joins it, so a
+burst of saves costs one write and every caller gets that write's answer.
 
 ### `Keep:EndSession`
 
@@ -333,8 +357,9 @@ Saves one last time and gives the key up, so the next server does not wait.
 function Keep:EndSession(): boolean
 ```
 
-A second call answers `false` rather than writing again. Yields. Throws on a key
-that was only read.
+A second call answers `false` rather than writing again. When `Validate` refuses
+the data, the key is still given up, with the data it held before, and the call
+answers `false`. Yields. Throws on a key that was only read.
 
 ### `Keep:SetAsync`
 
@@ -344,7 +369,8 @@ Writes back a key that was only read, giving up whatever session was on it.
 function Keep:SetAsync(): boolean
 ```
 
-Yields. Throws on a key that was taken rather than read.
+Answers `false` when `Validate` refuses the data. Yields. Throws on a key that
+was taken rather than read.
 
 ### `Keep:Reconcile`
 
@@ -392,5 +418,5 @@ again after every save. Call `done` to mark one dealt with.
 | Metadata size | 300 characters | Roblox |
 | Letters per key | 1000 | `MaxMail` |
 | Tries per call | 4 | `Attempts` |
-| Tries per call while closing | 2 | Fixed |
+| Tries per call while closing, including calls already retrying | 2 | Fixed |
 | Wait for writes while closing | 25 seconds | Fixed |

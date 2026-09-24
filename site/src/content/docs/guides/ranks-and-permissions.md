@@ -40,6 +40,9 @@ Once, on the server, during `Init`. Configuring twice is refused rather than
 allowed to change who is privileged while the server is running.
 
 ```luau
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Twill = require("@game/ReplicatedStorage/Twill")
 local Ranks = require(ReplicatedStorage.Shared.Ranks)
 
 Twill.Authorization.Configure({
@@ -125,6 +128,7 @@ remote and without waiting.
 
 ```luau title="ReplicatedStorage/Client/AdminController"
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Twill = require("@game/ReplicatedStorage/Twill")
 local Ranks = require(ReplicatedStorage.Shared.Ranks)

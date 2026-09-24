@@ -51,8 +51,9 @@ first without remembering what was seen calls twice for anything that arrives
 during it. Neither failure shows up in a quiet test place; both show up on a
 full server.
 
-`PlayerAdded` is a deferred event, which makes that window wide enough to hit
-rather than theoretical. Twill has already shipped that bug once, which is why
+Under deferred signal behaviour, which Server Authority always uses, events
+arrive later than the code that caused them, so that window is wide enough to
+hit rather than theoretical. Twill has already shipped that bug once, which is why
 the guarantee is written into the module rather than left to each caller.
 
 ## The three sets

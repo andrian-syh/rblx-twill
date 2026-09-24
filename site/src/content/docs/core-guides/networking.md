@@ -8,7 +8,7 @@ description: Declare a remote once, serve it with metering and validation, and r
 Both sides declare the same remote, in either order, and both get the same
 handle.
 
-```luau title="ReplicatedStorage/YourGame/Remotes.luau"
+```luau title="ReplicatedStorage/Shared/Remotes"
 local Net = require("@game/ReplicatedStorage/Twill/Net")
 local Types = Net.Types
 
@@ -27,7 +27,7 @@ stops one caller from encoding through another's types.
 ## Serve
 
 ```luau title="server"
-local Remotes = require(ReplicatedStorage.YourGame.Remotes)
+local Remotes = require(ReplicatedStorage.Shared.Remotes)
 
 function ShopService.Start()
 	Twill.Net.Handle(Remotes.BuyItem, function(player, itemId)

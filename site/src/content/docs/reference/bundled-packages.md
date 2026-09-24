@@ -25,10 +25,10 @@ you to redistribute belongs with the thing you redistribute.
 
 `ServerScriptService.TwillServer.Packages`
 
-| Package | Licence | Author |
-| --- | --- | --- |
-| Cmdr | MIT | evaera |
-| Cryptography | MIT | daily3014 and Xoifaii |
+| Package | Version | Licence | Author |
+| --- | --- | --- | --- |
+| Cmdr | v1.13.0 | MIT | evaera |
+| Cryptography | | MIT | daily3014 and Xoifaii |
 
 Cryptography is [Luau Cryptography][crypto], also [announced on the developer
 forum][thread].

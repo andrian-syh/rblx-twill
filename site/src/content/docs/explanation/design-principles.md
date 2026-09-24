@@ -21,8 +21,9 @@ make it useless.
 `Admin` refuses every command until `Configure` has been called. A console that
 defaults to open is a console that ships open.
 
-A validator that throws is read as a refusal, in both `Net` and `Replication`. A
-test that cannot decide must not be read as consent.
+A validator that throws is read as a refusal, in `Net`, `Replication`, and the
+`Validate` check on `Data` and `Store`. A test that cannot decide must not be
+read as consent. A save that `Validate` refuses keeps the last good data stored.
 
 A critical service that fails to boot locks the server. Serving a game with a
 missing system means discovering it later, from a player.
@@ -64,7 +65,8 @@ can use anything that depends on ranks.
 
 ## Configuration happens once
 
-`Data`, `Authorization`, `Admin`, and `Token` all refuse a second `Configure`.
+`Data`, `Authorization`, `Admin`, `Token`, and `Config` all refuse a second
+`Configure`.
 
 This is not tidiness. Changing a data template, who is privileged, or a signing
 secret while a server is running changes the meaning of everything already
@@ -99,9 +101,9 @@ handler must not do anything slow.
 
 ## Cleanup has an owner
 
-Nothing in Twill starts a connection nobody owns. Every handle carries
-`Destroy`, every loop and watch takes a bag, and anything without one goes to
-`Scope.Framework()`.
+Nothing in Twill starts a connection nobody owns. Every handle carries `Destroy`
+or `Disconnect`, every function that starts something lasting takes an owner
+bag, and anything without one goes to `Scope.Framework()`.
 
 Three lifetimes exist because they are genuinely different. A character bag
 closes at respawn, not at death, so a sprint loop in one keeps running on a
@@ -162,7 +164,7 @@ reports it.
 `Warn` and `Error` report the nearest line outside Twill.
 
 ```text
-[Twill.Data] (from MyGame.Services.Shop:42) Edit refused: unsupported value
+[Twill.Data] (from MyGame.Services.Shop:42) main.Home for 123 holds Vector3; run it through Twill.Serialize.Encode first
 ```
 
 A framework that reports its own internals as the location of your bug has made

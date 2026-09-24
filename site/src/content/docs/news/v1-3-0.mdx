@@ -1,6 +1,6 @@
 ---
-title: v1.3.0 — Console Commands & Internal State
-description: Released August 16, 2026. Seven console commands, and the switch to turn them off
+title: "v1.3.0 — Seven console commands"
+description: "Released August 16, 2026. Seven console commands expose state only Twill can see, with a setting to turn them off"
 template: splash
 ---
 
@@ -17,56 +17,46 @@ import NewsPagination from '../../../components/NewsPagination.astro';
 		<span class="news-badge-date">August 16, 2026</span>
 	</div>
 	<p class="news-article-lead">
-		Seven console commands, and the switch to turn them off.
+		Seven console commands expose state only Twill can see, with a setting to turn them off.
 	</p>
 </header>
 
-## Commands for the state a game cannot see
+## Commands for state only Twill can see
 
-The console could reach players and their data. It could not reach Twill. Which
-services booted, which remotes nobody serves, what a replicated key holds, what
-log level a live server is running at, all of it private to the framework, and
-none of it reachable without going through internals.
+The console could reach players and their data, but not Twill itself: which
+services booted, which remotes nothing serves, what a replicated key holds, or
+what log level a live server runs at. Twill now ships commands for that state,
+and no gameplay commands. Commands such as `fly` or `speed` depend on your own
+character rules, so they stay in your game.
 
-That is the line these commands draw. Twill ships commands for state only Twill
-can see, and no gameplay commands at all. There is no `fly`, no `speed`, no
-`godmode`. Those depend on your own character rules and are a few lines each in
-Cmdr, so they stay yours.
+| Command | What it does |
+| :--- | :--- |
+| `twill` | Shows boot order, declared remotes and whether anything serves them, the data store, and replication counts. A remote marked `UNSERVED` was never given to [`Net.Handle`](/reference/net/). |
+| `loglevel` | Reads or sets the [log level](/reference/log/) on a running server, without republishing. |
+| `repl` | Reads [replicated state](/reference/replication/), and freezes, unfreezes or throttles a key. |
+| `rank` | Reads a player's rank, or overrides it for the session. |
+| `pass` | Checks game pass ownership, and clears the cached answer. |
+| `saveall` | Asks every open data session on the server to write. |
+| `verifyroll` | Checks a revealed seed against the commitment a [round](/reference/random/) published before the draw. |
 
-* **`twill`** reports the whole picture on one screen: boot order, declared remotes
-and whether anything serves them, the data store, replication counts.
-* The `net` topic is the one that earns its place. A remote marked `UNSERVED` was
-declared and never handed to [`Net.Handle`](/reference/net/), which otherwise
-shows up as a client firing into silence.
-* **`loglevel`** reads or sets the [log level](/reference/log/) on a running
-server. Turning `Debug` on used to mean republishing the place.
-* **`repl`** reads [replicated state](/reference/replication/), and can freeze a
-key that is flooding every client without shutting the server down.
-* **`rank`**, `pass`, `saveall`, and `verifyroll` cover the rest: a
-player's rank, game pass ownership and its cache, an early write for every open
-session, and checking a revealed seed against the commitment
-[a round](/reference/random/) published before the draw.
+`verifyroll` lets a moderator settle a disputed roll in front of the player,
+without either side having to trust the other.
 
-That last one is worth naming. When a player says the game cheated them, a
-moderator can settle it in front of them, and nothing about the answer depends
-on either of them trusting the other.
+## `rank` cannot hand out authority
 
-## The command that can hand out authority
+`rank set` refuses three things:
 
-The console decides who may run what by rank, so `rank set` is the shortest path
-from moderator to owner if it is not guarded. It refuses three things:
-
-- Changing your own rank, at all.
-- Changing the rank of anyone already at your rank or above.
+- Changing your own rank.
+- Changing the rank of anyone at your rank or above.
 - Granting a rank at or above your own.
 
-The most a moderator can create is somebody strictly below themselves. All three
-refusals are asserted in the test suite rather than left to reading.
+The most a moderator can create is someone strictly below themselves. The test
+suite asserts all three refusals.
 
-## Choosing which of them you get
+## Choose which commands register
 
-`Admin.Configure` takes `TwillCommands`, in the same three shapes
-`DefaultCommands` already took.
+`Admin.Configure` takes `TwillCommands`, in the same three shapes as
+`DefaultCommands`:
 
 ```luau
 Twill.Admin.Configure({
@@ -75,20 +65,25 @@ Twill.Admin.Configure({
 })
 ```
 
-A command left out is not registered, and a command that is not registered is
-never moved into `ReplicatedStorage`. Turning one off removes it from the client
-rather than hiding it there.
+A command left out is never registered and never moved into
+`ReplicatedStorage`, so it is absent from the client rather than hidden there.
 
-## Lifting a ban now answers to the same check as applying one
+## Security fix
 
-`moderation` ran its rank check before `kick` and `ban` and not before `unban`,
-so anyone who could reach the console could undo a ban placed by somebody above
-them. It was the one action the command let through on its own gate alone.
+`moderation` ran its rank check before `kick` and `ban`, but not before `unban`.
+Anyone who could reach the console could lift a ban placed by someone ranked
+above them. `unban` now answers to the same check.
 
-The module's header also claimed it refused a moderator acting on an equal. It
-can only compare ranks for a target on this server, since a rank is read from a
-`Player`. The documentation site [already said so](/reference/troubleshooting/);
-the module's own header did not.
+## Other changes
+
+- The header of `moderationServer` no longer claims to refuse a moderator acting
+  on an equal. It can compare ranks only for a target on the same server, as the
+  [troubleshooting reference](/reference/troubleshooting/) already said.
+
+## Full changelog
+
+Every change in this release is listed in the
+[changelog](https://github.com/andrian-syh/rblx-twill/blob/main/CHANGELOG.md#130---2026-08-16).
 
 <NewsPagination />
 

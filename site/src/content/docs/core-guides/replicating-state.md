@@ -69,8 +69,9 @@ Only that field travels. Replication keeps a private copy of what each player
 was last sent and diffs against it, so a deep write inside a large table costs
 one field, not the table.
 
-`SetPath` returns `false` if the path does not exist, rather than creating the
-intermediate tables and hiding a typo.
+`SetPath` creates any tables missing along the path. It returns `false` when a
+step along the path holds something other than a table, or when the key's
+validator refuses the write.
 
 ## Rearrange without sending every step
 

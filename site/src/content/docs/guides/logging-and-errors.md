@@ -77,7 +77,7 @@ and raise the floor instead of stripping them out before release.
 bad call points at the call rather than at the framework that noticed it.
 
 ```text
-[Twill.Data] (from MyGame.Services.Shop:42) Edit refused: unsupported value
+[Twill.Data] (from MyGame.Services.Shop:42) main.Home for 123 holds Vector3; run it through Twill.Serialize.Encode first
 ```
 
 That is usually enough to skip opening a stack trace at all. Only a bounded
@@ -94,7 +94,7 @@ function ObservabilityService.Init()
 	Twill.Log.SetErrorHandler(function(scope, ...)
 		-- Runs on its own thread, so a slow sink cannot hold up the reporter,
 		-- and it is allowed to yield.
-		AnalyticsService:LogCustomEvent(scope, ...)
+		sendToYourSink(scope, ...)
 	end)
 end
 ```
@@ -132,6 +132,9 @@ Posting happens only on the server, where the URL cannot be read by a client,
 and it is throttled so a burst of failures cannot bury the channel. A burst is
 dropped rather than queued, because the point is to be told that something
 broke, not to receive every instance of it.
+
+Discord refuses webhook requests from Roblox game servers, and `Install` warns
+when the URL points straight at Discord. Post through a proxy you control.
 
 :::danger[Keep the URL out of ReplicatedStorage]
 A webhook URL is a credential. Anything that can post to your channel can flood

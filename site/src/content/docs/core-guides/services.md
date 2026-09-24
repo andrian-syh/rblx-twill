@@ -33,10 +33,13 @@ ServerScriptService
 ├── TwillServer
 ├── Services
 │   ├── ShopService
-│   ├── CombatService
-│   └── shopCatalog        (a plain data module, ignored: returns no service)
+│   └── CombatService
 └── Main
 ```
+
+Every `ModuleScript` in the folder that returns a table is booted as a service,
+including a plain data module such as a catalog. Keep data modules outside the
+folders you pass to `Start`.
 
 Nesting a folder inside `Services` does not extend the search. Twill warns
 rather than boot what it never found, so pass the inner folder to `Start` as

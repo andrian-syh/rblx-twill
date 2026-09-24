@@ -24,11 +24,12 @@ framework and there are no fixtures.
 - A pass is one line. A failure names every check that failed.
 - One failure does not stop the rest, so a single break does not hide the others.
 
-It covers `Limit`, `Schema`, `Delta`, `Data` migrations, `Net`, server
-`Replication`, the `Lifecycle` surface, `Compress`, `Serialize`, `Random`,
-`Token`, `Chance`, `Navigation`, the console's rank gate, its value rendering,
-and every refusal the `rank` command makes, plus known-answer tests for the
-cryptographic primitives against official RFC vectors.
+It covers every module that can be exercised from one server, including `Bag`,
+`Signal`, `Scope`, `Loop`, `Net` and its wire format, server `Replication`,
+`Store`, `Data` migrations and sessions, `Tree`, `Tween`, `Async`, `Pool`,
+`Config`, `Shared`, `Board`, `Random`, `Token`, `Chance`, `Navigation`, and the
+console's rank gate. It also carries known-answer tests for the cryptographic
+primitives against official RFC vectors.
 
 ## The shape it uses
 
@@ -57,7 +58,8 @@ rather than after the claim they make.
 | `admit` in server `Net` | A server cannot fire `OnServerEvent` at itself. |
 | `drain` in `Replication` | It needs a real client receiving. |
 | The `Lifecycle` core | `Start` runs once. Testing it means hijacking the boot. |
-| The `Data` binding | It needs a `Configure` that would clash with the real game. |
+| The `Replicate` binding of `Data` | It needs a client receiving, and `Data` can be configured once per server. |
+| `Teleport.Send` reaching another server | Studio cannot teleport. |
 | `Path.Blocked` in `Navigation` | It needs the world to change under an agent that is already walking. |
 | `owner` on `Replication.Subscribe` | It only exists on the client, and the suite runs on the server. |
 
@@ -67,10 +69,10 @@ while the assertion is watching. They are not skipped because they are
 unimportant; they are skipped because a single-process assertion cannot reach
 them.
 
-Closing them needs an integration harness: a Studio-only `Script` and
-`LocalScript` pair that runs real remotes round-trip and waits for replication
-to actually arrive. Until that exists, the claims about those six paths rest on
-reading rather than on running.
+These paths were each proven once, with a temporary `Script` and `LocalScript`
+pair run in a playtest, including under Server Authority. Keeping them proven
+needs an integration harness that runs on every playtest. Until that exists,
+each change to those paths needs its own playtest.
 
 Saying so is more useful than a coverage percentage that counts the easy parts.
 
@@ -99,7 +101,7 @@ instrument before the subject.
 ### Cleanup rules apply to test code
 
 ```luau
-sandbox.Connection = Players.PlayerAdded:Connect(onJoin)
+local connection = Players.PlayerAdded:Connect(onJoin)
 sandbox:Destroy()
 -- still connected
 ```

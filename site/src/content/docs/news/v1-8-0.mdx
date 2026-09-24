@@ -1,6 +1,6 @@
 ---
-title: v1.8.0 — The Store Underneath
-description: Released September 2, 2026. Player data now sits on Twill's own store, and the console can read a key's history
+title: "v1.8.0 — Player data on Twill's own store"
+description: "Released September 2, 2026. Data runs on Twill's own Store, and the console reads a key's history and holder"
 template: splash
 ---
 
@@ -17,15 +17,29 @@ import NewsPagination from '../../../components/NewsPagination.astro';
 		<span class="news-badge-date">September 2, 2026</span>
 	</div>
 	<p class="news-article-lead">
-		Player data now sits on Twill's own store, and the console can read a key's history.
+		Data runs on Twill's own Store, and the console reads a key's history and holder.
 	</p>
 </header>
 
-## One less bundled package
+## Before upgrading
 
-[`Data`](/reference/data/) used to hand its real work to a bundled package. That
-package is gone. [`Store`](/reference/store/) holds a DataStore key for one
-server at a time, saves it while it is held, and gives it up on the way out.
+- Nothing changes for [`Data`](/reference/data/). Its API, its behaviour and the
+  format of what it stores are unchanged.
+- [`Token`](/reference/token/) now produces standard HMAC-SHA256, so tokens
+  issued before this release read as `forged`. Reissue any that are still in
+  circulation.
+
+## Player data runs on Twill's own store
+
+`Data` used to hand its storage work to the bundled ProfileStore package. That
+package is removed. [`Store`](/reference/store/) holds a DataStore key for one
+server at a time, saves it while it is held, and releases it on the way out.
+
+A key written by ProfileStore still reads. Its format is recognised and raised to
+the current one on the first save.
+
+`Store` also works on its own, for keys that are not player data, such as a
+guild or a shared world:
 
 ```luau
 local keep = guilds:StartSessionAsync("guild-4812")
@@ -33,61 +47,39 @@ local keep = guilds:StartSessionAsync("guild-4812")
 keep.Data.Level += 1
 ```
 
-`Data` did not change. Its functions, its behaviour, and the format of what it
-stores are the same, and a key written by the old package still reads: the older
-format is recognised and raised to the current one on the first save.
+## Eight storage faults are fixed
 
-`Store` is also usable on its own, for keys that are not player data. A guild, a
-shared world, a leaderboard snapshot.
+Reading the new module end to end turned up eight faults.
 
-## What the audit found
+- **A refused write reported success.** The code checked that the call had not
+  raised, rather than that anything was stored. With packing enabled, a failure
+  to pack took exactly this path: nothing was stored, `LastSaved` was updated,
+  and `OnAfterSave` fired.
+- **Nothing was saved on shutdown.** The closing handler wrote to the frozen
+  module table on its first line and raised there.
+- **Shutdown had no time limit.** Each write kept four attempts with backoff
+  climbing to 30 seconds, so keys later in the queue could not finish before the
+  server closed.
+- **A replaced handle kept accepting writes.** Taking a key this server already
+  held left the earlier handle looking alive. It accepted writes that could never
+  be stored.
 
-Replacing a package that has run for years means inheriting the problems it had
-already solved. Reading the new module end to end turned up eight faults, and
-only one of them was the one that showed in the console.
+The full list is in the changelog.
 
-Two were the same mistake in different places. A write that storage refused
-reported success, because the code checked that the call had not raised rather
-than that anything had been stored. With packing enabled, a failure to pack took
-exactly that path.
+## The console answers support questions
 
-```text
-packing fails → nothing stored → LastSaved updated → OnAfterSave fires
-```
+Two commands join `playerdata`:
 
-Nothing was saved on shutdown at all: the closing handler wrote to the frozen
-module table on its first line and raised there. Shutdown also waited for every
-write with no limit, while each write kept four attempts with backoff climbing
-to thirty seconds, so keys later in the queue could not finish in time.
-
-Taking a key this server already held left the earlier handle looking alive. It
-kept accepting writes that could never be stored and said nothing until the
-server closed.
-
-Three of the eight came from the same root: something waited, or believed, with
-no bound on it.
-
-## The console can answer support questions now
-
-Two additions to `playerdata`.
-
-`status` names the server holding each scope, how many sessions the key has had,
-how long since it was written, and whether storage is reachable and failing.
-
-`versions` reads up to five earlier versions of a scope, newest first. The reset
-warning has promised for several releases that earlier versions are kept. Now
-there is a way to look at them.
+- `status` names the server holding each scope, how many sessions the key has
+  had, how long since it was written, and whether storage is reachable.
+- `versions` reads up to five earlier versions of a scope, newest first.
 
 Both are also available in code, as `Data.Inspect` and `Data.Versions`.
 
-## One breaking change
+## Full changelog
 
-`Token` now produces standard HMAC-SHA256. The bundled cryptography library
-byte-swaps a digest that is already in the right order unless told not to, so
-every tag Twill produced before this release was a keyed hash but not HMAC.
-
-Tokens issued before this release read as `forged`. Reissue anything still in
-circulation.
+Every change in this release is listed in the
+[changelog](https://github.com/andrian-syh/rblx-twill/blob/main/CHANGELOG.md#180---2026-09-02).
 
 <NewsPagination />
 

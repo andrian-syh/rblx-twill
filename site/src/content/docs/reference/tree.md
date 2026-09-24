@@ -71,7 +71,7 @@ assume the rest of the tree is there.
 Builds an instance tree from a spec and hands back the pieces worth keeping.
 
 ```luau
-function Tree.Build(spec: Spec, parent: Instance?): (Instance, { [string]: Instance })
+function Tree.Build(spec: Spec, parent: Instance?, owner: Bag?): (Instance, { [string]: Instance })
 ```
 
 **Parameters**
@@ -80,6 +80,7 @@ function Tree.Build(spec: Spec, parent: Instance?): (Instance, { [string]: Insta
 | :--- | :--- | :--- |
 | `spec` | `Spec` | Describes the root instance and everything under it. |
 | `parent` | `Instance?` | Where the root goes. Left unparented when omitted. |
+| `owner` | `Bag?` | A bag that destroys the tree, and its events with it, when it closes. |
 
 **Returns**
 
@@ -88,7 +89,8 @@ function Tree.Build(spec: Spec, parent: Instance?): (Instance, { [string]: Insta
 `{ [string]: Instance }` - Every instance that asked for a `Ref`, by that name,
 however deep in the tree it sat.
 
-Throws when a spec anywhere in the tree has no `ClassName` string.
+Throws when a spec anywhere in the tree has no `ClassName` string, and when
+`owner` is not a bag.
 
 Children are parented to their own parent as they are built, and the root is
 parented last. A tree that fails partway leaves nothing behind in the world,
@@ -132,17 +134,15 @@ chain of `FindFirstChild` calls.
 
 ## Connections
 
-`Events` connections are not owned by a bag. Destroying the root instance
-disconnects them, which is enough for UI parented to a `PlayerGui`, since Roblox
-removes it with the player.
+`Events` connections last until the tree is destroyed. That is enough for UI
+parented to a `PlayerGui`, since Roblox removes it with the player.
 
-For anything longer lived, or anything parented into the world, put the root in
-a [`Scope`](/reference/scope/) bag:
+For anything longer lived, or anything parented into the world, pass a
+[`Scope`](/reference/scope/) bag as the owner. Closing the bag destroys the tree
+and disconnects its events:
 
 ```luau
-local root = Tree.Build(spec, workspace)
-
-bag:Add(root)
+local root = Tree.Build(spec, workspace, bag)
 ```
 
 ## What this is not

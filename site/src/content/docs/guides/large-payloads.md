@@ -17,7 +17,8 @@ loudly instead of quietly.
 -- Text out, so it goes straight through anything that carries JSON.
 local packed = Twill.Compress.Encode(bigTable)
 
-MessagingService:PublishAsync("WorldEvent", packed)
+-- Refuses a message past the 1 KB limit at the call, instead of at the platform.
+Twill.Shared.Publish("WorldEvent", packed)
 ```
 
 ```luau
@@ -90,8 +91,9 @@ To write to a player on another server, use
 [`Data.Edit`](/reference/data/#writing-to-anybody). It routes through Store and
 never writes over a session it does not own.
 
-MessagingService has no such guarantee, and a cross-server write built on it
-will eventually race with the owning server and lose progress.
+Messages, through `Twill.Shared` or MessagingService directly, have no such
+guarantee, and a cross-server write built on them will eventually race with the
+owning server and lose progress.
 
 ## Transport ceilings still apply
 

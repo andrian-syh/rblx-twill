@@ -8,7 +8,7 @@ description: Set up a profile, add fields safely over time, and read data for pl
 Configure once, during `Init`, then wire the gate so no service sees a player
 before their data exists.
 
-```luau title="ServerScriptService/Main.server.luau"
+```luau title="ServerScriptService/Main"
 local Twill = require("@game/ReplicatedStorage/Twill")
 
 Twill.Data.Configure({
@@ -117,6 +117,28 @@ end,
 Once a version has shipped, its number is fixed. Profiles in the wild record
 which version they are at. Renumbering makes a step run twice or not at all.
 
+## Refuse data that should never be saved
+
+A bug that sets `Coins` to a negative number, or removes a required field, is
+saved like any other change. Give the store a check, and a failing state is
+never written: the last good data stays stored, and the refusal is logged.
+
+```luau
+Twill.Data.Configure({
+	-- ...
+	Validate = function(data)
+		return data.Coins >= 0, "coins cannot go below zero"
+	end,
+})
+```
+
+The check must return exactly `true` to allow the save. A check that raises
+counts as a refusal. Each branch takes its own `Validate`.
+
+`Data.Edit` and `Data.Reset` try a change on a copy first and return `refused`
+when the check fails, so an admin edit cannot put a player into a state that
+would never save again.
+
 ## Store a Roblox value
 
 A DataStore holds JSON. A `Vector3` written straight into player data fails the
@@ -162,16 +184,18 @@ Read-only, and it does not take the session from whichever server holds it.
 ## Write to a player who is not here
 
 ```luau
-local outcome = Twill.Data.Edit(userId, "Data", "Coins", 500)
+local outcome = Twill.Data.Edit(userId, "main", "Coins", 500)
 ```
 
-Three routes are chosen for you: applied here if this server holds the session,
-sent to whichever server does, or left in their saved data until next login.
+The scope is `"main"` for the main profile, or the name of a branch. One of three
+routes is chosen for you: applied here if this server holds the session, sent to
+whichever server does, or left waiting in their saved data until a server next
+opens their session.
 **Nothing ever writes over a session it does not own.**
 
 Check the [outcome](/reference/data/#outcome). `"unsupported"` means the value
 cannot survive a DataStore and needs [`Serialize.Encode`](/reference/serialize/)
-first.
+first. `"refused"` means the scope's `Validate` check rejected the result.
 
 ## Move a large collection off the main profile
 
@@ -208,5 +232,7 @@ local landed = Twill.Data.SaveNow(player, function(saved)
 end, 10)
 ```
 
+Only a save that read the data after the call counts, so a save already under
+way cannot confirm a change it never saw.
 [`Monetization`](/reference/monetization/) already does this for receipts. You
 do not need to repeat it there.

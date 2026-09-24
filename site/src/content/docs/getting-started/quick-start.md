@@ -72,9 +72,10 @@ Player1 has visited 1 time(s)
 Stop and play again. The count goes up, because the profile was saved and
 reloaded.
 
-If the count is not increasing, enable **Studio Access to API Services** in
-**Game Settings → Security**. Studio cannot reach a DataStore without it, and
-the profile starts fresh every run.
+If the count does not increase, the output also shows a warning that storage
+cannot be reached. Enable **Studio Access to API Services** in
+**Game Settings → Security**. Without it, Twill keeps player data in memory and
+forgets it when you stop.
 
 ## 4. Boot the client too
 
@@ -84,16 +85,16 @@ ordered exactly the way your server code is.
 Add a `Folder` named `Client` inside `ReplicatedStorage`, and put a
 `ModuleScript` in it.
 
-```luau title="ReplicatedStorage/Client/HudService"
-local HudService = {}
+```luau title="ReplicatedStorage/Client/HudController"
+local HudController = {}
 
 -- Start runs after every client module has finished Init, so by here it is
 -- safe to reach for another one.
-function HudService.Start()
+function HudController.Start()
 	print("client booted")
 end
 
-return HudService
+return HudController
 ```
 
 Then add a `LocalScript` in `StarterPlayerScripts` to start them.
@@ -103,7 +104,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Twill = require("@game/ReplicatedStorage/Twill")
 
-Twill.Lifecycle.Start(ReplicatedStorage.Client)
+Twill.Lifecycle.Start(ReplicatedStorage:WaitForChild("Client"))
 ```
 
 Press **Play** again and `client booted` joins the output.

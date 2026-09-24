@@ -113,7 +113,7 @@ player or per character.
 	Text = "Buy",
 	Events = {
 		Activated = function()
-			local bought, message = Remotes.BuyItem:Fire("sword")
+			local bought, message = Remotes.BuyItem:Ask("sword")
 
 			if not bought then
 				showToast(message)
@@ -161,18 +161,15 @@ above.
 
 ## Clean up
 
-`Events` connections are not owned by a bag. Destroying the root disconnects
-them, which for UI under a `PlayerGui` is enough, because Roblox removes it with
-the player.
+`Events` connections last until the tree is destroyed. For UI under a
+`PlayerGui` that is enough, because Roblox removes it with the player.
 
-Anything longer-lived, or anything parented into the world, belongs in a
-[`Scope`](/reference/scope/) bag:
+Anything longer-lived, or anything parented into the world, should have an
+owner. Pass a [`Scope`](/reference/scope/) bag as the third argument, and the
+tree is destroyed, connections and all, when the bag closes:
 
 ```luau
-local root = Twill.Tree.Build(spec, workspace)
-
--- Goes when the player does, connections and all.
-bag:Add(root)
+local root = Twill.Tree.Build(spec, workspace, bag)
 ```
 
 Subscriptions are separate and need the same treatment:

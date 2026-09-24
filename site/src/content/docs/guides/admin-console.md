@@ -17,6 +17,8 @@ client has already said yes.
 The console needs one require on each side. Neither does the other's job.
 
 ```luau title="ServerScriptService/Main"
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
 local Twill = require("@game/ReplicatedStorage/Twill")
 local Ranks = require(ReplicatedStorage.Shared.Ranks)
 
@@ -61,6 +63,9 @@ Twill.Admin.Configure({
 	DefaultCommands = { "kick", "teleport", "respawn" },
 })
 ```
+
+`DefaultCommands = true` registers every Cmdr built-in, including `ban`,
+`unban` and `exit`. A command not named in `Commands` needs `MinimumRank`.
 
 `MinimumRank` has no default on purpose. A permission gate that guesses is a
 gate that eventually guesses wrong, in the direction nobody notices until it
@@ -219,12 +224,18 @@ player must go through the console, where the gate is.
 
 ## Change the activation key
 
+On the client:
+
 ```luau
-Twill.Admin.Cmdr:SetActivationKeys({ Enum.KeyCode.F4 })
+local Admin = require("@game/ReplicatedStorage/Twill/Admin")
+
+Admin.Cmdr:SetActivationKeys({ Enum.KeyCode.F4 })
 ```
 
-`Twill.Admin.Cmdr` is Cmdr itself, on both sides, so anything Cmdr offers is
-reachable there.
+`Admin.Cmdr` is Cmdr itself on each side, so anything Cmdr offers is reachable
+there. The bundled Cmdr is v1.13.0: call registry methods through
+`Admin.Cmdr.Registry`, such as `Admin.Cmdr.Registry:RegisterHook`. Calling them
+on the Cmdr object directly still works but logs a deprecation warning.
 
 ## Client checks are a courtesy
 

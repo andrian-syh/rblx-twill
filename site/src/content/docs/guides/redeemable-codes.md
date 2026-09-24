@@ -55,7 +55,15 @@ an unbounded code outlives every reason you had for issuing it.
 
 ## Redeem it once
 
-This is the half `Token` deliberately does not do for you.
+This is the half `Token` deliberately does not do for you. Keep a list of spent
+codes in each player's data, so add it to the template first:
+
+```luau
+Template = {
+	Coins = 0,
+	RedeemedCodes = {},
+}
+```
 
 ```luau
 local REDEEMED_FIELD = "RedeemedCodes"

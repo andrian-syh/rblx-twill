@@ -112,19 +112,45 @@ Anything still open closes when the player leaves.
 
 A branch cannot be named `main`.
 
+## Refusing data that should never be saved
+
+`Validate` is a check the data must pass before any save. A save it refuses is
+skipped, the last good data stays stored, and the refusal is logged.
+
+```luau
+Data.Configure({
+	Store = "PlayerData",
+	Template = { Coins = 0 },
+	Validate = function(data)
+		return data.Coins >= 0, "coins cannot go below zero"
+	end,
+})
+```
+
+The check must return exactly `true`. A second return value is the reason that
+is logged. A check that raises counts as a refusal. Each branch takes its own
+`Validate`.
+
+When a player leaves while their data fails the check, their session is still
+released so the next server does not wait, and the data they last saved is what
+that server loads.
+
 ## Writing to anybody
 
 `Edit` and `Reset` work on any user, wherever they are. When this server holds
 the data, the change lands here. When it does not, the change is written into the
 key itself and applied by whichever server next holds it.
 
-That difference is what `Outcome` reports.
+That difference is what `Outcome` reports. When the scope has a `Validate`
+check, a change made here is tried on a copy first, and a change the check
+refuses is never applied.
 
 | Outcome | Meaning |
 | :--- | :--- |
 | `applied` | Written here and saved. |
 | `queued` | Left on the key. It lands when a server holds them. |
 | `blocked` | Something along that path is not a table. |
+| `refused` | The scope's `Validate` check rejected the result. Nothing changed. |
 | `unknown` | No scope by that name. |
 | `unsupported` | The value would not survive being saved. |
 | `failed` | The change could not be sent. |
@@ -153,6 +179,10 @@ function Data.Configure(config: Config)
 | `Migrations` | `{ [number]: (data) -> () }?` | Keyed by the version each step produces. |
 | `Branches` | `{ [string]: Branch }?` | Separate stores under the same user. |
 | `Replicate` | `{ string }?` | Field names the player's own client should see. |
+| `Validate` | `((data) -> (boolean, string?))?` | A check every save must pass. See [Refusing data that should never be saved](#refusing-data-that-should-never-be-saved). |
+
+A `Branch` takes `Template`, `Version`, `Migrations` and `Validate`, with the
+same meanings.
 
 Throws on a second call, on a missing or empty `Store`, on a `Template` that is
 not a table, and on a branch named `main`.
@@ -253,7 +283,12 @@ function Data.SaveNow(player: Player, verify: ((saved: { [string]: any }) -> boo
 
 **Returns**
 
-`boolean` - `true` when the write landed and `verify` accepted it. Yields.
+`boolean` - `true` when the write landed and `verify` accepted it. Yields for
+at most `timeout` seconds.
+
+Only a save that read the data after the call counts, so a save that was already
+under way cannot confirm a change it never saw. A save refused by `Validate`
+answers `false`.
 
 This is what a Developer Product grant waits on. Granting in memory and
 answering `PurchaseGranted` before the write lands loses the purchase if the
@@ -348,7 +383,8 @@ function Data.Edit(userId: number, scope: string, path: string, value: any): Out
 | `value` | `any` | What to write. `nil` removes the field. |
 
 A value storage would refuse is refused here instead, and answers `unsupported`.
-Run it through [`Serialize.Encode`](/reference/serialize/) first.
+Run it through [`Serialize.Encode`](/reference/serialize/) first. A result the
+scope's `Validate` check rejects answers `refused` and changes nothing.
 
 Yields. Throws when used before `Configure`, and on a missing user id or path.
 
@@ -436,7 +472,7 @@ Throws when a step raises, naming the version it was reaching.
 ### `Outcome`
 
 ```luau
-export type Outcome = "applied" | "queued" | "blocked" | "unknown" | "unsupported" | "failed"
+export type Outcome = "applied" | "queued" | "blocked" | "refused" | "unknown" | "unsupported" | "failed"
 ```
 
 ## Replication

@@ -51,6 +51,8 @@ Available on the server and the client.
 | [BigNumber](/reference/bignumber/) | Exact whole numbers with no ceiling. |
 | [Chance](/reference/chance/) | Weighted draws, and the odds behind them. |
 | [Tween](/reference/tween/) | Values moved over time, every one of them on a single loop. |
+| [Async](/reference/async/) | Yielding work with a deadline, run together, or tried again. |
+| [Pool](/reference/pool/) | Parts and models reused rather than cloned and destroyed. |
 | [Navigation](/reference/navigation/) | Agents that walk somewhere, and one loop driving all of them. |
 | [Authorization](/reference/authorization/) | Ranks, and the questions that depend on them. |
 | [Admin](/reference/admin/) | An in-game command console built on Cmdr, with nine commands of its own. |
@@ -68,6 +70,10 @@ Requiring any of these from a client fails with a message naming the module.
 | [Filter](/reference/filter/) | Player-written text made safe to show. |
 | [Random](/reference/random/) | Unpredictable draws, and rolls a player can audit. |
 | [Token](/reference/token/) | Signed text that proves nobody edited it. |
+| [Shared](/reference/shared/) | Cross-server messages and memory store maps, within one budget. |
+| [Config](/reference/config/) | Live experience configs, with a default for every key. |
+| [Teleport](/reference/teleport/) | Players sent between servers, with carried data kept off the client. |
+| [Board](/reference/board/) | A leaderboard read from a cache and written in batches. |
 
 Four modules span both sides under one name. `Net`, `Replication`,
 `Authorization`, and `Admin` each have a server half that is not replicated, and

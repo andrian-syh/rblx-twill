@@ -1,6 +1,6 @@
 ---
-title: v1.7.2 — Compression, All the Way Down
-description: Released August 24, 2026. The compressor is now Twill's own code end to end, and reads no stream past its end
+title: "v1.7.2 — Compression without a bundled package"
+description: "Released August 24, 2026. Compress is Twill's own code end to end, and never reads past the end of a stream"
 template: splash
 ---
 
@@ -17,55 +17,46 @@ import NewsPagination from '../../../components/NewsPagination.astro';
 		<span class="news-badge-date">August 24, 2026</span>
 	</div>
 	<p class="news-article-lead">
-		The compressor is now Twill's own code end to end, and reads no stream past its end.
+		Compress is Twill's own code end to end, and never reads past the end of a stream.
 	</p>
 </header>
 
-## One less thing that came from elsewhere
+## Compress no longer relies on a bundled package
 
-[`Compress`](/reference/compress/) used to hand its real work to a bundled
-package. That package is gone. The serializer that turns a value into bytes and
-the coder that shrinks them are first-class Twill modules now,
-`Compress.Serializer` and `Compress.Lzw`, written in the same style as the rest
-of the framework and split along the seam a reader would want to change.
+[`Compress`](/reference/compress/) used to hand its work to the bundled
+BytePress package, which is now removed. The serializer and the entropy coder
+are Twill modules, `Compress.Serializer` and `Compress.Lzw`.
+
+`Encode`, `Decode` and the byte format are unchanged, so a value already stored
+in a DataStore reads back the same:
 
 ```luau
 local packed = Twill.Compress.Encode(save)
-local save = Twill.Compress.Decode(packed)
+local restored = Twill.Compress.Decode(packed)
 ```
 
-`Encode` and `Decode` are exactly what they were, and the byte format did not
-move, so a value already sitting in a DataStore reads back the same. This is a
-change to whose code runs, not to what it does.
+## Hostile payloads return `nil`
 
-## A reader that stops at the edge
+A saved payload can arrive truncated, altered in place, or shaped by someone who
+means the server harm. Every read now checks the bytes it is about to take before
+taking them.
 
-The part worth pausing on is the reading side. A saved payload can arrive
-truncated by a transport, altered in place, or shaped by someone who means the
-server harm.
+- A stream that is too short, nested too deep, or tagged with something unknown
+  returns `nil` instead of reading past its end.
+- A payload crafted to drive the reader into unbounded recursion is refused at a
+  fixed depth instead of exhausting the stack.
 
-Every read now checks the bytes it is about to take before it takes them. A
-stream that is too short, nested deeper than the format allows, or tagged with
-something unknown comes back as `nil` rather than reading whatever lies past its
-end. A payload crafted to drive the reader into unbounded recursion is refused
-at a fixed depth instead of exhausting the stack.
+## Other changes
 
-```text
-a truncated save → nil, not a half-built value
-a recursion bomb → nil, not a frozen server
-```
+- A `Color3` channel is rounded to its nearest 8-bit step instead of floored,
+  which halves the largest error a stored colour can carry.
+- The entropy coder rebuilds its dictionary once it fills, so a long payload
+  whose repetition changes partway through keeps compressing.
 
-A corrupted field becoming a missing value is a trade a game can absorb. A
-corrupted field becoming a fault is not.
+## Full changelog
 
-## Two smaller wins
-
-A `Color3` channel is now rounded to its nearest 8-bit step rather than floored,
-which halves the largest error a stored colour can carry.
-
-The entropy coder clears and rebuilds its dictionary once it fills. A long
-payload whose repetition changes partway used to encode the rest against a
-frozen table; now it keeps adapting, and keeps compressing.
+Every change in this release is listed in the
+[changelog](https://github.com/andrian-syh/rblx-twill/blob/main/CHANGELOG.md#172---2026-08-24).
 
 <NewsPagination />
 

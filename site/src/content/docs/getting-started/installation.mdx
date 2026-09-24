@@ -25,8 +25,8 @@ place was built, as long as the two folders land where they belong. See
 
 - Roblox Studio, and a place you can edit.
 - **Studio Access to API Services** enabled, under **Game Settings → Security**.
-  Studio cannot reach a DataStore without it, and player data is the first thing
-  most of Twill touches.
+  Without it, Studio cannot reach a DataStore. Twill then keeps player data in
+  memory for the session, warns once, and forgets everything when you stop.
 
 That is the whole list. Every dependency Twill uses is bundled inside the
 folders you are about to install.
@@ -44,7 +44,7 @@ The names matter. Twill finds its own server half by name, and a renamed folder
 fails at the require with:
 
 ```text
-[Twill] TwillServer.Net is missing; the server half of Twill was not installed.
+[Twill] TwillServer.Net is missing; the server half is not installed
 ```
 
 :::caution[The split is not a packaging detail]
@@ -86,7 +86,7 @@ Two lines in the output means both folders are where they should be.
 | Instead you see | Cause |
 | --- | --- |
 | Nothing, and an error naming `Twill` | `Twill` is missing from `ReplicatedStorage`, or renamed. |
-| The version, then an error naming `TwillServer` | The server half is missing from `ServerScriptService`, or renamed. |
+| The version, then `[Twill] 'Data' is not a Twill module` | `TwillServer` is missing from `ServerScriptService`, or renamed. |
 
 ## Requiring modules
 
@@ -111,7 +111,7 @@ Naming a server-only module from a client fails at the require rather than
 handing back a `nil` that surfaces somewhere else much later:
 
 ```text
-[Twill] 'Data' is not a Twill module. It may be a server-only module.
+[Twill] 'Data' is not a Twill module, or is server only
 ```
 
 ## Next

@@ -83,7 +83,8 @@ end
 
 An agent in a bag is destroyed when the bag closes: its loop entry, its
 connections, its `Path`, and any markers it was showing. There is no teardown to
-write.
+write. An agent is also destroyed when its model is destroyed, whether or not it
+has a bag.
 
 For an NPC that belongs to a round rather than a player, use the round's own
 bag. For one that lives as long as the server, use

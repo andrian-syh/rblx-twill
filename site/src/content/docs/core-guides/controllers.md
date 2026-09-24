@@ -28,7 +28,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Twill = require("@game/ReplicatedStorage/Twill")
 
-Twill.Lifecycle.Start(ReplicatedStorage.Client)
+Twill.Lifecycle.Start(ReplicatedStorage:WaitForChild("Client"))
 ```
 
 Controllers live where a client can reach them, which means `ReplicatedStorage`
@@ -111,6 +111,8 @@ Use [`Scope`](/reference/scope/) directly. For anything tied to the character,
 the choice of bag is the whole decision:
 
 ```luau
+local RunService = game:GetService("RunService")
+
 local Twill = require("@game/ReplicatedStorage/Twill")
 
 local function onCharacterAdded(character: Model)

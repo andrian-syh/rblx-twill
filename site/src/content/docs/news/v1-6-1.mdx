@@ -1,6 +1,6 @@
 ---
-title: v1.6.1 — The Codec Stops Repeating Itself
-description: Released August 20, 2026. Work the codec was doing twice, and allocations on the path that carries the most
+title: "v1.6.1 — Faster codec, fewer allocations"
+description: "Released August 20, 2026. The codec stops repeating work and allocates less on its busiest path"
 template: splash
 ---
 
@@ -17,62 +17,46 @@ import NewsPagination from '../../../components/NewsPagination.astro';
 		<span class="news-badge-date">August 20, 2026</span>
 	</div>
 	<p class="news-article-lead">
-		Work the codec was doing twice, and allocations on the path that carries the most.
+		The codec stops repeating work and allocates less on its busiest path.
 	</p>
 </header>
 
-## A string built for an error that never came
+## Error paths are built only when an error happens
 
-`Net.Any` built a path string for every key of every table it wrote. The string
-existed for one purpose: to name a value if something went wrong with it. It was
-built on the way through regardless, so the overwhelming majority of them were
-assembled, held, and discarded without ever being read.
+`Net.Any` built a path string for every key of every table it wrote, only to name
+a value if something went wrong. Paths are now composed where an error is
+raised, once per container.
 
-Paths are now composed where the error is raised, and once per container rather
-than once per key.
+[`Replication`](/reference/replication/) sends its patches through `Any`, so
+this is the busiest path in the codec.
 
-This is not an even saving across the module.
-[`Replication`](/reference/replication/) sends its patches through `Any`, so of
-everything the codec touches, this is the path that carries the most.
+## Errors name numeric keys
 
-## An error that would not name the key
-
-A numeric key inside a dictionary used to be reported without saying which key
-it was. The message named the container and then gave up at the point it
-mattered.
+An error about a numeric key in a dictionary now names the key:
 
 ```text
 before:  value[?]
 after:   value[7]
 ```
 
-Nothing about the encoding changed. The path is built at the point where the key
-is still in hand.
-
-## Two thousand checks for one guarantee
+## One bounds check per array
 
 An array of fixed-width numbers checked the buffer's capacity once for the whole
-run, and then checked it again for every element in that run. The first check
-had already covered all of them.
+run, then again for every element. A 2000-element array now costs 2000 fewer
+bounds checks in each direction. The single check still covers the whole run
+before any byte is touched.
 
-The run is now written and read through the offset that single check returned,
-so a two thousand element array costs two thousand fewer bounds checks in each
-direction.
+## Fewer allocations for CFrames
 
-**Nothing is checked less.** The one check still covers the whole run before a
-byte is touched. What went away is the repetition behind it, not the guarantee.
+- Packing and unpacking a `CFrameRot` no longer allocates tables.
+- `Any` no longer allocates a 12-element table for every `CFrame` it writes.
 
-## Tables that existed for one loop
+The wire format is unchanged: v1.6.0 and v1.6.1 produce the same bytes.
 
-Packing and unpacking a `CFrameRot` allocated a table per value on the way out
-and two on the way back. They use locals now.
+## Full changelog
 
-`Any` was worse: it allocated a twelve element table for every `CFrame` it
-wrote, purely to iterate the components it had already unpacked. It writes them
-directly.
-
-Neither changes the wire format. A place running v1.6.0 and a place running
-v1.6.1 produce the same bytes.
+Every change in this release is listed in the
+[changelog](https://github.com/andrian-syh/rblx-twill/blob/main/CHANGELOG.md#161---2026-08-20).
 
 <NewsPagination />
 

@@ -1,6 +1,6 @@
 ---
-title: v1.9.0 — Every Key Arrives
-description: Released September 24, 2026. Replicated state of any realistic size now reaches the client, and player data survives what used to damage it
+title: "v1.9.0 — Replicated state that always arrives"
+description: "Released September 24, 2026. Replicated state of any size reaches the client, and player data survives migrations and departures"
 template: splash
 ---
 
@@ -17,28 +17,36 @@ import NewsPagination from '../../../components/NewsPagination.astro';
 		<span class="news-badge-date">September 24, 2026</span>
 	</div>
 	<p class="news-article-lead">
-		Replicated state of any realistic size now reaches the client, and player data survives what used to damage it.
+		Replicated state of any size reaches the client, and player data survives migrations and departures.
 	</p>
 </header>
 
-This release comes out of a full read of the framework against a running place,
-with every finding proven in a playtest before it was fixed. Most of what
-changed is invisible until it goes wrong, and it went wrong in ways a player
-would notice.
+## Before upgrading
 
-## Replicated state that arrives
+Four changes can reach existing code.
 
-A player's first view of [`Replication`](/reference/replication/) travelled as
-one call holding every key. That call used
-[`Types.Any`](/reference/net/#typesany), which stops at 4096 parts, and an
-inventory of a thousand items with three fields each is past that. The call was
-dropped, the client never received its first view, and every later change for
+- Migrations no longer run for a player with no saved data. If a step also set
+  up a value that new players need, put that value in the `Template`.
+- `Remote:Connect`, `Remote:Once` and `Remote:Wait` throw on the server, where
+  they never received anything. Serve the remote with
+  [`Net.Handle`](/reference/net/).
+- A whole number token given a fraction throws. Round the value first, or
+  declare a fractional token such as `NumberF32`.
+- A [`Navigation`](/reference/navigation/) agent can fail with a new reason,
+  `faulted`.
+
+## Replicated state of any size arrives
+
+A player's first view of [`Replication`](/reference/replication/) used to travel
+as one call holding every key. That call used
+[`Types.Any`](/reference/net/#typesany), which stops at 4096 parts. An inventory
+of a thousand items with three fields each is past that, so the call was
+dropped. The client never received its first view, and every later change for
 that player was ignored for the rest of the session.
 
 Each key now travels as its own call. A key that cannot be sent holds back only
 itself, is reported, and goes again the next time it is written. `Types.Any`
-also takes wider bounds for what the server sends, because a client has nothing
-to fear from the server:
+also accepts wider bounds for what the server sends:
 
 | Ceiling | Client to server | Server to client |
 | :--- | ---: | ---: |
@@ -46,62 +54,49 @@ to fear from the server:
 | Parts in one call | 4096 | 1048576 |
 | Entries in one table | 4096 | 65535 |
 
-The playtest that proved it sent 1500 items to a client and a change to one of
-them afterwards. Both arrived.
+The playtest that proved the fix sent 1500 items to a client, then a change to
+one of them. Both arrived.
 
-## Player data
+## Player data survives migrations and departures
 
 Three faults in [`Data`](/reference/data/) could damage what a player owns.
 
-A new player's template ran through every migration, as if it were data saved at
-version 1. A step that read a field only old data has, such as converting a
-legacy inventory, failed on the template, and the new player was kicked.
-Migrations now run only for data saved at an older version.
+- **New players ran every migration.** The template was treated as data saved at
+  version 1, so a step that read a field only old data has failed, and the new
+  player was kicked. Migrations now run only for data saved at an older version.
+- **A failed migration was saved.** A step that raised left behind what it had
+  already converted, and the session saved it on the way out. Steps now run on a
+  copy, which replaces the live data only when every step succeeds.
+- **Data could disappear before services finished.** Data was released on its
+  own `PlayerRemoving` connection, which could run before a service's
+  `OnPlayerRemoving`. Release now happens when the player's bag closes, after
+  every service has had its turn.
 
-A migration that raised left behind whatever it had already converted, and the
-session saved it on the way out. The next load ran the earlier steps again on
-data that already had them. Steps now run on a copy, which replaces the live
-data only when every step has succeeded.
-
-A player's data was released on its own `PlayerRemoving` connection, which
-could run before the services' `OnPlayerRemoving`. A service reading
-`Data.Get(player)` there could get `nil`. Release now happens when the player's
-bag closes, after every service has had its turn.
-
-## Purchases
+## Purchases are granted only once saved
 
 [`Monetization`](/reference/monetization/) answered a redelivered receipt as
-granted whenever the grant was on record in memory. When the first save had not
-been confirmed, that meant answering `PurchaseGranted` for a reward that might
-never reach storage. A receipt seen before is now answered the same way as a new
-one: only once the save recording it is confirmed.
+granted whenever the grant was recorded in memory, even when the first save had
+not been confirmed. A receipt seen before is now answered the same way as a new
+one: `PurchaseGranted` only once the save recording it is confirmed.
 
-## Smaller fixes
+## Other changes
 
-- A weighted [`Chance`](/reference/chance/) draw from a committed round could
-  land on a different entry when replayed elsewhere. Entries are now weighed in
-  the order they were added.
-- [`Store`](/reference/store/) could no longer retry a last save that failed,
-  and shutdown counted one still in flight as finished.
-- [`Loop.After`](/reference/loop/) kept its entry after running, so the
-  framework bag grew with every call that named no owner.
-- [`Schema`](/reference/schema/) raised on a bound that was not a number,
-  despite promising never to raise.
-- A [`Watch`](/reference/watch/) callback that raised stopped the sweep for
-  every member after it.
+- A weighted [`Chance`](/reference/chance/) draw from a committed round now lands
+  on the same entry on every server, because entries are weighed in the order
+  they were added.
+- [`Store`](/reference/store/) retries a last save that failed, and shutdown no
+  longer counts a save still in flight as finished.
+- [`Loop.After`](/reference/loop/) releases its entry once it runs, so the
+  framework bag no longer grows with every call that names no owner.
+- [`Schema`](/reference/schema/) no longer raises on a bound that is not a
+  number.
+- A [`Watch`](/reference/watch/) callback that raises no longer stops the members
+  after it from being announced.
 
-## Before upgrading
+## Full changelog
 
-Four changes can reach existing code. The
-[changelog](https://github.com/andrian-syh/rblx-twill/blob/main/CHANGELOG.md)
-carries the full Migration section.
-
-- Migrations no longer run for new players. A step that also set something up
-  for them must move that value into the `Template`.
-- `Remote:Connect`, `Once` and `Wait` throw on the server, where they never
-  received anything. Serve the remote with `Net.Handle`.
-- A whole number token given a fraction throws instead of cutting it.
-- `Navigation` agents can fail with a new reason, `faulted`.
+Every change in this release is listed in the
+[changelog](https://github.com/andrian-syh/rblx-twill/blob/main/CHANGELOG.md#190---2026-09-24).
 
 <NewsPagination />
 

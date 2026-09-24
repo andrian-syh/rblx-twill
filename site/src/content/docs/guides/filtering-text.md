@@ -96,7 +96,7 @@ the correct direction to fail.
 
 ## Budget
 
-This module has a rate limit of its own per user, and the underlying calls spend
-the server's web quota.
+The platform limits filtering per user, and the underlying calls spend the
+server's web quota. `Filter` adds no limit of its own.
 
 Filter once at submission. Store the result. Show the stored result.

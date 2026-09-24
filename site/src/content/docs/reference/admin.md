@@ -128,7 +128,7 @@ function Admin.Configure(config: Config)
 | :--- | :--- | :--- |
 | `MinimumRank` | `number` | The floor for opening the console. Required. |
 | `Commands` | `{ [string]: number }?` | Per-command ranks, above or below the floor. |
-| `DefaultCommands` | `(boolean \| { string })?` | `true` for all of Cmdr's built-ins, `false` for none, or a list of names. |
+| `DefaultCommands` | `(boolean \| { string })?` | `true` for all of Cmdr's built-ins, including `ban`, `unban` and `exit`; `false` for none; or a list of names. |
 | `TwillCommands` | `(boolean \| { string })?` | The same three shapes, for Twill's own. `true` when left out. |
 
 Call once, during `Init`. Throws on a second call, rather than letting who is
@@ -195,13 +195,17 @@ gate is.
 
 `[Server]` | `[Client]`
 
-Cmdr itself, on both sides.
+Cmdr itself, on both sides. The bundled version is v1.13.0.
 
 ```luau
 Admin.Cmdr
 ```
 
-Press F2 to open the console, or change that with `Cmdr:SetActivationKeys`.
+Call registry methods through `Admin.Cmdr.Registry`. Calling one on the Cmdr
+object directly still works, but logs a deprecation warning.
+
+Press F2 to open the console. On the client, `Admin.Cmdr:SetActivationKeys`
+changes the key.
 
 ## Built-in commands
 

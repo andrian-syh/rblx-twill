@@ -183,8 +183,10 @@ one of three routes:
 Data.Edit(userId, scope, path, value)
    ↓
 is the session open on this server?
-   ├── yes ──→ write to the live profile, save          "applied"
-   └── no  ──→ post a message through Store             "queued"
+   ├── yes ──→ try the change on a copy
+   │             ├── Validate refuses ──→ nothing changes         "refused"
+   │             └── accepted ──→ write to the live profile, save "applied"
+   └── no  ──→ post a message through Store                       "queued"
                   ↓
                whichever server holds the session applies it,
                or it waits in stored data until they next log in
@@ -194,6 +196,20 @@ Nothing ever writes over a session it does not own, which is the property that
 makes this safe to call from an admin command without knowing where the player
 is. The cost is honesty about timing: `"queued"` means it will land, not that it
 has, and for a user who never returns it never lands at all.
+
+## Cross-server traffic
+
+Every message a server publishes, every topic it listens to, and every memory
+store request it makes goes through [`Shared`](/reference/shared/), which counts them
+against one budget per server. Twill's own traffic uses it too:
+
+- `Store` publishes release requests and listens for them through `Shared`.
+- `Teleport` leaves carried data in a memory store through `Shared`, and hands
+  the client only a ticket signed by `Token`.
+
+Messaging limits are per server, so `Shared` counts them exactly. The memory
+store quota belongs to the whole experience and no server can see what the
+others spend, so `Shared` counts this server's fair share of it.
 
 ## Keys and paths
 

@@ -32,16 +32,22 @@ server that gets slower the longer it stays up.
 ## Repeat on an interval
 
 ```luau
-function AutosaveService.Start()
+function IncomeService.Start()
 	-- The callback receives how long actually passed, not the interval you
 	-- asked for.
-	Loop.Every(60, function(elapsed)
+	Loop.Every(1, function(elapsed)
 		for _, player in Players:GetPlayers() do
-			Twill.Data.Save(player)
+			local data = Twill.Data.Get(player)
+
+			if data then
+				data.Coins += math.floor(INCOME_PER_SECOND * elapsed)
+			end
 		end
 	end)
 end
 ```
+
+Player data already saves on its own, so there is no need for a save loop.
 
 A frame that overshoots the interval reports the time that actually passed
 rather than firing twice to catch up. Work out rates from `elapsed` instead of

@@ -47,12 +47,18 @@ Twill.Scope.Player(player):Add(b)
 
 Neither service has to know about the other, and one close cleans up both.
 
-## Loops and watches take a bag
+## Twill functions take a bag
+
+Every Twill function that starts something lasting takes an owner bag as its
+last argument.
 
 ```luau
 Twill.Loop.Every(1, tick, bag)
 Twill.Loop.After(5, expire, bag)
 Twill.Watch.Tagged("Door", onDoor, bag)
+Twill.Tree.Build(spec, playerGui, bag)
+Twill.Pool.new(template, { Size = 20 }, bag)
+Twill.Navigation.new(npc, nil, bag)
 ```
 
 Leave the last argument out and the work goes to `Scope.Framework()`, which
@@ -71,21 +77,24 @@ bag:Add(function()
 end)
 ```
 
-Every handle Twill returns carries `Destroy`, so a bag holds it like anything
-else.
+A bag closes an instance, a connection, a function or a thread on its own, and a
+table through its `Destroy` or `Disconnect` method. Every handle Twill returns
+carries one of those. For anything else, name the method, as with `"Destroy"`
+above.
 
 ## What `Destroy` does not do
 
 :::danger[Destroying a parent does not disconnect a connection to a service]
 ```luau
 local sandbox = Instance.new("Folder")
-sandbox.Connection = Players.PlayerAdded:Connect(onJoin)
+local connection = Players.PlayerAdded:Connect(onJoin)
+
 sandbox:Destroy()
--- onJoin still fires. Forever.
+-- onJoin still fires. Destroying the folder never touched the connection.
 ```
 
-`Players` holds the connection, not the folder. Running that code seven times
-leaves seven live connections.
+`Players` holds the connection, and destroying an unrelated instance does not
+end it. Running that code seven times leaves seven live connections.
 :::
 
 This is the usual way test code leaks, and the usual cause of a Studio session

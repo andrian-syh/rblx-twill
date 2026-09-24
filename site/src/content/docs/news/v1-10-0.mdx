@@ -1,0 +1,111 @@
+---
+title: "v1.10.0 — Configs, teleports and leaderboards"
+description: "Released September 25, 2026. Six new modules cover configs, asynchronous work, pooling, cross-server budgets, teleports and leaderboards, and player data can refuse a bad save"
+template: splash
+---
+
+import NewsBackLink from '../../../components/NewsBackLink.astro';
+import NewsPagination from '../../../components/NewsPagination.astro';
+
+<div class="news-article-container">
+
+<NewsBackLink />
+
+<header class="news-article-header">
+	<div class="news-article-badges">
+		<span class="news-badge-version">v1.10.0</span>
+		<span class="news-badge-date">September 25, 2026</span>
+	</div>
+	<p class="news-article-lead">
+		Six new modules cover configs, asynchronous work, pooling, cross-server budgets, teleports and leaderboards, and player data can refuse a bad save.
+	</p>
+</header>
+
+## Before upgrading
+
+Four changes can reach existing code.
+
+- `Admin.Cmdr` is Cmdr v1.13.0. Calling a registry method on the Cmdr object,
+  such as `Admin.Cmdr:RegisterCommandsIn`, logs a deprecation warning. Call it
+  through `Admin.Cmdr.Registry` instead.
+- `DefaultCommands = true` also registers Cmdr's `ban`, `unban` and `exit`, at
+  `MinimumRank` unless `Commands` names them.
+- `Data.SaveNow` confirms only a save that read the data after the call. Code
+  that relied on an earlier save landing first now waits for its own.
+- Code that matches every `Data.Edit` or `Data.Reset` outcome should expect
+  `refused` once a scope has a `Validate` check.
+
+## Six new modules
+
+| Module | What it does |
+| :--- | :--- |
+| [`Async`](/reference/async/) | Gives yielding work a deadline (`Timeout`), runs several calls together (`All`), and retries with randomised backoff (`Retry`). Every call returns an answer. |
+| [`Pool`](/reference/pool/) | Hands out copies of a part or model, parked out of the world instead of cloned and destroyed. |
+| [`Config`](/reference/config/) | Reads experience configs without yielding. Every key has a default, which also stands in for a value of the wrong type. |
+| [`Shared`](/reference/shared/) | Publishes, subscribes and uses memory store maps within one budget per server. |
+| [`Teleport`](/reference/teleport/) | Sends groups in calls of 50, keeps a group on one reserved server, brings parties along, and keeps carried data off the client. |
+| [`Board`](/reference/board/) | Shows an ordered data store leaderboard from a cache, and writes gathered changes within the write budget. |
+
+```luau
+local sent, code = Twill.Teleport.Send(ARENA_PLACE, squad, {
+	Reserve = true,
+	Party = true,
+	Data = { Mode = "ranked" },
+})
+```
+
+## Player data refuses a bad save
+
+A bug that sets `Coins` below zero used to be saved like any other change. A
+`Validate` check now stops it: a save the check refuses is skipped, and the last
+good data stays stored.
+
+```luau
+Twill.Data.Configure({
+	Store = "PlayerData",
+	Template = { Coins = 0 },
+	Validate = function(data)
+		return data.Coins >= 0, "coins cannot go below zero"
+	end,
+})
+```
+
+Admin edits go through the same check. `Data.Edit` and `Data.Reset` try the
+change on a copy, and return `refused` without touching the live data when the
+check fails. See [Store and save player data](/core-guides/player-data/#refuse-data-that-should-never-be-saved).
+
+## Saves are cheaper and shutdown is safer
+
+- A burst of saves for one key costs one write. A save asked for while another
+  still waits to read the key joins it.
+- When a server begins shutting down, calls that are already retrying stop at
+  two attempts, so the final saves are not left waiting behind them.
+- `Data.SaveNow` now returns at its timeout, and counts only a save that read
+  the data after the call.
+
+## Tested under Server Authority
+
+Twill's test suite, 1115 checks, passes with `Workspace.AuthorityMode` set to
+`Server`. A two-sided playtest also delivered `Replication` writes, `Net`
+pushes, and `Ask` replies under the deferred signals that mode requires.
+
+## Other changes
+
+- `Tree.Build` takes an owner bag, which destroys the tree and its events when
+  it closes.
+- A `Navigation` agent is destroyed along with its model, and an agent for a
+  player's own character no longer takes network ownership of parts added to it
+  later.
+- Mail on a key written by ProfileStore keeps that format's count of letters
+  sent, so a new letter never reuses an old number.
+- `Store` sends and listens for release requests through `Shared`, so they count
+  against the same budget as the game's own messages.
+
+## Full changelog
+
+Every change in this release is listed in the
+[changelog](https://github.com/andrian-syh/rblx-twill/blob/main/CHANGELOG.md#1100---2026-09-25).
+
+<NewsPagination />
+
+</div>

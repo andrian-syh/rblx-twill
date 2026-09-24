@@ -6,7 +6,7 @@ description: Every listener runs, and none of them can stop the rest
 ```luau
 local Signal = require("@game/ReplicatedStorage/Twill").Signal
 
-local roundEnded = Signal.new<(winner: Player, score: number) -> ()>()
+local roundEnded = Signal.new<<(winner: Player, score: number) -> ()>>()
 
 roundEnded:Connect(function(winner, score)
 	announce(winner, score)
@@ -18,10 +18,11 @@ roundEnded:Fire(player, 12)
 ## Typed signals
 
 The type argument to `Signal.new` declares what the signal carries. `Fire` is
-checked against it, and listeners are typed without annotation.
+checked against it, and listeners are typed without annotation. Luau passes an
+explicit type argument between double angle brackets.
 
 ```luau
-local hit = Signal.new<(target: Model, damage: number) -> ()>()
+local hit = Signal.new<<(target: Model, damage: number) -> ()>>()
 
 hit:Fire(dummy, 25)
 hit:Fire(dummy)          -- refused by the type checker

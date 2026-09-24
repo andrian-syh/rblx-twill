@@ -1,6 +1,6 @@
 ---
-title: v1.5.0 — Cleanup That Finishes
-description: Released August 20, 2026. Twill's own cleanup container, closing newest first and running to the end
+title: "v1.5.0 — Cleanup that always finishes"
+description: "Released August 20, 2026. Twill's own Bag closes newest first and runs to the end even when a step fails"
 template: splash
 ---
 
@@ -17,122 +17,11 @@ import NewsPagination from '../../../components/NewsPagination.astro';
 		<span class="news-badge-date">August 20, 2026</span>
 	</div>
 	<p class="news-article-lead">
-		Twill's own cleanup container, closing newest first and running to the end.
+		Twill's own Bag closes newest first and runs to the end even when a step fails.
 	</p>
 </header>
 
-## The bug that motivated a rewrite
-
-Twill used to hand out cleanup bags from a bundled library. Those bags closed
-their entries in a loop with nothing catching a failure, and the loop guarded
-re-entry with a flag it raised on the way in and lowered on the way out.
-
-An entry whose cleanup raised escaped that loop. The flag stayed raised.
-
-From that moment the bag was dead in a way nothing announced: every remaining
-entry stayed held forever, closing it again returned immediately, and adding to
-it raised. Player bags are shared between systems, which is the whole point of
-them, so one service's bad `Destroy` silently took every other service's
-teardown down with it, for the rest of that player's session.
-
-`Twill.Bag` closes every entry inside its own `pcall`.
-
-```luau
-bag:Add(function() print("one") end)
-bag:Add(function() error("something went wrong") end)
-bag:Add(function() print("three") end)
-
-bag:Clean()
-```
-
-Prints `three`, reports the failure through [`Log`](/reference/log/), prints
-`one`, and ends empty and usable. Nothing is swallowed and nothing is stranded.
-
-## Newest first
-
-The last thing added is the first thing closed, so an entry is never torn down
-after the thing it leans on has already gone.
-
-```luau
-bag:Add(connectionPool)
-bag:Add(connectionPool:Open())   -- closed first, while the pool still exists
-```
-
-Reverse order is the only order that is correct when entries depend on each
-other. The container this replaces closed forward, and documented no order at
-all.
-
-## One loop, four properties
-
-Supporting all of these at once is the whole design, and every well-known
-container gives up at least one:
-
-| | Order | Cost | Survives a failing cleanup | `Add` from inside a cleanup |
-| --- | --- | --- | --- | --- |
-| Bag | newest first | linear | yes | yes |
-
-Entries are taken out of the array before they are run. That one detail is what
-makes closing linear while still letting a cleanup add to the bag it is closing.
-The alternative, rescanning for the next entry after each one, is quadratic.
-Measured in Studio, five thousand entries:
-
-| Entries | Rescanning | Bag |
-| --- | --- | --- |
-| 100 | 0.012 ms | 0.015 ms |
-| 1 000 | 0.284 ms | 0.105 ms |
-| 5 000 | 9.92 ms | 0.544 ms |
-
-Quadratic teardown is invisible until the frame a lot of players leave at once.
-
-## Names, so one thing at a time is easy
-
-```luau
-local function retarget(model: Model)
-	-- The previous tween is cancelled by being replaced.
-	bag:Add(makeTween(model), "Cancel", "aim")
-end
-```
-
-Without a name, that stacks a new tween on every retarget and cancels all of
-them at once when the bag finally closes.
-
-## No promise dependency, and promises still work
-
-```luau
-bag:Add(promise, "cancel")
-bag:Add(tween, "Cancel")
-bag:Add(sound, "Stop")
-```
-
-A promise carries `cancel`, so naming it is the entire feature. There is no
-`AddPromise` and nothing to register, because the method name is the extension
-point. Anything you write yourself is supported the day you write it.
-
-Something with no way to close is refused at the `Add` that offered it, with
-that line named. A container that accepts it and warns has accepted a leak.
-
-## Smaller things that used to be silent
-
-A one-shot listener whose signal fired during the connect used to leave a dead
-connection in the bag until the bag closed. Its entry is now registered before
-the signal is connected.
-
-A thread cancelling itself used to fail silently. It is now deferred.
-
-**Attaching to an instance that is already gone** used to raise. It now closes
-the bag at once, because the thing you were waiting for has already happened.
-
-## Counting, so a leak is testable
-
-```luau
-Scope.Close(player)
-assert(bagFor(player):Count() == 0, "something outlived the player")
-```
-
-`Count`, `IsEmpty`, and `IsDestroyed` exist mostly so a leak is something a test
-can assert against rather than something a session discovers slowly.
-
-## Upgrading
+## Before upgrading
 
 Rename the type. Everything else keeps its name.
 
@@ -141,10 +30,10 @@ Rename the type. Everything else keeps its name.
 +function MyService.OnPlayerReady(player, data, bag: Scope.Bag)
 ```
 
-`Add`, `Connect`, `Extend`, `Remove`, `Clean`, and `Destroy` are unchanged, so
-code that only uses those needs no edit at all.
+`Add`, `Connect`, `Extend`, `Remove`, `Clean` and `Destroy` are unchanged. Code
+that uses only those needs no edit.
 
-| Was | Now |
+| Before | After |
 | --- | --- |
 | `bag:AttachToInstance(part)` | `bag:AttachTo(part)` |
 | `bag:Pop(x)` | `bag:Release(x)` |
@@ -154,8 +43,93 @@ code that only uses those needs no edit at all.
 | `bag:AddPromise(p)` | `bag:Add(p, "cancel")` |
 | `Twill.Trove.new()` | `Twill.Bag.new()` |
 
-`Twill.Trove` is gone from the root table, and the bundled library is no longer
-shipped. See [Bag](/reference/bag/) for the full surface.
+Cleanup now runs newest first. Code that relied on the old forward order relied
+on behaviour that was never documented.
+
+## A failing cleanup no longer stops the bag
+
+The bundled library closed its entries in a loop that caught nothing, guarded by
+a flag raised on entry. A cleanup that raised escaped the loop and left the flag
+raised. Every remaining entry stayed held forever, and the bag cleaned nothing
+again. Player bags are shared between systems, so one service's failing
+`Destroy` stopped every other service's teardown.
+
+[`Twill.Bag`](/reference/bag/) closes every entry inside its own `pcall`:
+
+```luau
+bag:Add(function() print("one") end)
+bag:Add(function() error("something went wrong") end)
+bag:Add(function() print("three") end)
+
+bag:Clean()
+```
+
+This prints `three`, reports the failure through [`Log`](/reference/log/),
+prints `one`, and leaves the bag empty and usable.
+
+## Newest first
+
+The last entry added is the first closed, so nothing is torn down after the
+thing it depends on:
+
+```luau
+bag:Add(connectionPool)
+bag:Add(connectionPool:Open())   -- closed first, while the pool still exists
+```
+
+## Linear teardown
+
+Entries are taken out of the list before they run. This keeps closing linear
+while still allowing a cleanup to add to the bag it is closing. Measured in
+Studio:
+
+| Entries | Rescanning | Bag |
+| --- | --- | --- |
+| 100 | 0.012 ms | 0.015 ms |
+| 1000 | 0.284 ms | 0.105 ms |
+| 5000 | 9.92 ms | 0.544 ms |
+
+## Named entries
+
+A name keeps one thing at a time. Adding under a name closes whatever held that
+name before:
+
+```luau
+local function retarget(model: Model)
+	bag:Add(makeTween(model), "Cancel", "aim")
+end
+```
+
+Anything with a closing method can be held by naming the method, including
+promises, so there is no promise dependency:
+
+```luau
+bag:Add(promise, "cancel")
+bag:Add(tween, "Cancel")
+bag:Add(sound, "Stop")
+```
+
+Something with no way to close is refused at the `Add` call.
+
+## Other changes
+
+- A one-shot listener whose signal fired during the connect no longer leaves a
+  dead connection in the bag.
+- A thread that cancels itself is deferred instead of failing silently.
+- Attaching to an instance that is already gone closes the bag at once instead
+  of raising.
+- `Count`, `IsEmpty` and `IsDestroyed` let a test assert that nothing leaked:
+
+  ```luau
+  Scope.Close(player)
+  assert(bagFor(player):Count() == 0, "something outlived the player")
+  ```
+- `Twill.Trove` and the bundled Trove package are removed.
+
+## Full changelog
+
+Every change in this release is listed in the
+[changelog](https://github.com/andrian-syh/rblx-twill/blob/main/CHANGELOG.md#150---2026-08-20).
 
 <NewsPagination />
 

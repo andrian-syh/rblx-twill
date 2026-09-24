@@ -1,6 +1,6 @@
 ---
-title: v1.4.0 — Networking Is Twill's Own
-description: Released August 20, 2026. A built-in wire format, and a corrupt call that costs only itself
+title: "v1.4.0 — Networking on Twill's own wire format"
+description: "Released August 20, 2026. Net has a built-in wire format, and a corrupt call costs only itself"
 template: splash
 ---
 
@@ -17,127 +17,18 @@ import NewsPagination from '../../../components/NewsPagination.astro';
 		<span class="news-badge-date">August 20, 2026</span>
 	</div>
 	<p class="news-article-lead">
-		A built-in wire format, and a corrupt call that costs only itself.
+		Net has a built-in wire format, and a corrupt call costs only itself.
 	</p>
 </header>
 
-## One field changes what a bad message costs
+:::note[Since this release]
+Refusal messages no longer start with `Twill.Net:`. The examples below show the
+current wording, introduced in v1.7.0 and v1.7.1.
+:::
 
-Twill used to encode remotes through a bundled library. It no longer does.
-`Twill.Net` carries its own wire format, and the whole design turns on one
-field:
-**every call carries the length of its own body.**
+## Before upgrading
 
-That field is four bytes per call, and it buys three things at once.
-
-A corrupt call stops at its own frame. The reader steps to where the body ended
-whether or not reading it worked, so a call that arrives mangled costs itself
-and nothing else:
-
-```text
-1 = payload1  |  2 = refused  |  3 = payload3
-```
-
-A refused call is never read. Rate limiting can skip past a call it has already
-decided to drop, so the decoding is not paid for on behalf of the caller being
-turned away.
-
-And a hostile length is a bounded problem rather than an open one. It is checked
-against the frame it arrived in before anything is allocated for it.
-
-## Declaring with `Net.Types`
-
-```luau
-local Net = require("@game/ReplicatedStorage/Twill/Net")
-local Types = Net.Types
-
-local buy = Net.Declare("BuyItem", { Types.String(32) }, { Types.Boolean })
-local aim = Net.DeclareUnreliable("Aim", { Types.Vector3F32 })
-```
-
-Both sides compile the same declaration, so nothing describing a type is sent. A
-struct sends its values and not its field names. A thousand booleans is a
-hundred and twenty-five bytes.
-
-`Types.String(32)` is a ceiling, and it is enforced at the sender:
-
-```text
-Twill.Net: BuyItem argument 1 is 300 bytes, past its ceiling of 32
-```
-
-Previously a string past 255 bytes wrapped its length prefix and quietly
-corrupted everything written after it. A sender's own mistake now surfaces at
-the sender.
-
-## Things that used to be silent
-
-**Half floats** dropped very small values to zero, or worse, wrote garbage for
-them. They now round-trip subnormals, both infinities, and NaN.
-
-**A skewed CFrame** was flattened without a word by the compact rotation formats.
-`Types.CFrameRot` now refuses one, and `Types.CFrame` keeps all twelve
-components:
-
-```text
-Twill.Net: a CFrameRot is not a plain rotation, so it needs the full CFrame type
-```
-
-**A constant outside a declared set** used to arrive as `nil` on the far side.
-It is refused on the way out.
-
-**A union tag** naming a member the union was never declared with used to select
-whichever decoder that number happened to name. It is refused.
-
-## Two things a client can no longer say
-
-`Types.Player` is refused in an argument list. A player named on the wire is a
-player the sender chose, and the caller already arrives as your handler's first
-argument, from the engine:
-
-```text
-'Trade' argument 1 names a player, which only the server may say;
-the caller is given to the handler already
-```
-
-And only the client asks. The server never waits on an answer from a client, so
-there is no server thread a peer's message can reach. The number identifying a
-question is the asker's own and is looked up only in the asker's own table.
-
-An `Instance` from a client is still allowed, and still the client's choice. The
-decoder proves its shape: that it exists, that it is the class you named. It
-does not prove the caller may touch it. That belongs in `Validate`, where it is
-visible.
-
-## Metering happens before reading
-
-The bytes of a whole message are weighed before it is opened. Then each call is
-metered by name after four bytes of header and before its arguments are decoded.
-
-Batching many calls into one message therefore costs what those calls actually
-weigh, rather than what one message costs.
-
-A joining player is metered from their first call. Their standing is created the
-moment it is needed rather than by a hook that can lose a race against a message
-arriving in the same frame.
-
-## Boot order is not load bearing
-
-A remote declared on a client is given its number by the server, and that
-arrives a moment later. A call made before then is held and sent once the number
-arrives.
-
-```luau
-Net.OnReady(function()
-	-- everything declared here knows its number
-end)
-```
-
-Replication used to poll for up to thirty seconds before asking for its first
-snapshot. It waits on this instead.
-
-## Upgrading
-
-Two changes, both mechanical.
+Declarations are the only call sites that change.
 
 ```luau
 -- before
@@ -149,9 +40,100 @@ local Types = Net.Types
 Net.Declare("BuyItem", { Types.String(32) }, { Types.Boolean })
 ```
 
-`Twill.Packet` is gone from the root table, and the bundled library is no longer
-shipped. `Handle`, `IsHandled`, `Get`, and `List` are unchanged, and `List` now
-reports each remote's number alongside its signature.
+`Handle`, `IsHandled`, `Get` and `List` are unchanged. `Twill.Packet` and the
+bundled Packet package are removed.
+
+## A corrupt call costs only itself
+
+[`Twill.Net`](/reference/net/) has its own wire format, and every call carries
+the length of its own body. That field, four bytes per call, does three things:
+
+- **A corrupt call stops at its own frame.** The reader moves to where the body
+  ends whether or not reading it worked, so the calls behind it still arrive.
+- **A refused call is never decoded.** Rate limiting skips a call it has already
+  decided to drop.
+- **A hostile length is bounded.** It is checked against the frame it arrived in
+  before anything is allocated.
+
+```text
+1 = payload1  |  2 = refused  |  3 = payload3
+```
+
+## Remotes are declared with `Net.Types`
+
+```luau
+local Net = require("@game/ReplicatedStorage/Twill/Net")
+local Types = Net.Types
+
+local buy = Net.Declare("BuyItem", { Types.String(32) }, { Types.Boolean })
+local aim = Net.DeclareUnreliable("Aim", { Types.Vector3F32 })
+```
+
+Both sides compile the same declaration, so no type information travels. A
+struct sends its values without field names, and a thousand booleans take 125
+bytes.
+
+`Types.String(32)` is a ceiling enforced at the sender:
+
+```text
+BuyItem argument 1 is 300 bytes, past its ceiling of 32
+```
+
+Before, a string past 255 bytes wrapped its length prefix and corrupted
+everything written after it.
+
+## Clients cannot name players or reach server threads
+
+`Types.Player` is refused in an argument list. The caller already arrives as the
+handler's first argument, from the engine:
+
+```text
+'Trade' argument 1 names a player, which only the server may say;
+the caller is given to the handler already
+```
+
+Only a client asks questions. The server never waits on a client, and the number
+that identifies a question is looked up only in the asker's own table.
+
+An `Instance` sent by a client is still the client's choice. The decoder checks
+that it exists and is the class you named, but not that the caller may touch it.
+Check that in `Validate`.
+
+## Metering happens before decoding
+
+The bytes of a whole message are weighed before it is opened, and each call is
+metered by name before its arguments are decoded. Batching many calls into one
+message costs what those calls weigh. A joining player is metered from their
+first call.
+
+## Calls wait for numbering
+
+A remote declared on a client receives its number from the server a moment
+later. A call made before then is held and sent once the number arrives:
+
+```luau
+Net.OnReady(function()
+	-- every remote declared here has its number
+end)
+```
+
+`Replication` waits on `Net.OnReady` instead of polling for up to 30 seconds.
+
+## Other changes
+
+- Half floats round-trip very small values, both infinities, and NaN.
+- `Types.CFrameRot` refuses a CFrame that scales, skews or mirrors, instead of
+  flattening it. `Types.CFrame` keeps all twelve components.
+- A constant outside a declared set is refused when sent, instead of arriving as
+  `nil`.
+- A union tag naming an undeclared member is refused, instead of selecting an
+  arbitrary decoder.
+- `Net.List` reports each remote's number alongside its signature.
+
+## Full changelog
+
+Every change in this release is listed in the
+[changelog](https://github.com/andrian-syh/rblx-twill/blob/main/CHANGELOG.md#140---2026-08-20).
 
 <NewsPagination />
 

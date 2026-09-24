@@ -81,7 +81,7 @@ number alongside it and bind that instead:
 
 ```luau
 -- The exact value stays the source of truth; this one exists only to sort.
-data.Stats.CoinsRank = math.min(Twill.BigNumber.ToNumber(data.Coins), 2^53)
+data.Stats.CoinsRank = math.min(Twill.BigNumber.ToNumber(data.Coins), 2^53 - 1)
 ```
 
 ## Decimals

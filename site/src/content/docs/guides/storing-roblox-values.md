@@ -117,6 +117,12 @@ been playing with, which is the fastest way to catch a shape that only appears
 after a few sessions.
 
 ```luau
+local RunService = game:GetService("RunService")
+
+local Twill = require("@game/ReplicatedStorage/Twill")
+
+local logger = Twill.Log.new("DataAudit")
+
 function DataAuditService.Start()
 	if not RunService:IsStudio() then
 		return

@@ -41,7 +41,7 @@ Every line carries the scope that wrote it, and anything at warning level or
 above also names the nearest line outside Twill.
 
 ```text
-[Twill.Data] (from MyGame.Services.Shop:42) Edit refused: unsupported value
+[Twill.Data] (from MyGame.Services.Shop:42) main.Home for 123 holds Vector3; run it through Twill.Serialize.Encode first
  ^ who wrote it   ^ who caused it
 ```
 
@@ -66,7 +66,8 @@ required, and the names matter because Twill finds its own server half by name.
 The module named in the message is whichever one was needed first. See
 [Installing Twill](/getting-started/installation/).
 
-**`[Twill] 'X' is not a Twill module. It may be a server-only module.`**
+**`[Twill] 'X' is not a Twill module, or is server only`** on a client, or
+**`[Twill] 'X' is not a Twill module`** on the server
 
 Either the name is misspelled, or you reached a server-only module from the
 client. Anything holding saved data, purchases, filtering, unpredictable draws,
@@ -228,6 +229,17 @@ lands.
 
 Informational. An edit aimed at this player from elsewhere has arrived.
 
+**`dropped a queued edit to 'X': refused`**
+
+An edit sent from another server arrived, but the scope's `Validate` check
+refused the result, so nothing changed. `blocked` in the same place means a step
+along the path is not a table.
+
+**`an edit to 'X' in 'Y' was refused, so nothing changed: ...`**
+
+`Data.Edit` or `Data.Reset` tried the change on a copy, and `Validate` refused
+it. The call returned `"refused"`, and the live data is untouched.
+
 **`could not read 123: ...`** or **`stored data for 123 could not be upgraded: ...`**
 
 `GetOffline` failed to read, or the stored data failed a migration. It answers
@@ -270,6 +282,13 @@ name a key rather than a player.
 
 The same key was opened twice on this server, and the earlier handle is now
 inert. Whatever held it should let it go; the newer session owns the key.
+
+**`'X' in 'Y' was not written, and keeps what it held before: Validate refused it: ...`**
+
+The store's `Validate` check refused what the key holds, so the save was skipped
+and the last good data stays stored. A check that raised reads
+`Validate raised an error: ...`. Until the data passes again, no later save
+lands either, so find what put it in that state.
 
 **`'X' in 'Y' could not be written: ...`**
 
@@ -348,7 +367,7 @@ The caller exceeded the remote's rate. Refusals are reported at most once every
 few seconds per player and remote, with a count, so the log cannot become an
 amplifier for the flood it is refusing.
 
-**`'P' lacks the rank for 'X'`**
+**`'P' lacks the rank for 'X' (N call(s) refused)`**
 
 `MinimumRank` refused them, before any of their allowance was spent.
 
@@ -507,7 +526,7 @@ for Cmdr's client half to replicate, and the lazy accessor on the root table is
 not allowed to wait. Require the path directly. Once loaded, `Twill.Admin` works
 normally.
 
-**`[Twill] CmdrClient never appeared; the server has to require Twill.Admin before a client can.`**
+**`[Twill] CmdrClient never appeared; the server must require Twill.Admin first`**
 
 The client waited for Cmdr's client half and it never arrived, because the
 server never required `Twill.Admin`. The server require is what moves it into
@@ -543,7 +562,7 @@ Not from Twill's own `moderation` command, which reads durations exactly. This
 is Cmdr's built-in `duration` type, which resolves units by fuzzy match. Check
 which type your own command declares.
 
-**`A big: value is whole digits, such as big:1500`**
+**`A big: value is whole digits, such as big:1500.`**
 
 From `playerdata set`. The `big:` mark writes a
 [big number](/reference/bignumber/), so what follows it has to be digits, with an
@@ -666,6 +685,61 @@ succeeded. Both answer `nil`.
 Filter once when text is submitted, store the result, and show the stored
 result. Filtering on every draw exhausts the per-user limit and achieves
 nothing.
+
+## Cross-server and configs
+
+These come from [`Shared`](/reference/shared/), [`Teleport`](/reference/teleport/),
+[`Board`](/reference/board/), and [`Config`](/reference/config/).
+
+**`a message on 'X' was not published: ...`**
+
+`Shared.Publish` ran out of tries, or this server's publishing allowance stayed
+full for the whole wait. Messages are best effort, so nothing that matters may
+depend on one arriving.
+
+**`not listening to 'X': this server is at its subscription allowance`**
+
+The server already holds as many subscriptions as its player count allows. Close
+subscriptions you no longer need; each one is released when its owner bag
+closes.
+
+**`'X' in 'Y' was not written: ...`** from `Twill.Shared`
+
+A memory store write failed after its retries. A reason naming
+`DataStructureMemoryOverLimit` means the experience's memory quota is full:
+shorten lifetimes or remove entries you no longer need.
+
+**`N player(s) could not be sent to X: ...`** or **`'P' could not be sent to X (Flooded): ...`**
+
+A teleport failed after its retries, or the platform turned a player down for a
+reason waiting cannot fix. `Teleport.OnFailed` fires for each player, with the
+`Enum.TeleportResult`.
+
+**`'P' arrived carrying data, but Token is not configured to read it`**
+
+The destination place never called `Token.Configure`. Every place in the
+experience that receives data needs the same secret.
+
+**`'X' on 'Y' was not written and waits for the next try: ...`**
+
+A leaderboard write failed. The change stays queued, merged with anything asked
+for since, and goes again on the next flush.
+
+**`configs could not be loaded (...); defaults stand in while this keeps trying`**
+
+Experience configs are unreachable, usually because the place is not published
+or configs have never been created. Every key reads its default until they
+arrive.
+
+**`'X' was delivered as a string but its default is a number; the default is used`**
+
+A published config value has a different type from the default declared for
+it. Fix the value in the Creator Hub, or the default in `Config.Configure`.
+
+**`ConfigService: Config value not found for key "X"`**
+
+Written by the engine, not by Twill, when a declared key has no published
+value. The default is used. Create the key in the Creator Hub to silence it.
 
 ## Studio and tooling
 

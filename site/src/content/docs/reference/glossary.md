@@ -30,6 +30,7 @@ what it usually does.
 | **Player bag** | Closes when that player leaves. Handed to every service as the third argument of `OnPlayerReady`, which is why most code never calls `Scope` directly. |
 | **Character bag** | Closes when the character model is removed, which Roblox does at **respawn**, not at the moment of death. For anything that should outlive dying, such as a ragdoll. |
 | **Alive bag** | Closes the instant the humanoid dies, or on removal if the character is taken away without dying. For anything that should stop while a player is dead: movement, abilities, input. |
+| **Owner** | The bag passed as the last argument to a Twill function that starts something lasting. Whatever was started closes with it. |
 | **Framework bag** | `Scope.Framework()`, which lives as long as the session. Anything in Twill that starts a connection without an owner puts it here, because nothing in the framework is allowed to start a connection nobody owns. |
 
 ## Player data
@@ -42,6 +43,7 @@ what it usually does.
 | **Scope** (data) | The name of one store belonging to a user: `"main"` for the primary profile, or a branch name. Used by `Data.Edit`, `Data.Reset`, and the admin console. |
 | **Session** | `Store`'s hold on a key. One server at a time, which is what stops two servers writing over each other. Losing it mid-play costs the player their place on that server rather than their progress. |
 | **Outcome** | The typed value returned by `Data.Edit` and `Data.Reset`, naming what actually happened instead of a boolean that hides the reason. |
+| **Validate** | A check you give `Data` or `Store`. A save it refuses is skipped and the last good data stays stored, and an edit it refuses returns the outcome `refused`. |
 | **Storable shape** | Data a DataStore can hold and return unchanged. The traps are silent: a table mixing named and numbered keys, and gaps in a numbering, both come back wrong with no error. `Serialize.FindUnstorable` names them. |
 
 Three different things are called a scope. A data scope names a store, such as
@@ -72,4 +74,6 @@ other two. They never appear in the same argument, but the word is overloaded.
 | **Fail closed** | Answering with a refusal when a check cannot be completed, rather than with the unchecked value. [`Filter`](/reference/filter/) returns `nil` when the Roblox filter is unreachable, never the text that went in. |
 | **Commitment** | A digest published **before** a draw is made, proving the outcome was fixed in advance. See [`Random`](/reference/random/#rounds). |
 | **Round** | The object returned by `Random.Commit()`. It carries a commitment, draws from a reproducible stream, and can reveal its seed for auditing. |
+| **Budget** (Shared) | This server's allowance for publishing, subscribing and memory store requests, counted per minute by [`Shared`](/reference/shared/). |
+| **Ticket** (Teleport) | The signed claim a teleported player carries. It names the data waiting in a memory store, which never passes through the client. |
 | **Audience** | A string signed into a token and checked when it is read, so a token minted for one purpose is refused by every other. |

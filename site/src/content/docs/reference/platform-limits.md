@@ -67,7 +67,9 @@ server was listening, and never writes over a session it does not own.
   DataStore value. This is the limit `Compress.Encode` exists to help with, and
   it is easy to exceed with an ordinary table.
 - **Sends, receives, and subscriptions all have their own budgets**, each scaling
-  with players or servers.
+  with players or servers. [`Shared`](/reference/shared/) counts this server's
+  publishes and subscriptions against them, and waits a moment for room rather
+  than failing at once.
 
 Use it for announcements, shutdown coordination, and cache invalidation. Do not
 use it as a data channel.
@@ -89,8 +91,44 @@ sorted map, a queue, and a hash map.
   A loop that looks like one call per tick can be several.
 - Values must be JSON-serialisable, so the same shape notes as DataStore apply.
 
+[`Shared`](/reference/shared/) counts this server's requests and retries a throttled
+one. Because the quota belongs to the whole experience, it counts a fair share
+rather than an exact figure.
+
 Current numbers:
 [Memory stores](https://create.roblox.com/docs/cloud-services/memory-stores).
+
+## Ordered data stores
+
+Leaderboards run on ordered data stores, which hold whole numbers only and have
+a tighter write budget per server than ordinary data stores.
+[`Board`](/reference/board/) reads the top on a timer, gathers changes into one write
+per entry, and writes only as fast as the budget reported by the engine allows.
+
+## Teleports
+
+- **At most 50 players per call.** [`Teleport`](/reference/teleport/) splits a larger
+  group into calls of 50, and reserves one server first so the group stays
+  together.
+- **Teleport data passes through the client.** Anything sent in it can be read,
+  and possibly altered. `Teleport` keeps the data in a memory store and sends
+  only a signed ticket.
+- **Studio cannot teleport.** Test teleports in a published place.
+
+Current details: [Teleport between places][teleport].
+
+[teleport]: https://create.roblox.com/docs/projects/teleport
+
+## Experience configs
+
+Configs are read on the server only. A value has a size ceiling per type, and an
+experience has a ceiling on the number of active configs. [`Config`](/reference/config/)
+answers every declared key from a default until configs arrive, and keeps the
+default when a delivered value has the wrong type.
+
+Current details: [Experience configs][configs].
+
+[configs]: https://create.roblox.com/docs/production/configs
 
 ## Attributes
 

@@ -8,7 +8,8 @@ cannot be abused, state that reaches the client, data that survives the session.
 
 Twill is that foundation, written once and running on both sides of the game. It
 covers boot order, networking, replication, player data, monetisation,
-permissions, and an admin console.
+permissions, an admin console, live configs, teleports, leaderboards and
+cross-server messaging.
 
 It is not a gameplay kit and not a reactive UI layer. Twill gives you no
 character controller, no combat, no camera, and no input handling, and it does
@@ -60,11 +61,6 @@ session, remotes that strangers will eventually probe, state the client has to
 be told about, and a growing pile of systems that all have to start in the right
 order and stop cleanly when a player leaves.
 
-If you have built that scaffolding before, you know it never gets more
-interesting the second time, and that the bugs it produces arrive late, in
-production, and in somebody's save file. Twill is the version you do not write
-again.
-
 It fits less well if you want a ready-made gameplay kit, or if your project is
 small enough that one `Script` already settles it.
 
@@ -73,7 +69,7 @@ small enough that one `Script` already settles it.
 **Safe defaults you cannot forget.** Every remote served through `Net.Handle` is
 metered from its first line. A rate limit is not an option you can leave off.
 The server half is never replicated, so thresholds, the metering algorithm, and
-each player's allowance cannot be studied by anyone.
+each player's allowance cannot be read by a client.
 
 **Every module stands alone.** You can use `Twill.Log` and nothing else. Only
 `Lifecycle` is a framework in the strict sense; the rest are libraries you call.
@@ -129,11 +125,10 @@ against.
 
 ## Status
 
-**v1.9.0.** The API is stable, and where one does move, the
+**v1.10.0.** The API is stable. When a release asks you to change code, its
+entry in the
 [changelog](https://github.com/andrian-syh/rblx-twill/blob/main/CHANGELOG.md)
-carries a Migration section saying exactly what to rewrite. A major version is
-reserved for a release that reshapes how the framework works rather than for any
-single change.
+opens with a Migration section that says exactly what to rewrite.
 
 `Twill.Version` reports the version the installed copy carries, which is the
 quickest way to tell what a place is actually running.

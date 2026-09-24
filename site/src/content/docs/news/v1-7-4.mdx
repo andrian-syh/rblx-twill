@@ -1,6 +1,6 @@
 ---
-title: v1.7.4 — Told Apart, or Not Sent
-description: Released August 28, 2026. A union that could not tell its members apart now says so, instead of picking one
+title: "v1.7.4 — Unions carry what they accept"
+description: "Released August 28, 2026. A union refuses members it cannot tell apart, and hostile payloads no longer cost memory"
 template: splash
 ---
 
@@ -17,18 +17,15 @@ import NewsPagination from '../../../components/NewsPagination.astro';
 		<span class="news-badge-date">August 28, 2026</span>
 	</div>
 	<p class="news-article-lead">
-		A union that could not tell its members apart now says so, instead of picking one.
+		A union refuses members it cannot tell apart, and hostile payloads no longer cost memory.
 	</p>
 </header>
 
-## The member nobody named
+## Unions refuse members they cannot tell apart
 
-A [`Union`](/reference/net/#compound) is told what shapes it may carry, but it
-is never told which one a caller meant. It works that out from the value, and
-for most declarations there is nothing to work out: a string is the string
-member, a number is the number member.
-
-Where two members could both answer to one value, it picked the first it found.
+A [`Union`](/reference/net/#compound) works out which member a value belongs to
+from the value itself. Where two members could both answer to one value, it used
+to pick the first it found.
 
 ```luau
 local Payload = Net.Types.Union(
@@ -38,21 +35,15 @@ local Payload = Net.Types.Union(
 ```
 
 Both members are a table when sent. The array was tried first, so every table
-was written as an array, and a map, having no numbered entries, arrived empty.
-No error, no warning, no missing field to notice. A table with nothing in it.
+was written as an array, and a map arrived empty, with no error or warning. The
+same fault had two other forms:
 
-The same shape had two quieter forms. `Union(NumberVarU, NumberF32)` sent 1.5
-and delivered 1; its signed twin delivered −2, the fraction folded through a
-zigzag never meant to hold one. `Union(Color3, Color3F32)` reached for the
-eight-bit member before the finer one and quantised a colour that had asked not
-to be.
+- `Union(NumberVarU, NumberF32)` sent 1.5 and delivered 1. Its signed twin
+  delivered -2.
+- `Union(Color3, Color3F32)` quantised a colour to eight bits.
 
-## What replaced the guessing
-
-Members that share a runtime shape are now told apart by the widest of them, and
-the widest is the one that carries what the others could. Every Roblox datatype
-here stores single precision, and a Luau number is a double, so there is always
-a member that loses nothing:
+Members that share a runtime shape are now told apart by the widest of them,
+which carries everything the others could:
 
 ```luau
 Union(NumberU8, NumberF64)       -- keeps its double
@@ -60,72 +51,49 @@ Union(Vector3F32, Vector3F16)    -- keeps its precision
 Union(CFrame, CFrameRot)         -- keeps its skew
 ```
 
-A union naming no such member cannot be resolved by any rule, so it is refused
-where it is written rather than where it is sent:
+A union with no such member is refused where it is declared, not where it is
+sent:
 
 ```text
 BuyItem argument 1 names 2 members that all look like table when sent,
 and nothing says which one a value meant
 ```
 
-This is the rule every tagged format arrives at. Protocol Buffers and Cap'n
-Proto make the sender name the variant outright, because a value cannot be
-trusted to name itself. A union that infers has to refuse what it cannot infer.
-
-## Ten datatypes that could be named but never sent
+## Ten more datatypes travel in a union
 
 `UDim`, `UDim2`, `Rect`, `Region3`, `NumberRange`, `TweenInfo`, `DateTime`,
-`BrickColor`, `NumberSequence`, and `ColorSequence` could all be written into a
-union declaration. None of them could be carried by one: the declaration
-compiled, and the first send refused the value as something the union was not
-declared to carry.
+`BrickColor`, `NumberSequence` and `ColorSequence` could be declared in a union
+but never carried by one. They travel now.
 
-They travel now. A member of a kind that still cannot be recognised, such as
-`Any`, `Nil`, or `Static`, is refused at the declaration instead of at the first
-send.
+A member of a kind that still cannot be recognised, such as `Any`, `Nil` or
+`Static`, is refused at the declaration instead of at the first send.
 
-## A count is somebody else's number
+## Security fixes
 
-`Compress` reads back what `Compress` wrote, and a run of values in that format
-carries its own length. That length was believed: the table was built for it,
-and only then were the values read into it.
+- **Memory exhaustion in `Compress`.** A run of values carries its own count,
+  and a table was built for that count before the values were read. Five bytes
+  could ask for about 90 MB. A count is now weighed against the bytes that
+  arrived with it, so a malformed payload returns `nil`.
+- **A replication guard that covered half its key.**
+  [`SetValidator`](/reference/replication/#replicationsetvalidator) refused
+  `Set` and `Mutate`, but never saw `SetPath`, `SetPathFor`, `Increment` or
+  `IncrementFor`. Every write now answers to the guard, and a field is tried on
+  a copy first, so a refusal leaves nothing behind.
+- **Unmetered instances.** Metering weighed a message's payload but not the
+  instances travelling beside it. Both are charged now.
 
-```text
-5 bytes in  →  93 MB and a quarter second, before a single value was read
-```
+## Other changes
 
-A count is now weighed against the bytes that arrived with it before anything is
-built. There are only so many values a stream of a given length can hold, and a
-count claiming more than that ends the read. A malformed payload costs a `nil`.
+- A colour crossing through a channel no screen can show returns a valid colour
+  instead of `nan`.
+- [`Tween`](/reference/tween/) applies the same finite-number rule to a rate and
+  a repeat count as to a time and a delay.
+- The descriptions of `Navigation` and `Net.List` now match what they do.
 
-## A guard that covered half its key
+## Full changelog
 
-[`SetValidator`](/reference/replication/#replicationsetvalidator) is documented
-to refuse writes to a key unless a test passes. It refused `Set` and `Mutate`.
-It never saw `SetPath`, `SetPathFor`, `Increment`, or `IncrementFor`, so a key
-guarded for its shape could be given any shape at all one field at a time.
-
-Every write answers to the guard now. A field written into a guarded key is
-tried on a copy of it first, so a refusal leaves nothing behind: not the value,
-and not the tables the write would have had to build along the way.
-
-## Smaller things
-
-**The metering that decides whether a message is worth opening** weighed the
-payload and not the instances travelling beside it. A tiny payload could carry
-as many as it liked for almost nothing. Both are charged for now.
-
-**A colour crossing a channel no screen can show** answered with `nan` for the
-whole colour. The even space the crossing runs through has no answer for a
-channel below nothing, and now it is not asked for one.
-
-**`Tween` refused a time and a delay that were not finite** and accepted a rate
-and a repeat count that were not. All four are held to the same rule.
-
-**Two module descriptions were wrong.** `Navigation` claimed to answer a goal
-against the nearest place an agent can stand, which it has never done.
-`Net.List` was described as reporting what a client may send, when it reports
-what has been declared.
+Every change in this release is listed in the
+[changelog](https://github.com/andrian-syh/rblx-twill/blob/main/CHANGELOG.md#174---2026-08-28).
 
 <NewsPagination />
 

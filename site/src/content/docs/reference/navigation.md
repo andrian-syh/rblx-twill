@@ -162,6 +162,9 @@ and for every part added to it later, so where it went is decided there rather
 than on somebody's machine. A player's own character is left alone, since taking
 that would take their control with it.
 
+The agent is destroyed when its model is destroyed, whether or not it has an
+owner.
+
 ### `Options`
 
 ```luau

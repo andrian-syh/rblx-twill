@@ -100,11 +100,12 @@ the exact one and bind that:
 
 ```luau
 -- The exact value stays the source of truth. This exists only to sort.
-data.Stats.CoinsRank = math.min(Twill.BigNumber.ToNumber(data.Coins), 2^53)
+data.Stats.CoinsRank = math.min(Twill.BigNumber.ToNumber(data.Coins), 2^53 - 1)
 ```
 
-The same applies to an OrderedDataStore leaderboard, which also takes numbers
-only.
+The same applies to a leaderboard. An ordered data store, and `Twill.Board`
+over it, holds whole numbers below 2^53 only, so write the clamped value there
+too.
 
 ## Migrating a live currency
 

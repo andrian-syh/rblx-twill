@@ -198,6 +198,7 @@ export default defineConfig({
 								{ label: 'Replication', slug: 'reference/replication' },
 								{ label: 'Data', slug: 'reference/data' },
 								{ label: 'Store', slug: 'reference/store' },
+								{ label: 'Shared', slug: 'reference/shared' },
 								{ label: 'Scope', slug: 'reference/scope' },
 								{ label: 'Bag', slug: 'reference/bag' },
 								{ label: 'Signal', slug: 'reference/signal' },
@@ -220,6 +221,8 @@ export default defineConfig({
 								{ label: 'BigNumber', slug: 'reference/bignumber' },
 								{ label: 'Chance', slug: 'reference/chance' },
 								{ label: 'Tween', slug: 'reference/tween' },
+								{ label: 'Async', slug: 'reference/async' },
+								{ label: 'Pool', slug: 'reference/pool' },
 							],
 						},
 						{
@@ -234,6 +237,9 @@ export default defineConfig({
 								{ label: 'Filter', slug: 'reference/filter' },
 								{ label: 'Random', slug: 'reference/random' },
 								{ label: 'Token', slug: 'reference/token' },
+								{ label: 'Config', slug: 'reference/config' },
+								{ label: 'Teleport', slug: 'reference/teleport' },
+								{ label: 'Board', slug: 'reference/board' },
 							],
 						},
 						{

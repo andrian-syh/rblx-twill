@@ -1,6 +1,6 @@
 ---
-title: v1.0.0 — Initial Stable Release
-description: Released August 12, 2026. First release of the modular pure-Luau game framework
+title: "v1.0.0 — First release"
+description: "Released August 12, 2026. Twill's first release: a modular Luau framework whose API is stable until the next major version"
 template: splash
 ---
 
@@ -17,72 +17,71 @@ import NewsPagination from '../../../components/NewsPagination.astro';
 		<span class="news-badge-date">August 12, 2026</span>
 	</div>
 	<p class="news-article-lead">
-		The API is stable, and breaking changes wait for a major version.
+		Twill's first release: a modular Luau framework whose API is stable until the next major version.
 	</p>
 </header>
 
+:::note[Since this release]
+Much of what v1.0.0 bundled is now Twill's own code. Player data runs on
+[`Store`](/reference/store/) instead of ProfileStore (v1.8.0). Signals, cleanup
+bags, networking, weighted draws and compression replaced their bundled packages
+between v1.1.0 and v1.7.2. See the [news](/news/) for each release.
+:::
+
+## Install
+
 [Download the model](https://github.com/andrian-syh/rblx-twill/releases/tag/v1.0.0)
-from the release, or copy the folders in by hand. Either way the install is the
-same two folders, and both are required. See
+from the release, or copy the folders in by hand. Either way, the install is two
+folders, and both are required. See
 [Installing Twill](/getting-started/installation/).
 
-Twill ships with a documentation page per module carrying signatures taken from
-the source, and a test suite that runs on every playtest in Studio.
+`Twill.Version` reports which release a place is running.
 
-`Twill.Version` reports what an installed copy carries, which is the quickest
-way to tell what a place is actually running.
+## What is in it
 
-## What went into it
+- **Core:** `Lifecycle`, `Net`, `Replication`, `Data`, `Scope` and `Log`.
+- **Utilities:** `Schema`, `Limit`, `Loop`, `Watch`, `Format`, `Serialize`,
+  `Compress`, `Tree`, `Error` and `BigNumber`.
+- **Game systems:** `Authorization`, `Admin`, `Monetization`, `Leaderstats`,
+  `Filter`, `Random` and `Token`.
 
-* **`Compress`.** Large values made small and safe to send as text. `Encode`
-computes both a JSON form and a compressed form and returns the smaller, so the
-result is never longer than the JSON it replaced, while a few thousand
-repetitive rows land near a fifth of it. The byte count travels with the
-payload, so a truncated payload is refused rather than read as a smaller value.
+Every module works on its own, has a reference page with signatures taken from
+the source, and is covered by a test suite that runs on every playtest in
+Studio.
 
-* **`Random` and `Token`.** Draws come from a cryptographic generator rather than
-`math.random`, and a round can publish a commitment before drawing so the
-outcome can be audited afterwards. `Token` signs a payload with HMAC-SHA256 so a
-redeem code can be checked without a DataStore lookup.
+## Highlights
 
-* **`Data` bound to `Replication`.** Naming fields in `Replicate` sends them to
-their owner's client, following direct mutation, with no mirroring by hand.
+- **`Compress`** returns whichever is smaller, JSON or the compressed form, so
+  the result is never longer than the JSON it replaces. The byte count travels
+  with the payload, so a truncated payload is refused.
+- **`Random`** draws from a cryptographic generator. A round can publish a
+  commitment before drawing, so the outcome can be audited afterwards.
+- **`Token`** signs a payload with HMAC-SHA256, so a redeem code can be checked
+  without a DataStore lookup.
+- **`Data` with `Replication`.** Fields named in `Replicate` reach their owner's
+  client as the server changes them.
+- **Server modules are typed from their own source,** so a signature cannot
+  drift between the server half and the root table.
+- **Every bundled component is traced and licensed.** See
+  [Bundled packages](/reference/bundled-packages/).
 
-* **Server modules typed from their own source.** The root table used to carry
-hand-written types for the six server-only modules, because a client's type
-checker cannot require them. They are now taken from the server half directly,
-so a signature cannot drift between the two without the source moving. Nothing
-changes at runtime: those types are resolved by the type solver and never
-executed.
+## Defects fixed before release
 
-* **Every bundled component is traced and licensed.** The `Cryptography` package
-is recorded as MIT by daily3014 and Xoifaii, and the notices file no longer
-claims that every bundled component is vendored unmodified, since that one
-carries three fixes to its random number generator. See
-[Bundled packages](/reference/bundled-packages/).
+- `Schema` accepted NaN and infinity, which fail every range comparison. Both
+  are now refused at the type check.
+- `Schema` accepted a dictionary as an empty array. An array rule now requires
+  keys to be exactly `1..n`.
+- `Replication` ignored numeric path segments when writing and waking
+  subscribers, so `Subscribe("Data.Items.2")` never fired.
+- `Serialize.FindUnstorable` did not inspect keys. It now refuses mixed keys,
+  gaps in a numbering, and text that is not valid UTF-8.
+- The bundled random number generator could be left permanently broken by a
+  failed entropy gather. The vendored copy fixes it.
 
-## Defects found and fixed before release
+## Full changelog
 
-* **`Schema` accepted NaN and infinity.** Both comparisons against a range are
-false for NaN, so it passed every number rule, including an unbounded one.
-Neither survives a DataStore, so both are now refused at the type check rather
-than at the range check.
-
-* **`Schema` accepted a dictionary as an array.** `{ a = 1 }` has a length of zero,
-so it passed every array rule as though it were empty. An array rule now
-requires the keys to be exactly `1..n`.
-
-* **`Replication` ignored numeric path segments on two of three paths.** Resolving
-a path fell back to a numeric key, but writing and waking subscribers did not,
-so `Subscribe("Data.Items.2")` never fired. All three now share one lookup.
-
-* **`Serialize.FindUnstorable` did not inspect keys.** A table mixing named and
-numbered keys encodes to an array with the named keys silently dropped. It is
-now refused, along with gaps in a numbering and text that is not valid UTF-8.
-
-* **The bundled CSPRNG could be left permanently broken.** A failed entropy gather
-was not checked, and reseeding cleared the key before gathering. Both are fixed
-in the vendored copy.
+Every change in this release is listed in the
+[changelog](https://github.com/andrian-syh/rblx-twill/blob/main/CHANGELOG.md#100---2026-08-12).
 
 <NewsPagination />
 
