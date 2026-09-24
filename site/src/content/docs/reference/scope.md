@@ -69,7 +69,9 @@ Returns the bag that closes when this player leaves.
 function Scope.Player(player: Player): Bag
 ```
 
-Created on the first ask. Throws when given anything but a `Player`.
+Created on the first ask. For a player who has already left, answers a bag that
+closes a moment later instead, so nothing put in it outlives them. Throws when
+given anything but a `Player`.
 
 ### `Scope.Character`
 

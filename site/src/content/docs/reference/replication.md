@@ -42,6 +42,12 @@ contain a dot.
 Writes are collected and sent on an interval rather than per write. Setting one
 key several times in a frame costs one message.
 
+Each key travels as its own call. A key too large to send, or holding a value
+[`Types.Any`](/reference/net/#typesany) cannot carry, holds back only itself: it
+is reported, the record of what the player last received stays where it was,
+and it goes again the next time the key is written. Every other key still
+arrives.
+
 What is sent is a difference, not the whole value. Each player has a private
 record of what they were last sent, and only the fields that moved travel. A
 first message carries everything the player can see.
@@ -135,7 +141,9 @@ Publishes a value only one player receives.
 function Replication.SetFor(player: Player, key: string, value: any)
 ```
 
-Does nothing for a player who is not on this server.
+Does nothing for a player who is not on this server. Works from the moment the
+player joins, including inside a `PlayerAdded` listener that runs before this
+module has heard of the join.
 
 #### `Replication.SetPathFor`
 
@@ -253,7 +261,8 @@ Returns how much has gone out since this server started.
 function Replication.GetStats(): { Messages: number, Keys: number }
 ```
 
-A snapshot, safe to keep. It does not follow later counting.
+A snapshot, safe to keep. It does not follow later counting. Each key travels as
+its own call, so both fields count key updates sent.
 
 ### Either side
 
@@ -327,3 +336,5 @@ Giving up is reported through the second return, never raised.
 | `WaitFor` default timeout | 10 seconds |
 | Wait for the server to register | 30 seconds |
 | Requests for a full view | 2 per second, per player |
+| Largest value one key carries | The server to client bounds of [`Types.Any`](/reference/net/#typesany) |
+| Reports of a key that could not be sent | 1 per 5 seconds, per player and key |

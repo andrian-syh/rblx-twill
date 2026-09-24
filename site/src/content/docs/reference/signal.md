@@ -45,7 +45,8 @@ behave:
   reached yet.
 
 Firing a signal from inside one of its own listeners runs the new firing there
-and then.
+and then. At 50 levels of that, `Fire` refuses with an error naming the cause,
+rather than running out of stack somewhere less obvious.
 
 ## Waiting
 
@@ -146,7 +147,8 @@ Calls every listener in the order they connected.
 function Signal:Fire(...: any)
 ```
 
-Throws on a destroyed signal.
+Throws on a destroyed signal, and when fired from inside its own listeners 50
+levels deep.
 
 ### `Signal:Count`
 
@@ -235,3 +237,9 @@ function Connection:Reconnect()
 
 Reconnecting puts the listener last, not back where it was. Throws when the
 signal has been destroyed.
+
+## Limits
+
+| Limit | Value |
+| :--- | ---: |
+| Firing from inside its own listeners | 50 levels |

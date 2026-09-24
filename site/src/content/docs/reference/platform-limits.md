@@ -35,7 +35,7 @@ Beyond the shape, three ceilings are worth knowing about:
 | Ceiling | Why it matters |
 | --- | --- |
 | Value size per key | Generous, but a profile that grows without bound will reach it. Reach for [`Compress`](/reference/compress/) before redesigning. |
-| Requests per minute | Scales with concurrent players, and is shared with Open Cloud. `Store` paces its own writes and queues them per key. |
+| Requests per minute | Scales with concurrent players, is counted for the whole experience rather than per server, and is shared with Open Cloud. `Store` asks the engine for the remaining budget before each call, and queues its own writes per key. |
 | Throughput per key | A separate budget from the request count, measured in bytes per minute. A large profile saved often can exhaust this while staying well inside the request budget. |
 
 That last one is the trap, because it is invisible until a profile grows. Two

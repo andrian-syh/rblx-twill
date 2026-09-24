@@ -41,6 +41,9 @@ An instance already in the set when the watch starts is announced through the
 same path as one arriving later, so the callback sees no difference between
 them.
 
+A callback that raises is reported with its traceback and stepped over. The
+member stays in the set, and every other member is still announced.
+
 ## API
 
 ### `Watch.Players`

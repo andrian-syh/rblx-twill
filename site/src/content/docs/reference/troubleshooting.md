@@ -250,6 +250,17 @@ Check three things in order: that you mutated the table `Data.Get` returned
 rather than a copy of it, that `Data.IsReady(player)` is true, and that Studio
 Access to API Services is enabled.
 
+**`'X' migration to version N failed: ...; their stored data was left exactly as it was`**
+
+A migration step raised. The player was kicked, and the steps ran on a copy, so
+nothing they had is lost or half converted. Fix the step, and the next load runs
+it again from the version the data carries.
+
+**`storage cannot be reached from this Studio session (...); player data lives in memory ...`**
+
+Studio Access to API Services is off, or Studio is offline. Players load from
+the template, and nothing is saved when the session stops.
+
 ## Storage
 
 These come from [`Store`](/reference/store/), underneath `Data`. Most of them
@@ -277,6 +288,11 @@ failing rather than waiting longer.
 The key holds a value that is neither a Twill envelope nor a ProfileStore one.
 Nothing is overwritten, because overwriting is how data is lost. Read it with
 `playerdata versions` before deciding what it was.
+
+**`'X' could not be packed to be written, so it was not taken`**
+
+`Compress` is on for the store and the data could not be packed. The key is
+left as it was. Look for a value `Compress` refuses, such as a cyclic table.
 
 **`storage is failing repeatedly; the last of it was '...'`**
 
@@ -377,6 +393,16 @@ the ones behind it in the same message still arrive. From a client this is
 ordinarily somebody probing the remote; between your own two sides it means the
 declarations have drifted apart.
 
+**`a remote is listened to on a client; the server serves one with Net.Handle ...`**
+
+`Remote:Connect`, `Once`, or `Wait` was called on the server. A server listener
+would receive calls with no metering. Serve the remote with `Net.Handle`.
+
+**`a call could not be written (N time(s)): ...`**
+
+A value did not fit its declared type, and the call was dropped at the sender.
+The rest of the message is unaffected. The reason names the field.
+
 ## Replication
 
 **The client never receives anything**
@@ -396,6 +422,13 @@ The server half never loaded, which usually means the server never required
 A change arrived for a key this client has never held. Applying it would build a
 value the server never published. In practice it means the readiness signal was
 missed rather than a message being lost.
+
+**`'X' could not be sent to Y (N time(s)); it goes again on its next write`**
+
+The key's value could not be written to the wire: it holds something
+[`Types.Any`](/reference/net/#typesany) cannot carry, such as a function, or it
+is past the server to client bounds. The player keeps what they last received.
+Every other key still arrives.
 
 **A subscription never fires**
 
@@ -651,8 +684,14 @@ put the connection in a [`Scope`](/reference/scope/) bag.
 **Data does not persist between playtests**
 
 Enable Studio Access to API Services under Game Settings, Security.
-Without it Studio cannot reach a DataStore, and every session starts from the
-template.
+Without it Studio cannot reach a DataStore, so `Data` runs on stand-in stores
+and every session starts from the template.
+
+**`Discord refuses requests from Roblox game servers ...`**
+
+[`Error.Install`](/reference/error/#webhook) was given a Discord webhook
+directly. Reports arrive from Studio and not from a live server. Post through a
+proxy that forwards to Discord.
 
 **Purchases cannot be tested**
 

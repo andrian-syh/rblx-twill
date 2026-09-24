@@ -138,6 +138,9 @@ function Store:StartSessionAsync(key: string, params: Params?): Keep?
 `Keep?` - The handle to work the key through, or `nil` when it could not be
 taken. Yields.
 
+Answers `nil` at once, with an error, when the data cannot be packed for
+writing.
+
 Throws when the key is empty, too long, or is not text.
 
 ### `Store:GetAsync`
@@ -231,6 +234,21 @@ function Store.Reach(): "NotReady" | "NoInternet" | "NoAccess" | "Access"
 
 Only Studio has to work this out. A live server answers `Access`.
 
+### `Store.AwaitReach`
+
+`[Server]`
+
+Waits until how far storage can be reached is known.
+
+```luau
+function Store.AwaitReach(): "NotReady" | "NoInternet" | "NoAccess" | "Access"
+```
+
+**Returns**
+
+The same answers as `Store.Reach`. `NotReady` only when the probe gave no answer
+within 20 seconds. Yields.
+
 ### `Store.IsStrained`
 
 `[Server]`
@@ -277,6 +295,7 @@ The handle a taken key is worked through.
 | `Updated` | `number` | When the key was last written, or `0`. |
 | `Loads` | `number` | The load count this handle took the key at. |
 | `Holder` | `{ Place, Job, Id }?` | Who held the key when this handle was made. |
+| `Fresh` | `boolean` | Whether the key held nothing before this handle took it. |
 
 | Signal | Fires with | When |
 | :--- | :--- | :--- |

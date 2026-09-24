@@ -96,6 +96,7 @@ that asks for one. A humanoid's own jump is skipped while it is in the air.
 | `too far` | The goal is more than 3000 studs away, so no route was attempted. |
 | `stuck` | It stopped getting nearer to the waypoint it was heading for. |
 | `gone` | The model left the world mid-journey. |
+| `faulted` | Its `Move` or `Jump` raised. The error is reported, and every other agent keeps moving. |
 
 Stuck is measured as a lack of progress, not as a clock against an expected
 speed. An agent that has not closed the distance by half a stud for its whole

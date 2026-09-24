@@ -30,7 +30,9 @@ registered for its product.
 Roblox redelivers a receipt until it is told the purchase was granted. The same
 purchase can arrive more than once. Granted purchase ids are recorded in the
 player's own saved data, in the same write as the reward, and a receipt already
-on that list is answered without granting anything a second time.
+on that list is not granted a second time. It is still answered only once the
+save recording it is confirmed, the same as a new one, so a grant that never
+reached storage is saved again rather than taken on trust.
 
 `PurchaseGranted` is returned only once the write is confirmed. A save does not
 wait, so reporting success before the data lands would lose the reward if the

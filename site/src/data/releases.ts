@@ -18,6 +18,16 @@ export interface Release {
 
 export const releases: Release[] = [
 	{
+		version: 'v1.9.0',
+		title: 'Every Key Arrives',
+		date: 'September 24, 2026',
+		tagline: 'Replicated state of any realistic size now reaches the client, and player data survives what used to damage it.',
+		summary:
+			"A player's first view of replicated state used to travel as one call, and past 4096 parts it never arrived, leaving that client blind for the whole session. Each key now travels on its own, with wider bounds for what the server sends. New players no longer run every migration on their template, a failed migration no longer saves what it half converted, and a redelivered purchase is answered only once it is saved.",
+		slug: '/news/v1-9-0/',
+		icon: 'star',
+	},
+	{
 		version: 'v1.8.0',
 		title: 'The Store Underneath',
 		date: 'September 2, 2026',

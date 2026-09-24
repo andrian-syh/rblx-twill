@@ -1,0 +1,108 @@
+---
+title: v1.9.0 — Every Key Arrives
+description: Released September 24, 2026. Replicated state of any realistic size now reaches the client, and player data survives what used to damage it
+template: splash
+---
+
+import NewsBackLink from '../../../components/NewsBackLink.astro';
+import NewsPagination from '../../../components/NewsPagination.astro';
+
+<div class="news-article-container">
+
+<NewsBackLink />
+
+<header class="news-article-header">
+	<div class="news-article-badges">
+		<span class="news-badge-version">v1.9.0</span>
+		<span class="news-badge-date">September 24, 2026</span>
+	</div>
+	<p class="news-article-lead">
+		Replicated state of any realistic size now reaches the client, and player data survives what used to damage it.
+	</p>
+</header>
+
+This release comes out of a full read of the framework against a running place,
+with every finding proven in a playtest before it was fixed. Most of what
+changed is invisible until it goes wrong, and it went wrong in ways a player
+would notice.
+
+## Replicated state that arrives
+
+A player's first view of [`Replication`](/reference/replication/) travelled as
+one call holding every key. That call used
+[`Types.Any`](/reference/net/#typesany), which stops at 4096 parts, and an
+inventory of a thousand items with three fields each is past that. The call was
+dropped, the client never received its first view, and every later change for
+that player was ignored for the rest of the session.
+
+Each key now travels as its own call. A key that cannot be sent holds back only
+itself, is reported, and goes again the next time it is written. `Types.Any`
+also takes wider bounds for what the server sends, because a client has nothing
+to fear from the server:
+
+| Ceiling | Client to server | Server to client |
+| :--- | ---: | ---: |
+| Depth | 16 | 64 |
+| Parts in one call | 4096 | 1048576 |
+| Entries in one table | 4096 | 65535 |
+
+The playtest that proved it sent 1500 items to a client and a change to one of
+them afterwards. Both arrived.
+
+## Player data
+
+Three faults in [`Data`](/reference/data/) could damage what a player owns.
+
+A new player's template ran through every migration, as if it were data saved at
+version 1. A step that read a field only old data has, such as converting a
+legacy inventory, failed on the template, and the new player was kicked.
+Migrations now run only for data saved at an older version.
+
+A migration that raised left behind whatever it had already converted, and the
+session saved it on the way out. The next load ran the earlier steps again on
+data that already had them. Steps now run on a copy, which replaces the live
+data only when every step has succeeded.
+
+A player's data was released on its own `PlayerRemoving` connection, which
+could run before the services' `OnPlayerRemoving`. A service reading
+`Data.Get(player)` there could get `nil`. Release now happens when the player's
+bag closes, after every service has had its turn.
+
+## Purchases
+
+[`Monetization`](/reference/monetization/) answered a redelivered receipt as
+granted whenever the grant was on record in memory. When the first save had not
+been confirmed, that meant answering `PurchaseGranted` for a reward that might
+never reach storage. A receipt seen before is now answered the same way as a new
+one: only once the save recording it is confirmed.
+
+## Smaller fixes
+
+- A weighted [`Chance`](/reference/chance/) draw from a committed round could
+  land on a different entry when replayed elsewhere. Entries are now weighed in
+  the order they were added.
+- [`Store`](/reference/store/) could no longer retry a last save that failed,
+  and shutdown counted one still in flight as finished.
+- [`Loop.After`](/reference/loop/) kept its entry after running, so the
+  framework bag grew with every call that named no owner.
+- [`Schema`](/reference/schema/) raised on a bound that was not a number,
+  despite promising never to raise.
+- A [`Watch`](/reference/watch/) callback that raised stopped the sweep for
+  every member after it.
+
+## Before upgrading
+
+Four changes can reach existing code. The
+[changelog](https://github.com/andrian-syh/rblx-twill/blob/main/CHANGELOG.md)
+carries the full Migration section.
+
+- Migrations no longer run for new players. A step that also set something up
+  for them must move that value into the `Template`.
+- `Remote:Connect`, `Once` and `Wait` throw on the server, where they never
+  received anything. Serve the remote with `Net.Handle`.
+- A whole number token given a fraction throws instead of cutting it.
+- `Navigation` agents can fail with a new reason, `faulted`.
+
+<NewsPagination />
+
+</div>

@@ -92,7 +92,9 @@ announce(round:Reveal())
 ```
 
 See [Run a draw a player can audit](/guides/provably-fair-draws/) for the full
-flow. Replaying requires the draws to be taken in the same order.
+flow. Replaying requires the draws to be taken in the same order, and the
+entries to be added in the same order: a pool weighs its entries in the order
+they were added, so a replayed round lands on the same entry on any server.
 
 ## API
 

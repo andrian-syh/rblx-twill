@@ -9,6 +9,99 @@ at least three large changes landing together, reaching more than a quarter of
 what came before. A smaller change to an API lands in a minor version and brings
 a Migration section with it, so what has to be rewritten is always written down.
 
+## [1.9.0] - 2026-09-24
+
+Replicated state of any realistic size now arrives, player data survives the
+migrations and departures that used to damage it, and a purchase is never
+answered as granted before it is saved.
+
+### Added
+
+- `Keep.Fresh` reports whether a key held nothing before the handle took it.
+- `Store.AwaitReach` waits until the reach probe has answered.
+- `Remote:Fire` and `Remote:FireClient` answer whether the call was written.
+- `Navigation` fails an agent with `faulted` when its `Move` or `Jump` raises,
+  and every other agent keeps moving.
+- `Signal:Fire` refuses to fire from inside its own listeners 50 levels deep,
+  with an error naming the cause.
+- `Error.Install` warns when its webhook points straight at Discord, which
+  refuses requests from Roblox game servers.
+- `Data` runs on stand-in stores in a Studio session that cannot reach storage,
+  and says so once.
+
+### Changed
+
+- `Types.Any` bounds depend on the direction a value travels. What a client
+  sends keeps the old bounds. What the server sends may be 64 deep, hold
+  1048576 parts and 65535 entries per table, and carry 1 MB per string.
+- `Replication` sends each key as its own call. `GetStats().Messages` counts
+  key updates sent, the same as `Keys`.
+- The whole number tokens of `Net.Types` refuse a fraction at the sender instead
+  of cutting it.
+- `Remote:Connect`, `Remote:Once` and `Remote:Wait` throw on the server, where a
+  listener was never called.
+- `Remote:Ask` waits for the remote to be numbered, within its timeout, instead
+  of answering nothing at once.
+- `Data` ends a player's sessions when their player bag closes, which under
+  `Lifecycle` is after the last `OnPlayerRemoving`.
+- A whole-scope `Data.Reset` keeps every field whose name begins with `__twill`.
+- A call that could not be written is reported at most once every five seconds
+  per remote, with a count.
+- `Scope.Player` for a player who has already left answers a bag that closes a
+  moment later, instead of one that is never closed.
+- `Chance` weighs its entries in the order they were added.
+
+### Fixed
+
+- A player's first view of replicated state travelled as one call holding every
+  key. Past 4096 parts it could not be written, the client never received it,
+  and every later change for that player was ignored for the rest of the
+  session. A change that could not be written also moved the server's record of
+  what the player held, so the next change was measured against something the
+  player never received.
+- `Replication.SetFor` and its twins did nothing when called from a
+  `PlayerAdded` listener that ran before the module's own.
+- A new player's template ran through every migration, as if it were data saved
+  at version 1. A step reading a field the template does not have failed, and
+  the player was kicked.
+- A migration that raised left the data it had half converted, and the session
+  saved it on the way out. The next load ran the earlier steps a second time.
+- A redelivered receipt whose first save was never confirmed was answered
+  `PurchaseGranted` without saving it.
+- A last save that failed left the key unable to try again. The key was not
+  released on request, and nothing was saved for it on shutdown. Shutdown also
+  counted a last save already in flight as finished.
+- A session opened by a write that storage refused, such as data that could not
+  be packed, was handed out as though it held the key.
+- A player who left while their data or a branch was loading kept an open
+  session and a bag nothing closed. Emptied branch records were never removed.
+- A weighted draw from a committed round could land on a different entry when
+  replayed on another server, because entries were weighed in hash order.
+- `Schema` raised on a rule whose bound was not a number.
+- `Loop.After` kept its entry in the bag after it ran, so the framework bag grew
+  with every call that named no owner.
+- A `Watch` callback that raised stopped every member after it from being
+  announced.
+- A store and its stand-in with the same name displaced each other's handles.
+- The console wrote text containing a quote as JSON it could not read back, and
+  named no reason for the `unsupported` outcome.
+- The `Net` reference claimed a value near its string ceiling could not travel.
+  A single call past 60 KB travels as a message of its own.
+
+### Migration
+
+Migrations no longer run for a player with no saved data. A step that also set
+up something new players needed must put that value in the `Template` instead.
+
+`Remote:Connect`, `Once` and `Wait` on the server never received anything. Serve
+the remote with `Net.Handle`.
+
+A whole number token given a fraction now throws. Round the value first, or
+declare a fractional token such as `NumberF32`.
+
+A `Navigation.Failed` handler that matches every reason should expect
+`faulted`.
+
 ## [1.8.0] - 2026-09-02
 
 Player data no longer sits on a bundled package. The store underneath it is
@@ -715,5 +808,19 @@ First release.
 - An automated test suite that runs on every playtest in Studio and never in
   production.
 
+[1.9.0]: https://github.com/andrian-syh/rblx-twill/releases/tag/v1.9.0
+[1.8.0]: https://github.com/andrian-syh/rblx-twill/releases/tag/v1.8.0
+[1.7.4]: https://github.com/andrian-syh/rblx-twill/releases/tag/v1.7.4
+[1.7.3]: https://github.com/andrian-syh/rblx-twill/releases/tag/v1.7.3
+[1.7.2]: https://github.com/andrian-syh/rblx-twill/releases/tag/v1.7.2
+[1.7.1]: https://github.com/andrian-syh/rblx-twill/releases/tag/v1.7.1
+[1.7.0]: https://github.com/andrian-syh/rblx-twill/releases/tag/v1.7.0
+[1.6.1]: https://github.com/andrian-syh/rblx-twill/releases/tag/v1.6.1
+[1.6.0]: https://github.com/andrian-syh/rblx-twill/releases/tag/v1.6.0
+[1.5.0]: https://github.com/andrian-syh/rblx-twill/releases/tag/v1.5.0
+[1.4.0]: https://github.com/andrian-syh/rblx-twill/releases/tag/v1.4.0
+[1.3.1]: https://github.com/andrian-syh/rblx-twill/releases/tag/v1.3.1
+[1.3.0]: https://github.com/andrian-syh/rblx-twill/releases/tag/v1.3.0
+[1.2.0]: https://github.com/andrian-syh/rblx-twill/releases/tag/v1.2.0
 [1.1.0]: https://github.com/andrian-syh/rblx-twill/releases/tag/v1.1.0
 [1.0.0]: https://github.com/andrian-syh/rblx-twill/releases/tag/v1.0.0

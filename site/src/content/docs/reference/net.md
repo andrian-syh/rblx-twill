@@ -58,6 +58,10 @@ of its own body, so a refused one is stepped over rather than read. That is also
 why a corrupt call costs only itself: every call behind it in the same message
 still arrives.
 
+A call refused at steps 1 to 5 was never read, so there are no arguments to hand
+to `Reject`. A remote that replies answers such a call without it, and `Ask`
+returns nothing.
+
 Logging once per refusal would make the log the flood. Refusals are reported at
 most once every five seconds per player and remote, with a count of how many went
 unreported.
@@ -249,21 +253,30 @@ Lets a module leave a remote alone rather than claiming it and being refused.
 Sends a call to the server.
 
 ```luau
-function Remote:Fire(...: any)
+function Remote:Fire(...: any): boolean
 ```
+
+**Returns**
+
+`boolean` - `false` when the call could not be written, and so will never
+arrive.
 
 ### `Remote:FireClient`
 
 `[Server]`
 
+Sends a call to one player, to several, to everyone, or to everyone but one.
+
 ```luau
-function Remote:FireClient(player: Player, ...: any)
+function Remote:FireClient(player: Player, ...: any): boolean
 function Remote:FireClients(players: { Player }, ...: any)
 function Remote:FireAllClients(...: any)
 function Remote:FireAllExcept(except: Player, ...: any)
 ```
 
-Calls made in the same frame leave together as one message.
+Calls made in the same frame leave together as one message. `FireClient` answers
+`false` when the call could not be written, such as a value `Types.Any` cannot
+carry, and so will never arrive.
 
 ### `Remote:Ask`
 
@@ -279,6 +292,9 @@ function Remote:Ask(...: any): ...any
 Yields. Throws when the remote was not declared with a reply, and when this side
 is already waiting on 256 answers.
 
+When the server has not numbered the remote yet, `Ask` waits for that first, for
+up to the same timeout, rather than giving up at once.
+
 `Ask` is client to server only. The server never waits on an answer from a
 client, so there is no server thread a client's message can reach. A game that
 needs to ask a client something composes two events and its own correlation id,
@@ -290,15 +306,15 @@ waiting on an answer.
 
 ### `Remote:Connect`
 
-`[Server]` | `[Client]`
+`[Client]`
 
 ```luau
 function Remote:Connect(callback: (...any) -> (), bag: any?): Connection
 function Remote:Once(callback: (...any) -> (), bag: any?): Connection
 ```
 
-On the server, use `Handle` instead. A listener has no metering, and metering is
-not optional.
+Throws on the server. A remote is served there with `Handle`, because a listener
+would have no metering, and metering is not optional.
 
 The connection carries `Disconnect` and `Destroy`, so a bag holds it like
 anything else. Listeners run from a copy of the list, so giving one up from
@@ -306,7 +322,7 @@ inside another is safe.
 
 ### `Remote:Wait`
 
-`[Server]` | `[Client]`
+`[Client]`
 
 Waits for the next call on this remote.
 
@@ -318,6 +334,8 @@ function Remote:Wait(timeout: number?): ...any
 
 `...any` - The call's arguments, or nothing when the wait ran out. Yields. The
 default wait is 10 seconds.
+
+Throws on the server, for the same reason as `Connect`.
 
 ## Types
 
@@ -342,6 +360,9 @@ reaches from -17179869184 to 17179869183. A value past either end is refused at
 the sender. Above that range, carry a [`BigNumber`](/reference/bignumber/) as
 text.
 
+The whole number tokens refuse a fraction at the sender, the same way they refuse
+a value past either end, rather than cutting it.
+
 `NumberF16` is a real half, including the very small values a naive
 implementation drops to zero, both infinities, and a NaN that stays a NaN.
 
@@ -352,8 +373,8 @@ implementation drops to zero, both infinities, and a NaN that stays a NaN.
 | `String` | `Types.String(maximum)` sets the ceiling. 65536 bytes when unset. |
 | `Buffer` | The same, for a `buffer`. |
 
-A reliable message carries at most 60 KB, so a value near the unset ceiling
-does not fit in one. Set a ceiling below that.
+Calls are gathered into messages of up to 60 KB. A single call larger than that
+still travels, as a message of its own, so the ceiling is the field's alone.
 
 The ceiling is enforced on the sender, naming the field:
 
@@ -427,9 +448,20 @@ precision. `Union(NumberVarU, NumberF32)` names no such member and is refused.
 ### `Types.Any`
 
 For a payload whose shape nobody can declare. Every value carries a tag, so it
-costs more than a declared type. It is bounded rather than open ended: a maximum
-depth, a maximum number of parts, and a maximum size, applied identically on both
-sides.
+costs more than a declared type. It is bounded rather than open ended, and the
+bounds depend on the direction a value travels:
+
+| Ceiling | Client to server | Server to client |
+| :--- | ---: | ---: |
+| Depth | 16 | 64 |
+| Parts in one call | 4096 | 1048576 |
+| Entries in one table | 4096 | 65535 |
+| Bytes in one string or buffer | 65536 | 1048576 |
+
+A client is held to the narrow bounds on both ends, because the server reading
+it faces a peer it cannot trust. The server is held to the wide ones, because a
+client has nothing to fear from the server, and replicated state routinely
+outgrows what one call from a player should carry.
 
 A table that reaches itself is refused rather than encoded. A value no format
 carries is refused with the path to it:
@@ -566,3 +598,5 @@ A remote that does not reply may leave it out. A refused call there is dropped.
 | `AwaitReady` default timeout | 30 seconds |
 | Client send interval | 1/60 second |
 | Refusal reports | 1 per 5 seconds, per player and remote |
+| Reports of a call that could not be written | 1 per 5 seconds, per remote |
+| `Types.Any` bounds | See [`Types.Any`](#typesany) |

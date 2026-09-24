@@ -34,8 +34,13 @@ without carrying the whole stack.
 
 ## Webhook
 
-Passing a Discord webhook URL posts each report there as well. A report is the
+Passing a webhook URL posts each report there as well, as a JSON body with a
+`content` field, which is the shape a Discord webhook takes. A report is the
 script name, the message, and the trace, cut to 1900 characters.
+
+Discord refuses requests from Roblox game servers, so a Discord webhook given
+directly works only from Studio. `Install` warns when the URL names Discord.
+Post through a proxy that forwards to it.
 
 Posting is metered at one post every five seconds, and a post refused by the
 meter is dropped rather than queued. The point is to be told that something

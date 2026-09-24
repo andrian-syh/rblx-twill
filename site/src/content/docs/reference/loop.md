@@ -99,6 +99,9 @@ A bag that closes during the wait cancels it, which is what makes this safe to
 start for a player who may leave before it comes due. Use it over `task.delay`
 for anything tied to a lifetime.
 
+The entry leaves its bag once the callback runs, so a long session that starts
+many of them does not collect them.
+
 ### `Loop.Stagger`
 
 `[Server]` | `[Client]`

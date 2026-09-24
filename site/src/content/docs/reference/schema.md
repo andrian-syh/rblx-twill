@@ -127,7 +127,7 @@ The position is `value` at the top level, and a path below it: `value.Coins`,
 | `value is not one of the allowed values` | An `enum` rule matching nothing. |
 | `value should be an array` | Not a table, or a table that is not a real array. |
 | `value should be a table` | An `object` rule given something else. |
-| `value has an invalid rule` | The rule itself is malformed. |
+| `value has an invalid rule` | The rule itself is malformed, including a bound that is not a number. |
 
 ## Where Twill uses this
 

@@ -42,6 +42,17 @@ You have not lost anything. Please rejoin.
 A session claimed by another server kicks as well, with a different message.
 Nothing is lost either way: the other server holds the data.
 
+In Studio, a place that cannot reach storage runs on stand-in stores instead,
+and says so once. Data then lives in memory and is forgotten when the session
+stops, rather than every player waiting for a store that will never answer.
+
+## When a player leaves
+
+A player's sessions end when their [`Scope.Player`](/reference/scope/) bag
+closes. Under [`Lifecycle`](/reference/lifecycle/) that is after the last
+`OnPlayerRemoving`, so a service can still read and change `Data.Get(player)`
+there, and the change is part of the last save.
+
 ## Versions and migrations
 
 `Version` is the shape the running server expects. `Migrations` are keyed by the
@@ -60,8 +71,13 @@ Data.Configure({
 ```
 
 Steps run in ascending order, from the version the data carries to the version
-the server wants. A missing step is skipped. A step that raises stops the load,
-and the player is kicked rather than saved with a half migrated shape.
+the server wants. A missing step is skipped. The steps run on a copy, which
+replaces the live data only once every step has succeeded. A step that raises
+stops the load and the player is kicked, with their stored data left exactly as
+it was.
+
+A player with no saved data starts from the template at the current version, and
+no step runs. A step only ever sees data that was saved at an older version.
 
 Data already at a version past the server's own is left exactly as it is, and
 reported once. This is what stops a rollback running every migration a second
@@ -350,6 +366,8 @@ Leave `path` out to restore the whole scope.
 
 There is no confirmation step and no undo. Restoring a scope rewrites the live
 table in place, so anything holding it keeps working and sees the template.
+Fields whose names begin with `__twill` survive a whole-scope reset, so a
+purchase already paid for is still recognised as paid.
 `Data.Versions` reads earlier versions if the old data is needed back.
 
 ### `Data.Inspect`
