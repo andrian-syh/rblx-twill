@@ -4,7 +4,7 @@ description: Draws a player cannot predict, and rolls they can check
 ---
 
 ```luau
-local Random = require("@game/ServerScriptService/TwillServer/Random")
+local Random = require("@game/ServerScriptService/Twill/Random")
 
 local prize = Random.Pick(lootTable)
 local code = Random.Id(16)

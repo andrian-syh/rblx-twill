@@ -1,10 +1,10 @@
 ---
 title: Twill
-description: A modular framework for Roblox. Two folders, no build step, no package manager, and every module works on its own
+description: A modular framework for Roblox. Two modules, no build step, no package manager, and every module works on its own
 template: splash
 hero:
   tagline: |
-    A modular framework for Roblox, installed as two folders with no build step and
+    A modular framework for Roblox, installed as two modules with no build step and
     no package manager. Every module works on its own. Take one and ignore the rest.
   image:
     file: ../../assets/hero.svg
@@ -77,7 +77,7 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
 ## In one screen
 
 ```luau
-local Twill = require("@game/ReplicatedStorage/Twill")
+local Twill = require("@game/ServerScriptService/Twill")
 
 Twill.Data.Configure({
 	Store = "PlayerData",
@@ -96,7 +96,7 @@ order, and announces each player once their data exists.
 
 <CardGrid>
 	<Card title="Install and boot" icon="rocket">
-		Put both folders in place, configure player data, and watch a service boot.
+		Put both modules in place, configure player data, and watch a service boot.
 		[Start here](/getting-started/installation/).
 	</Card>
 

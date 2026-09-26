@@ -119,7 +119,7 @@ after a few sessions.
 ```luau
 local RunService = game:GetService("RunService")
 
-local Twill = require("@game/ReplicatedStorage/Twill")
+local Twill = require("@game/ServerScriptService/Twill")
 
 local logger = Twill.Log.new("DataAudit")
 

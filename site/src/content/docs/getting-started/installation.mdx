@@ -1,24 +1,24 @@
 ---
 title: Installing Twill
-description: Put both folders in place, then prove both of them answer
+description: Put both Twill modules in place, then prove both of them answer
 ---
 
 import { LinkButton } from '@astrojs/starlight/components';
 
-Twill installs by dropping two folders into a place. There is no package
-manager, no build step, and no external toolchain.
+Twill installs by dropping two ModuleScripts, both named `Twill`, into a place.
+There is no package manager, no build step, and no external toolchain.
 
 <LinkButton href="https://github.com/andrian-syh/rblx-twill/releases/latest" icon="download" target="_blank">
 	Download Twill.rbxm
 </LinkButton>
 
-The model file on the latest release drops in as the two folders below already
-named and in order. Insert it into an empty place with **right-click → Insert
-from File**, then check the install at step 3.
+The model file on each release holds both modules, already named. Insert
+it into a place with **right-click → Insert from File**, move each module to the
+service below, then check the install at step 3.
 
 The steps below describe doing that in Studio. If you keep your source as files
 and assemble a place from them, keep doing so: Twill is indifferent to how the
-place was built, as long as the two folders land where they belong. See
+place was built, as long as both modules land where they belong. See
 [It follows the place, not the folder](/getting-started/introduction/#it-follows-the-place-not-the-folder).
 
 ## Prerequisites
@@ -29,28 +29,29 @@ place was built, as long as the two folders land where they belong. See
   memory for the session, warns once, and forgets everything when you stop.
 
 That is the whole list. Every dependency Twill uses is bundled inside the
-folders you are about to install.
+modules you are about to install.
 
-## 1. Put both folders in place
+## 1. Put both modules in place
 
-**Both folders are required.**
+**Both modules are required, and both come from the same release.**
 
-| Folder | Goes in |
-| --- | --- |
-| `Twill` | `ReplicatedStorage` |
-| `TwillServer` | `ServerScriptService` |
+| Module | Goes in | Holds |
+| --- | --- | --- |
+| `Twill` | `ReplicatedStorage` | Everything both sides use, and the client half of each kit. |
+| `Twill` | `ServerScriptService` | Everything only the server uses, and the server half of each kit. |
 
-The names matter. Twill finds its own server half by name, and a renamed folder
-fails at the require with:
+The names and places matter. Twill finds its own server half by name, and a
+missing or renamed one fails at the require with:
 
 ```text
-[Twill] TwillServer.Net is missing; the server half is not installed
+[Twill] ServerScriptService.Twill.Net is missing; the server half is not installed
 ```
 
 :::caution[The split is not a packaging detail]
-`TwillServer` is never replicated. Rate ceilings, the metering algorithm, each
-player's current allowance, and all data handling stay somewhere a client cannot
-read. Moving any of it into `ReplicatedStorage` hands that to every player.
+`ServerScriptService.Twill` is never replicated. Rate ceilings, the metering
+algorithm, each player's current allowance, and all data handling stay somewhere
+a client cannot read. Moving any of it into `ReplicatedStorage` hands that to
+every player.
 :::
 
 ## 2. Create a folder for your own services
@@ -60,7 +61,7 @@ there, separate from Twill's.
 
 ```text
 ServerScriptService
-├── TwillServer          (Twill's server half)
+├── Twill                (Twill's server half)
 ├── Services             (yours, empty for now)
 └── Main                 (a Script, added in the quick start)
 ```
@@ -70,34 +71,39 @@ ServerScriptService
 Add a `Script` anywhere in `ServerScriptService` and press **Play**.
 
 ```luau
-local Twill = require("@game/ReplicatedStorage/Twill")
+local Twill = require("@game/ServerScriptService/Twill")
 
 print(`Twill {Twill.Version} is installed`)
-
--- Naming a server-only module is what proves the second folder is present.
--- Reading the version alone would pass with TwillServer missing entirely.
-local _ = Twill.Data
-
-print("Both halves answered")
 ```
 
-Two lines in the output means both folders are where they should be.
+Requiring the server module checks the whole install: it refuses to load when
+the other module is missing or comes from a different release. One line in the
+output means both are where they should be.
 
 | Instead you see | Cause |
 | --- | --- |
-| Nothing, and an error naming `Twill` | `Twill` is missing from `ReplicatedStorage`, or renamed. |
-| The version, then `[Twill] 'Data' is not a Twill module` | `TwillServer` is missing from `ServerScriptService`, or renamed. |
+| An error that `Twill` is not a valid member of `ServerScriptService` | The server module is missing or renamed. |
+| `[Twill] ReplicatedStorage.Twill is missing; install both halves from the same release` | The shared module is missing or renamed. |
+| `[Twill] ReplicatedStorage.Twill is X but ServerScriptService.Twill is Y; ...` | The two modules come from different releases. |
 
 ## Requiring modules
 
-The root table resolves modules lazily, so one require reaches everything, and a
-module you never name costs nothing.
+Each side has one way in. Both hand back the same table on the server, which
+resolves modules lazily, so one require reaches everything and a module you
+never name costs nothing.
 
 ```luau
+-- In a server script:
+local Twill = require("@game/ServerScriptService/Twill")
+
+Twill.Data              -- server only
+Twill.Kits.Trade        -- the server half of a kit
+
+-- In a client script:
 local Twill = require("@game/ReplicatedStorage/Twill")
 
-Twill.Log        -- shared
-Twill.Data       -- resolved from TwillServer, server only
+Twill.Log               -- shared
+Twill.Kits.Trade        -- the client half of the same kit
 ```
 
 Requiring a module directly works too, and is the better choice inside a client
@@ -105,6 +111,7 @@ module that must not wait.
 
 ```luau
 local Log = require("@game/ReplicatedStorage/Twill/Log")
+local Token = require("@game/ServerScriptService/Twill/Token")
 ```
 
 Naming a server-only module from a client fails at the require rather than

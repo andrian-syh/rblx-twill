@@ -7,7 +7,7 @@ description: Players sent between servers in groups, with carried data kept off 
 module.
 
 ```luau
-local Teleport = require("@game/ReplicatedStorage/Twill").Teleport
+local Teleport = require("@game/ServerScriptService/Twill").Teleport
 
 local sent, code = Teleport.Send(ARENA_PLACE, squad, { Reserve = true, Data = { Mode = "ranked" } })
 local data, reason = Teleport.Receive(player)

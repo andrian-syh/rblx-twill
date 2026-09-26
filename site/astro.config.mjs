@@ -181,6 +181,7 @@ export default defineConfig({
 								{ label: 'Send large payloads', slug: 'guides/large-payloads' },
 								{ label: 'Spread work across frames', slug: 'guides/frame-budget' },
 								{ label: 'See what your game is doing', slug: 'guides/logging-and-errors' },
+								{ label: 'Check what Studio cannot', slug: 'guides/live-server-checks' },
 							],
 						},
 					],
@@ -253,6 +254,10 @@ export default defineConfig({
 							],
 						},
 					],
+				},
+				{
+					label: 'Kits',
+					items: [{ label: 'Trade', slug: 'kits/trade' }],
 				},
 				{
 					label: 'Explanation',

@@ -23,7 +23,7 @@ you to redistribute belongs with the thing you redistribute.
 
 ## Server
 
-`ServerScriptService.TwillServer.Packages`
+`ServerScriptService.Twill.Packages`
 
 | Package | Version | Licence | Author |
 | --- | --- | --- | --- |

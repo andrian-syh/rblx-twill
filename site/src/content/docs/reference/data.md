@@ -7,7 +7,7 @@ description: Player data with versioning, branches, and writes that reach any us
 module.
 
 ```luau
-local Data = require("@game/ReplicatedStorage/Twill").Data
+local Data = require("@game/ServerScriptService/Twill").Data
 
 Data.Configure({
 	Store = "PlayerData",
@@ -196,6 +196,29 @@ Reports whether a store has been configured.
 ```luau
 function Data.IsConfigured(): boolean
 ```
+
+### `Data.Check`
+
+`[Server]`
+
+Runs a store's `Validate` check on data without saving it.
+
+```luau
+function Data.Check(data: { [string]: any }, branch: string?): (boolean, string?)
+```
+
+**Returns**
+
+`boolean` - `true` when the store would accept the data. `true` as well when the
+store has no check.
+
+`string?` - Why it would not.
+
+Try a change on a copy first, and make it for real only when the copy passes.
+A change made across two players at once, such as a trade, is the usual reason.
+
+Throws before `Configure`, on data that is not a table, and on a branch nobody
+configured. Added in v2.0.0.
 
 ### `Data.Gate`
 

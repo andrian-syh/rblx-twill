@@ -3,20 +3,21 @@ title: Module reference
 description: Every module Twill ships, what it is for, and which side of the game it runs on.
 ---
 
-Twill installs as two folders. Both are required.
+Twill installs as two ModuleScripts, both named `Twill`. Both are required.
 
-| Folder | Contents |
+| Module | Contents |
 | --- | --- |
-| `ReplicatedStorage.Twill` | The modules a client is allowed to see, plus the root table. |
-| `ServerScriptService.TwillServer` | The server half. Never replicated. |
+| `ReplicatedStorage.Twill` | The modules a client is allowed to see, the client half of each kit, and the root table. |
+| `ServerScriptService.Twill` | The server half, and the server half of each kit. Never replicated. |
 
 The root table resolves modules lazily, so a single require reaches everything:
 
 ```luau
-local Twill = require("@game/ReplicatedStorage/Twill")
+local Twill = require("@game/ServerScriptService/Twill")
 
-Twill.Log        -- shared
-Twill.Data       -- resolved from TwillServer, server only
+Twill.Log          -- shared
+Twill.Data         -- server only
+Twill.Kits.Trade   -- a kit, its server half on the server
 ```
 
 Requiring a module directly works too, and is the better choice inside a client
@@ -74,6 +75,18 @@ Requiring any of these from a client fails with a message naming the module.
 | [Config](/reference/config/) | Live experience configs, with a default for every key. |
 | [Teleport](/reference/teleport/) | Players sent between servers, with carried data kept off the client. |
 | [Board](/reference/board/) | A leaderboard read from a cache and written in batches. |
+
+## Kits
+
+A kit covers one kind of game feature rather than every game. Kits ship inside
+Twill and load only when named, as `Twill.Kits.<Name>`: the server half on the
+server, the client half on a client.
+
+| Kit | What it does |
+| --- | --- |
+| [Trade](/kits/trade/) | Trades between two players on one server that cannot duplicate or lose an item. |
+
+## Modules with two halves
 
 Four modules span both sides under one name. `Net`, `Replication`,
 `Authorization`, and `Admin` each have a server half that is not replicated, and

@@ -1,0 +1,114 @@
+---
+title: "v2.0.0 — One Twill module per side"
+description: "Released September 26, 2026. Twill installs as two modules named Twill, one per side, and adds traffic counting and the Trade kit"
+template: splash
+---
+
+import NewsBackLink from '../../../components/NewsBackLink.astro';
+import NewsPagination from '../../../components/NewsPagination.astro';
+
+<div class="news-article-container">
+
+<NewsBackLink />
+
+<header class="news-article-header">
+	<div class="news-article-badges">
+		<span class="news-badge-version">v2.0.0</span>
+		<span class="news-badge-date">September 26, 2026</span>
+	</div>
+	<p class="news-article-lead">
+		Twill installs as two modules named Twill, one per side, and adds traffic counting and the Trade kit.
+	</p>
+</header>
+
+## Before upgrading
+
+The server half moved, so every path to it changes. Paths under
+`ReplicatedStorage.Twill` stay the same.
+
+1. Replace `ReplicatedStorage.Twill` and the `ServerScriptService.TwillServer`
+   folder with the two modules from the release.
+2. Rename every server path in your own code:
+
+   | Twill 1 | Twill 2 |
+   | :--- | :--- |
+   | `@game/ServerScriptService/TwillServer/` | `@game/ServerScriptService/Twill/` |
+   | `ServerScriptService.TwillServer` | `ServerScriptService.Twill` |
+   | `WaitForChild("TwillServer")` | `WaitForChild("Twill")` |
+
+3. Delete the `TwillServer` folder. One left in place is reported at boot, and
+   nothing reads it.
+
+## One module per side
+
+Twill is two ModuleScripts, both named `Twill`. The one in `ReplicatedStorage`
+holds what both sides use. The one in `ServerScriptService` holds what only the
+server uses, and hands back the same root.
+
+```luau
+-- Server
+local Twill = require("@game/ServerScriptService/Twill")
+
+-- Client
+local Twill = require("@game/ReplicatedStorage/Twill")
+```
+
+Requiring the server module checks the install. It refuses to load when the
+shared module is missing or comes from another release, and names both
+versions. See [Installing Twill](/getting-started/installation/).
+
+## Kits, starting with Trade
+
+A kit covers one kind of game feature. Kits ship inside Twill and load only
+when named, so a game that never names one pays nothing for it.
+`Twill.Kits.Trade` is the server half on the server and the client half on a
+client.
+
+The [Trade kit](/kits/trade/) runs a trade between two players on one server,
+from invite to saved result:
+
+- Every item is checked against live data when it is offered, and again at the
+  swap.
+- The swap is tried on copies first, and refused when either copy fails the
+  store's `Validate` check.
+- Both players are saved before the trade lets go.
+
+```luau
+local Trade = require("@game/ServerScriptService/Twill").Kits.Trade
+
+Trade.Configure({
+	Kinds = { Coins = Trade.Currency("Coins"), Pets = Trade.Unique("Pets") },
+})
+```
+
+## Traffic you can measure on a live server
+
+Studio reports no network traffic, so bandwidth has to be read on a published
+server. `Net.GetStats` returns what each side sent, received and refused, per
+remote and in total, and `Net.ResetStats` starts a window. `twill traffic` in
+the admin console shows the same count. See
+[Measuring traffic](/reference/net/#measuring-traffic) and
+[Check what Studio cannot](/guides/live-server-checks/).
+
+## Tested with two clients
+
+Twill's test suite gained a client half, which checks `Net`, `Replication`,
+`Lifecycle` and the Trade kit against a real client. With two clients, it runs
+a whole trade between them. All 1232 checks pass.
+
+## Other changes
+
+- `Data.Check` runs a store's `Validate` check without saving.
+- `Limit.Throttle` speaks on the first report of each key. On a freshly started
+  server it used to stay silent for its first interval.
+- A log line from a script named like `TwillShop` names its call site. It used
+  to be taken as coming from inside Twill.
+
+## Full changelog
+
+Every change in this release is listed in the
+[changelog](https://github.com/andrian-syh/rblx-twill/blob/main/CHANGELOG.md#200---2026-09-26).
+
+<NewsPagination />
+
+</div>

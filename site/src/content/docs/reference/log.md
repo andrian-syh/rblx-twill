@@ -38,7 +38,8 @@ call points at the call rather than at the framework.
 ```
 
 A line is outside Twill when its source starts with neither
-`ReplicatedStorage.Twill` nor `ServerScriptService.TwillServer`. Native frames
+`ReplicatedStorage.Twill` nor `ServerScriptService.Twill`, followed by a dot or
+nothing, so a script named `TwillTests` beside them still counts as yours. Native frames
 are stepped over. Twelve stack levels are examined, so a message raised through
 more layers than that reports no call-site rather than a wrong one.
 

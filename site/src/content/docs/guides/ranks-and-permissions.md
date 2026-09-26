@@ -42,7 +42,7 @@ allowed to change who is privileged while the server is running.
 ```luau
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Twill = require("@game/ReplicatedStorage/Twill")
+local Twill = require("@game/ServerScriptService/Twill")
 local Ranks = require(ReplicatedStorage.Shared.Ranks)
 
 Twill.Authorization.Configure({

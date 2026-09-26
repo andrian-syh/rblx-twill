@@ -3,39 +3,53 @@ title: Architecture
 description: How the two halves fit together, what happens during boot, and how a value reaches a client
 ---
 
-## Two folders
+## Two modules, one name
 
 ```text
 ReplicatedStorage
 └── Twill                 the root table, and every module a client may see
-    └── Packages          bundled dependencies, shared
+    ├── Packages          bundled dependencies, shared
+    └── Kits              the client half of each kit
 
 ServerScriptService
-└── TwillServer           server-only modules, and the server halves
-    └── Packages          bundled dependencies, server-only
+└── Twill                 server-only modules, and the server halves
+    ├── Packages          bundled dependencies, server-only
+    └── Kits              the server half of each kit
 ```
 
 Which module sits where is listed in the [module reference](/reference/), and
-the split follows one rule: a module lives in `TwillServer` when what it holds
-would tell a client how to get around it.
+the split follows one rule: a module lives in `ServerScriptService.Twill` when
+what it holds would tell a client how to get around it.
 
-`TwillServer` is never replicated. What lives there is not only secrets:
-thresholds, the metering algorithm, each player's current allowance, and every
-line that touches player data.
+`ServerScriptService.Twill` is never replicated. What lives there is not only
+secrets: thresholds, the metering algorithm, each player's current allowance,
+and every line that touches player data.
+
+Both are ModuleScripts rather than folders, so each side has exactly one thing
+to require. The server one checks that the shared one is present and from the
+same release, then hands back the same root.
 
 ## The root table
 
-`ReplicatedStorage.Twill` returns a table carrying `Version` and a metatable.
-Indexing it for anything else resolves the module by name, checking the shared
-folder first and the server folder second, then writes the result back into the
-table so every later lookup is an ordinary field read.
+`ReplicatedStorage.Twill` returns a table carrying `Version`, `Kits` and a
+metatable. Indexing it for anything else resolves the module by name, checking
+the shared half first and the server half second, then writes the result back
+into the table so every later lookup is an ordinary field read.
 
 ```luau
-local Twill = require("@game/ReplicatedStorage/Twill")
+local Twill = require("@game/ServerScriptService/Twill")
 
-Twill.Log      -- ReplicatedStorage.Twill.Log
-Twill.Data     -- ServerScriptService.TwillServer.Data
+Twill.Log          -- ReplicatedStorage.Twill.Log
+Twill.Data         -- ServerScriptService.Twill.Data
+Twill.Kits.Trade   -- ServerScriptService.Twill.Kits.Trade
 ```
+
+`ServerScriptService.Twill` hands back this same table, so a module reached
+through either root is loaded once.
+
+`Kits` resolves the same way, per side: the server gets a kit's server half, and
+a client gets its client half. A kit with only a client half resolves to that on
+both sides.
 
 Resolution is lazy, so a game that touches four modules loads four modules.
 

@@ -9,7 +9,7 @@ Configure once, during `Init`, then wire the gate so no service sees a player
 before their data exists.
 
 ```luau title="ServerScriptService/Main"
-local Twill = require("@game/ReplicatedStorage/Twill")
+local Twill = require("@game/ServerScriptService/Twill")
 
 Twill.Data.Configure({
 	Store = "PlayerData",

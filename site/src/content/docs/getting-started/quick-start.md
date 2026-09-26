@@ -14,7 +14,7 @@ folders should already be in place.
 Add a `Script` named `Main` in `ServerScriptService`.
 
 ```luau title="ServerScriptService/Main"
-local Twill = require("@game/ReplicatedStorage/Twill")
+local Twill = require("@game/ServerScriptService/Twill")
 
 -- Names the DataStore and the shape a new profile starts as. Fields missing
 -- from an existing profile are filled in from the template on load, so adding

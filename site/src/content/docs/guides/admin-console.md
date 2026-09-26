@@ -19,7 +19,7 @@ The console needs one require on each side. Neither does the other's job.
 ```luau title="ServerScriptService/Main"
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Twill = require("@game/ReplicatedStorage/Twill")
+local Twill = require("@game/ServerScriptService/Twill")
 local Ranks = require(ReplicatedStorage.Shared.Ranks)
 
 -- Moves Cmdr's client half into ReplicatedStorage, and opens the gate.
@@ -115,7 +115,7 @@ return {
 ```
 
 ```luau title="ServerScriptService/AdminCommands/givecoinsServer"
-local Twill = require("@game/ReplicatedStorage/Twill")
+local Twill = require("@game/ServerScriptService/Twill")
 
 return function(context, target, amount)
 	-- "main" is the scope name for the primary profile. A branch is named by
@@ -171,9 +171,11 @@ than applied, because that is the truth. Reading prints aligned rows, or an
 indented JSON block once there are more than forty values to show.
 
 **`twill`** reports what this server is running: the services that booted and in
-what order, every declared remote and whether anything serves it, whether player
-data is configured, and what replication is holding and sending. It changes
-nothing, and `twill all` is the whole picture on one screen.
+what order, every declared remote and whether anything serves it, the network
+traffic since the count began, whether player data is configured, and what
+replication is holding and sending. It changes nothing, and `twill all` is the
+whole picture on one screen. `twill traffic` shows bytes and average kbps each
+way, every refusal by reason, and the five remotes that carried the most.
 
 **`loglevel`** reads or sets the [log level](/reference/log/) on this server.
 Turning `Debug` on in a live server used to mean republishing the place. Note

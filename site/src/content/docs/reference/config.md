@@ -7,7 +7,7 @@ description: Live experience configs read without yielding, with a declared defa
 module. The engine does not offer configs to clients.
 
 ```luau
-local Config = require("@game/ReplicatedStorage/Twill").Config
+local Config = require("@game/ServerScriptService/Twill").Config
 
 Config.Configure({ Defaults = { BossHealth = 500, HalloweenLive = false } })
 

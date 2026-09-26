@@ -9,7 +9,7 @@ An agent wraps a model. Give it a bag and its cleanup is somebody else's
 problem.
 
 ```luau title="ServerScriptService/Services/GuardService"
-local Twill = require("@game/ReplicatedStorage/Twill")
+local Twill = require("@game/ServerScriptService/Twill")
 
 local GuardService = {}
 

@@ -27,9 +27,36 @@ framework and there are no fixtures.
 It covers every module that can be exercised from one server, including `Bag`,
 `Signal`, `Scope`, `Loop`, `Net` and its wire format, server `Replication`,
 `Store`, `Data` migrations and sessions, `Tree`, `Tween`, `Async`, `Pool`,
-`Config`, `Shared`, `Board`, `Random`, `Token`, `Chance`, `Navigation`, and the
-console's rank gate. It also carries known-answer tests for the cryptographic
-primitives against official RFC vectors.
+`Config`, `Shared`, `Board`, `Random`, `Token`, `Chance`, `Navigation`, the
+console's rank gate, and the rules of the Trade kit. It also carries
+known-answer tests for the cryptographic primitives against official RFC
+vectors.
+
+## The client half
+
+Some paths only exist with a real client on the other end. A `LocalScript`,
+`StarterPlayerScripts.TwillTestsClient`, runs beside the suite on every
+playtest. It makes a fixed set of calls, then echoes each push and each
+replicated value back to the server. It holds no verdicts: every assertion
+stays in `TwillTests`, so a run still ends in one line.
+
+Through it the suite checks, with a real client:
+
+- `Net`: calls arrive with their arguments, questions are answered, refusals by
+  `Schema`, `Validate`, rank and a raising handler are answered as served, calls
+  over the rate are dropped, and pushes arrive on both remotes.
+- `Net.GetStats`: traffic and refusals are counted against the right remote.
+- `Replication`: shared and player keys, paths, cleared keys, and a key that
+  cannot be sent not holding back the rest.
+- `Lifecycle`: boot order, every `Init` before any `Start`, a failed `Init`
+  kept to its own service, and the player gate and bag.
+- The `Replicate` binding of `Data`.
+- The Trade kit: every ask a lone player makes is turned down with a notice. With
+  a second player, in Clients and Servers mode, a whole trade runs between the
+  two clients and the coins are counted on both sides.
+
+The declarations both halves share live in one module beside the client half,
+so the two can never disagree about a remote.
 
 ## The shape it uses
 
@@ -55,24 +82,17 @@ rather than after the claim they make.
 
 | Untested | Why it is hard |
 | --- | --- |
-| `admit` in server `Net` | A server cannot fire `OnServerEvent` at itself. |
-| `drain` in `Replication` | It needs a real client receiving. |
-| The `Lifecycle` core | `Start` runs once. Testing it means hijacking the boot. |
-| The `Replicate` binding of `Data` | It needs a client receiving, and `Data` can be configured once per server. |
+| `OnPlayerRemoving` in `Lifecycle` | The only player would have to leave, which ends the playtest. |
+| A `Critical` service failing to boot | It kicks every player, the harness included. |
 | `Teleport.Send` reaching another server | Studio cannot teleport. |
 | `Path.Blocked` in `Navigation` | It needs the world to change under an agent that is already walking. |
-| `owner` on `Replication.Subscribe` | It only exists on the client, and the suite runs on the server. |
+| The whole trade, in a solo playtest | It needs two players; the suite says so and skips it. |
 
-What these have in common is that none of them exists inside a single process
-running on its own: they need a second side of the game, or a world that moves
+What these have in common is that the run would have to end, leave, or move
 while the assertion is watching. They are not skipped because they are
-unimportant; they are skipped because a single-process assertion cannot reach
-them.
-
-These paths were each proven once, with a temporary `Script` and `LocalScript`
-pair run in a playtest, including under Server Authority. Keeping them proven
-needs an integration harness that runs on every playtest. Until that exists,
-each change to those paths needs its own playtest.
+unimportant; they are skipped because a playtest cannot hold them still.
+[Check what Studio cannot](/guides/live-server-checks/) covers teleports on a
+live server.
 
 Saying so is more useful than a coverage percentage that counts the easy parts.
 

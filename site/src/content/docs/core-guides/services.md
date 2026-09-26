@@ -30,7 +30,7 @@ and each must be a `ModuleScript` returning a table.
 
 ```text
 ServerScriptService
-├── TwillServer
+├── Twill
 ├── Services
 │   ├── ShopService
 │   └── CombatService
@@ -150,7 +150,7 @@ published state without either naming the other.
 needs must already be set.
 
 ```luau title="ServerScriptService/Main"
-local Twill = require("@game/ReplicatedStorage/Twill")
+local Twill = require("@game/ServerScriptService/Twill")
 
 Twill.Data.Configure({ Store = "PlayerData", Template = { Coins = 100 } })
 Twill.Authorization.Configure({ Default = 10, Users = { [1] = 100 } })
@@ -195,7 +195,7 @@ it gets served.
 ```luau title="ServerScriptService/Services/ShopService"
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Twill = require("@game/ReplicatedStorage/Twill")
+local Twill = require("@game/ServerScriptService/Twill")
 local Remotes = require(ReplicatedStorage.Shared.Remotes)
 
 local ShopService = {}

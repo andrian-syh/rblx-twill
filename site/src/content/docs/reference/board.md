@@ -7,7 +7,7 @@ description: An ordered data store leaderboard read from a cache and written in 
 module.
 
 ```luau
-local Board = require("@game/ReplicatedStorage/Twill").Board
+local Board = require("@game/ServerScriptService/Twill").Board
 
 local wins = Board.new("Wins", { Size = 10 }, bag)
 wins:Increment(player.UserId, 1)

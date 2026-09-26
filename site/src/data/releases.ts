@@ -13,8 +13,8 @@
 //   first. The page description and lead repeat it.
 // - summary: two or three sentences, most important first. A release with a
 //   Migration section in the changelog says so in its last sentence.
-// - icon: 'rocket' for the first release, 'star' for a minor release, 'file'
-//   for a patch release.
+// - icon: 'rocket' for the first release and each major release, 'star' for a
+//   minor release, 'file' for a patch release.
 
 export interface Release {
 	version: string;
@@ -27,6 +27,16 @@ export interface Release {
 }
 
 export const releases: Release[] = [
+	{
+		version: 'v2.0.0',
+		title: 'One Twill module per side',
+		date: 'September 26, 2026',
+		tagline: 'Twill installs as two modules named Twill, one per side, and adds traffic counting and the Trade kit.',
+		summary:
+			'The server half is a module named Twill, which checks that both halves come from the same release. Kits ship inside Twill, starting with Trade, and Net counts its traffic so bandwidth can be measured on a live server. Some code needs changes; see the migration notes.',
+		slug: '/news/v2-0-0/',
+		icon: 'rocket',
+	},
 	{
 		version: 'v1.10.0',
 		title: 'Configs, teleports and leaderboards',

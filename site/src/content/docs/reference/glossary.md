@@ -13,7 +13,7 @@ what it usually does.
 | :--- | :--- |
 | **Service** | A server-side `ModuleScript` returning a table, discovered by [`Lifecycle`](/reference/lifecycle/). Every field is optional, so a module with none of them is still a legal service. See [Write a service](/core-guides/services/). |
 | **Controller** | The client-side counterpart of a service, booted by the same `Lifecycle`. Identical in shape, named separately so it is always clear which side a module runs on. `Lifecycle` itself draws no distinction and types both as `Service`. See [Write a controller](/core-guides/controllers/). |
-| **Server half** | `ServerScriptService.TwillServer`. Never replicated. It holds more than secrets: thresholds, the metering algorithm, each player's current allowance, and all data handling. |
+| **Server half** | `ServerScriptService.Twill`. Never replicated. It holds more than secrets: thresholds, the metering algorithm, each player's current allowance, and all data handling. |
 | **Root table** | `ReplicatedStorage.Twill`, which resolves modules by name on first use. Naming a server-only module from a client fails there rather than handing back `nil`. |
 | **Init** | The first boot phase. Runs sequentially for every service. Your own state only, because another service may not be set up yet. |
 | **Start** | The second boot phase, after every `Init` has finished. Connect, listen, and call other services freely. Each `Start` runs on its own thread, so boot order decides when one **begins**, never the order in which they finish. |

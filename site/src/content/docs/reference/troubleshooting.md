@@ -59,12 +59,39 @@ Twill.Log.SetLevel("Debug")
 
 ## Installation and requires
 
-**`[Twill] TwillServer.Net is missing; the server half is not installed`**
+**`[Twill] ServerScriptService.Twill.Net is missing; the server half is not installed`**
 
-`ServerScriptService.TwillServer` is absent or renamed. Both folders are
-required, and the names matter because Twill finds its own server half by name.
+`ServerScriptService.Twill` is absent or renamed. Both modules are required,
+and the names matter because Twill finds its own server half by name.
 The module named in the message is whichever one was needed first. See
 [Installing Twill](/getting-started/installation/).
+
+**`[Twill] ServerScriptService.Twill.X is missing; ServerScriptService.TwillServer is from Twill 1, so replace it with ServerScriptService.Twill`**
+
+A Twill 1 server folder is installed and the Twill 2 server module is not.
+Install both modules from the release and delete `TwillServer`. See
+[Before upgrading](/news/v2-0-0/#before-upgrading).
+
+**`[Twill] ReplicatedStorage.Twill is missing; install both halves from the same release`**
+
+`ServerScriptService.Twill` was required, but the shared module beside it is
+absent or renamed.
+
+**`[Twill] ReplicatedStorage.Twill is X but ServerScriptService.Twill is Y; install both halves from the same release`**
+
+The two modules come from different releases, usually after updating only one.
+Replace both from the same `.rbxm`.
+
+**`ServerScriptService.TwillServer is left from Twill 1 and is no longer read; delete it`**
+
+Twill 2 is installed and working, and the old server folder is still there.
+Nothing reads it; delete it.
+
+**`[Twill] 'X' is not an installed kit`**, or **`..., or has no client half`** on a client
+
+No kit under `Kits` answers to that name on this side. Check the spelling, and
+that the kit's halves sit in `Twill.Kits` in `ReplicatedStorage` and, for a kit
+with server logic, in `ServerScriptService`.
 
 **`[Twill] 'X' is not a Twill module, or is server only`** on a client, or
 **`[Twill] 'X' is not a Twill module`** on the server
@@ -740,6 +767,38 @@ it. Fix the value in the Creator Hub, or the default in `Config.Configure`.
 
 Written by the engine, not by Twill, when a declared key has no published
 value. The default is used. Create the key in the Creator Hub to silence it.
+
+## Trade kit
+
+These come from the [Trade kit](/kits/trade/).
+
+**`Trade.Configure needs Data configured first`**
+
+`Trade.Configure` ran before `Data.Configure`. Configure `Data` first, in the
+same `Init`.
+
+**`kind 'X' needs Has, Take and Give`**
+
+A kind of your own is missing one of its three functions. Use a built-in kind,
+or supply all three.
+
+**`trade X was made, but a save has not landed yet; it goes with the next one`**
+
+The swap was made and both players' data changed, but a save did not confirm
+within 20 seconds. The data is still held and saves with the next write. Nothing
+needs undoing.
+
+**`trade X failed: ...`**
+
+Something raised while a trade was being completed, outside the swap itself.
+Both players are told the trade failed. When the swap had not run yet, nothing
+moved; the error names what raised.
+
+**`Trade.X is client only; its server half decides trades`**
+
+A client call such as `Trade.Request` ran on the server, from a require of the
+client half by path. On the server, use `Twill.Kits.Trade`, which is the server
+half there.
 
 ## Studio and tooling
 

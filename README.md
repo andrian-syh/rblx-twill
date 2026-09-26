@@ -4,7 +4,7 @@
   <p><b>A modular, zero-setup infrastructure framework for Roblox Luau.</b></p>
 
   <p>
-    <a href="https://github.com/andrian-syh/rblx-twill/releases"><img src="https://img.shields.io/badge/version-1.10.0-2563eb?style=flat-square" alt="Version" /></a>
+    <a href="https://github.com/andrian-syh/rblx-twill/releases"><img src="https://img.shields.io/badge/version-2.0.0-2563eb?style=flat-square" alt="Version" /></a>
     <a href="https://luau.org/"><img src="https://img.shields.io/badge/language-Luau-00A2FF?style=flat-square&logo=lua&logoColor=white" alt="Luau" /></a>
     <a href="https://roblox.com/"><img src="https://img.shields.io/badge/platform-Roblox-000000?style=flat-square&logo=roblox&logoColor=white" alt="Roblox" /></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-10b981?style=flat-square" alt="License" /></a>
@@ -29,13 +29,13 @@ Twill handles the foundational infrastructure that nearly every Roblox game rewr
 
 ```
 ReplicatedStorage/
-└── Twill/                  ← Shared modules, client view, and root table
+└── Twill                   ← Shared modules, client halves of kits, and the root table
 
 ServerScriptService/
-└── TwillServer/            ← Server-only logic, data layer, and rate limits
+└── Twill                   ← Server-only logic, data layer, rate limits, and server halves of kits
 ```
 
-Two folders contain the entire framework. Dependencies come pre-bundled: no package manager, no build step, and no mandatory toolchain required.
+Two ModuleScripts, both named `Twill`, contain the entire framework. Each side requires its own one, and both hand back the same root. Dependencies come pre-bundled: no package manager, no build step, and no mandatory toolchain required.
 
 ---
 

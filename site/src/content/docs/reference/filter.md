@@ -4,7 +4,7 @@ description: Text a player wrote, made safe to show another player
 ---
 
 ```luau
-local Filter = require("@game/ServerScriptService/TwillServer/Filter")
+local Filter = require("@game/ServerScriptService/Twill/Filter")
 
 local shown = Filter.ForBroadcast(message, player.UserId)
 

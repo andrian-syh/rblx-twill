@@ -98,6 +98,47 @@ code, so everything a peer sends is read under the same rules on both sides.
 - A message claiming more calls than one message carries is cut off.
 - A payload larger than a message may be is dropped before it is read.
 
+## Measuring traffic
+
+Studio reports no network traffic during a playtest, so bandwidth has to be read
+on a live server. Each side counts what it sends, receives and refuses, and
+`Net.GetStats` reads the count back. Counting costs a few additions per call, so
+it stays on.
+
+```luau
+Net.ResetStats()
+task.wait(60)
+
+local stats = Net.GetStats()
+local kbps = stats.Received.Bytes * 8 / 1000 / stats.Seconds
+```
+
+The byte counts are the payload Twill builds. The engine adds framing of its own
+to every message, which no script can see, so the real figure is somewhat
+higher. Answers to `Ask` are counted under `(replies)`. A call is counted
+against its remote only once that remote is known to be declared, so a client
+naming made up remotes adds to the totals and never to the list.
+
+Every refusal is counted under one reason:
+
+| Reason | Meaning |
+| :--- | :--- |
+| `Budget` | The sender went over the byte budget. |
+| `Malformed` | The message was not a payload, was in another format, or held too many calls. |
+| `Unknown` | The call named a remote nobody declared. |
+| `Unserved` | The remote has no handler. |
+| `Rank` | The sender is below `MinimumRank`. |
+| `Rate` | The sender went over the remote's rate. |
+| `Schema` | An argument broke its `Schema` rule. |
+| `Validate` | `Validate` refused the call or raised. |
+| `Error` | The handler raised. |
+| `Deadline` | The handler took longer than the reply deadline. |
+| `Unreadable` | The call could not be decoded. |
+| `Unwritable` | A value could not be encoded, so the call was never sent. |
+| `Oversize` | An unreliable call was larger than one unreliable message. |
+
+The admin console shows the same count with `twill traffic`.
+
 ## API
 
 ### `Net.Declare`
@@ -204,6 +245,42 @@ function Net.AwaitReady(timeout: number?): boolean
 
 `boolean` - `true` when the network came up in time. Yields. The default wait is
 30 seconds.
+
+### `Net.GetStats`
+
+`[Server]` | `[Client]`
+
+Returns what this side sent, received and refused since the count began.
+
+```luau
+function Net.GetStats(): Stats
+```
+
+**Returns**
+
+`Stats` - A copy, safe to keep or change:
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `Seconds` | `number` | How long the count has run. |
+| `Sent` | `Traffic` | `Messages`, `Calls`, `Bytes` and `Instances` this side sent. |
+| `Received` | `Traffic` | The same, for what arrived. |
+| `Refused` | `{ [string]: number }` | Refusals by [reason](#measuring-traffic). |
+| `Remotes` | `{ [string]: RemoteStats }` | Per remote name: `Sent` and `Received`, each with `Calls` and `Bytes`, and `Refused` by reason. |
+
+Added in v2.0.0.
+
+### `Net.ResetStats`
+
+`[Server]` | `[Client]`
+
+Starts every count over from now.
+
+```luau
+function Net.ResetStats()
+```
+
+Reset before a window of play to measure that window alone. Added in v2.0.0.
 
 ### `Net.Handle`
 

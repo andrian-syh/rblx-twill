@@ -53,7 +53,7 @@ A failed post is reported through the same logger at `Warn` rather than raised,
 so an unreachable webhook does not itself become an error.
 
 A webhook URL is a credential. Keep it in the server half, in
-`ServerScriptService.TwillServer` or your own server folder, never in
+`ServerScriptService.Twill` or your own server folder, never in
 `ReplicatedStorage`. Anything that can read it can post to the channel.
 
 ## API

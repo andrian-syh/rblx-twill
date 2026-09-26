@@ -11,7 +11,7 @@ directly only for keys that are not player data: a guild, a shared world, a
 leaderboard snapshot.
 
 ```luau
-local Store = require("@game/ServerScriptService/TwillServer/Store")
+local Store = require("@game/ServerScriptService/Twill/Store")
 
 local guilds = Store.New("Guilds", { Members = {}, Level = 1 })
 local keep = guilds:StartSessionAsync("guild-4812")

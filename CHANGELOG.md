@@ -14,6 +14,67 @@ Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-09-26
+
+Twill 2 installs as two ModuleScripts both named `Twill`, one per side, with
+kits inside them, and adds traffic counting and the first kit, Trade.
+
+### Migration
+
+- Replace `ReplicatedStorage.Twill` and the `ServerScriptService.TwillServer`
+  folder with the two modules from the release. A `TwillServer` folder left in
+  place is reported at boot, and nothing reads it.
+- Rename every server path: `@game/ServerScriptService/TwillServer/` becomes
+  `@game/ServerScriptService/Twill/`, and `ServerScriptService.TwillServer`
+  becomes `ServerScriptService.Twill`, including `WaitForChild("TwillServer")`.
+- Paths under `ReplicatedStorage.Twill` do not change.
+- Server code may keep requiring `ReplicatedStorage.Twill`. The server entry,
+  `require("@game/ServerScriptService/Twill")`, hands back the same root and
+  also checks that both modules come from the same release.
+
+### Added
+
+- `Net.GetStats` reports what each side sent, received and refused: messages,
+  calls, bytes and instances each way, calls and bytes per remote, and every
+  refusal by its reason. `Net.ResetStats` starts the count over, so a window of
+  play can be measured on its own. Studio reports no traffic, so this is how
+  bandwidth is measured on a live server.
+- `twill traffic` in the admin console shows the same count: bytes and average
+  kbps each way, refusals by reason, and the five busiest remotes.
+- A guide to the checks Studio cannot run: measuring traffic and proving
+  teleports on a live server.
+- `Data.Check` runs a store's `Validate` check on data without saving it, so a
+  change can be tried on a copy first.
+- `Twill.Kits` reaches kits: a kit's server half on the server, its client half
+  on a client. Kits ship inside Twill and load only when named, so an unused
+  kit costs nothing.
+- The Trade kit, the first kit, at `Twill.Kits.Trade`. It runs trades between
+  two players on one server, from invite to saved result, and cannot duplicate
+  or lose an item: every item is checked again at the swap, the swap is tried on
+  copies and checked by `Validate` first, and both players are saved before the
+  trade lets go.
+- Requiring `ServerScriptService.Twill` refuses to start when
+  `ReplicatedStorage.Twill` is missing or comes from another release, naming
+  both versions.
+
+### Changed
+
+- The server half is the ModuleScript `ServerScriptService.Twill` rather than
+  the folder `ServerScriptService.TwillServer`. Both sides now have one thing to
+  require, and both hand back the same root.
+- A missing server half now names a Twill 1 folder left in place, when that is
+  the cause.
+
+### Fixed
+
+- `Limit.Throttle` stayed silent for the first report of each key during a
+  server's first moments, as long as its interval: on a freshly started server,
+  the first refused call or failed write in that window went unreported. The
+  first report now always speaks.
+- A log line from a script whose name only began with `Twill`, such as
+  `TwillShop`, was treated as coming from inside Twill, so it named no call
+  site. Only the two Twill roots and what sits under them count as Twill now.
+
 ## [1.10.0] - 2026-09-25
 
 Six new modules cover configs, asynchronous work, pooling, cross-server budgets,
@@ -921,7 +982,8 @@ First release.
 - An automated test suite that runs on every playtest in Studio and never in
   production.
 
-[Unreleased]: https://github.com/andrian-syh/rblx-twill/compare/v1.10.0...HEAD
+[Unreleased]: https://github.com/andrian-syh/rblx-twill/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/andrian-syh/rblx-twill/compare/v1.10.0...v2.0.0
 [1.10.0]: https://github.com/andrian-syh/rblx-twill/compare/v1.9.0...v1.10.0
 [1.9.0]: https://github.com/andrian-syh/rblx-twill/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/andrian-syh/rblx-twill/compare/v1.7.4...v1.8.0

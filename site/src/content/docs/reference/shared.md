@@ -7,7 +7,7 @@ description: Cross-server messages and memory store maps, spent from one budget 
 module.
 
 ```luau
-local Shared = require("@game/ReplicatedStorage/Twill").Shared
+local Shared = require("@game/ServerScriptService/Twill").Shared
 
 Shared.Publish("Announcements", { Text = "Double coins for an hour" })
 Shared.Subscribe("Announcements", onAnnouncement, bag)

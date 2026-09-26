@@ -4,7 +4,7 @@ description: Short text that carries a payload and proves nobody edited it
 ---
 
 ```luau
-local Token = require("@game/ServerScriptService/TwillServer/Token")
+local Token = require("@game/ServerScriptService/Twill/Token")
 
 Token.Configure({ Secret = secretYouKeep })
 

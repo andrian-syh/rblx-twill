@@ -86,7 +86,7 @@ you.
 ## No toolchain, and no opinion about yours
 
 Installing Twill requires nothing: no package manager, no build step, no
-external tooling. It is two folders you drop into a place, and every dependency
+external tooling. It is two ModuleScripts you drop into a place, and every dependency
 is bundled, so what you open is what runs.
 
 That is a statement about what is required, not about how you are expected to
@@ -104,11 +104,11 @@ No alias configuration is involved anywhere.
 The consequence is that Twill neither knows nor cares how a place was assembled.
 Build it by hand in Studio, edit it as files through an external editor, or
 generate it from a source tree with whatever tooling you keep. If the result
-puts `Twill` in `ReplicatedStorage` and `TwillServer` in `ServerScriptService`,
+puts one `Twill` in `ReplicatedStorage` and the other in `ServerScriptService`,
 it runs, and not one line of it changes.
 
 No source tree or project file is published alongside Twill yet, so working from
-files means lifting the two folders out of a place yourself. Updating a bundled
+files means lifting the two modules out of a place yourself. Updating a bundled
 package is a manual job for the same reason. See
 [Bundled packages](/reference/bundled-packages/).
 
@@ -118,14 +118,13 @@ Twill's own modules follow one layout: variables, then functions, then
 initialisation. Public functions carry a documentation block, and the block says
 what the function is for rather than how it works.
 
-Every module opens with a header explaining what it does, why it exists, and
-what it deliberately does not do. Much of this documentation is drawn from those
-headers, because they were written first and they are what the code is checked
-against.
+Every module opens with a header in one shape: its name and path, what it
+does in at most three lines, an example, a list of what it offers, and a note
+only where one is needed.
 
 ## Status
 
-**v1.10.0.** The API is stable. When a release asks you to change code, its
+**v2.0.0.** The API is stable. When a release asks you to change code, its
 entry in the
 [changelog](https://github.com/andrian-syh/rblx-twill/blob/main/CHANGELOG.md)
 opens with a Migration section that says exactly what to rewrite.
@@ -138,4 +137,4 @@ Every bundled dependency is traced and licensed; see
 
 ## Next
 
-[Install Twill](/getting-started/installation/) puts both folders in place.
+[Install Twill](/getting-started/installation/) puts both modules in place.

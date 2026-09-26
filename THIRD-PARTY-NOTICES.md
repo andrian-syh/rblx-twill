@@ -14,7 +14,7 @@ and Cryptography on 12 August 2026.
 ## Cmdr — MIT
 
 **Author:** evaera, from [Cmdr](https://github.com/evaera/Cmdr)
-**Location in Twill:** `ServerScriptService/TwillServer/Packages/Cmdr`
+**Location in Twill:** `ServerScriptService/Twill/Packages/Cmdr`
 
 Cmdr moves part of itself into `ReplicatedStorage/CmdrClient` at run time. That
 copy is the same redistribution and carries the same licence.
@@ -67,7 +67,7 @@ metatable that JSON drops, and copying results out of AptInt's limb pool.
 [Luau Cryptography](https://github.com/daily3014/rbx-cryptography)
 **Source:** https://github.com/daily3014/rbx-cryptography
 **Announcement:** https://devforum.roblox.com/t/fastest-cryptography-library-for-roblox/3680271
-**Location in Twill:** `ServerScriptService/TwillServer/Packages/Cryptography`
+**Location in Twill:** `ServerScriptService/Twill/Packages/Cryptography`
 
 ```
 MIT License

@@ -17,7 +17,7 @@ Make it once, keep it for the lifetime of that system, and never build one per
 call.
 
 ```luau title="ServerScriptService/Services/ShopService"
-local Twill = require("@game/ReplicatedStorage/Twill")
+local Twill = require("@game/ServerScriptService/Twill")
 
 -- The scope is what makes a line findable later. Name the system, not the file.
 local logger = Twill.Log.new("Shop")

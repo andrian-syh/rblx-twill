@@ -108,7 +108,7 @@ use.
 
 `Arguments` lives in `ReplicatedStorage` because Cmdr moves a command's
 definition next to its own before running it, on the client as well as the
-server. A path under `TwillServer` would not survive that move.
+server. A path under `ServerScriptService.Twill` would not survive that move.
 
 ## API
 
