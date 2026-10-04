@@ -800,6 +800,57 @@ A client call such as `Trade.Request` ran on the server, from a require of the
 client half by path. On the server, use `Twill.Kits.Trade`, which is the server
 half there.
 
+## Inventory and Wallet kits
+
+These come from the [Inventory kit](/kits/inventory/) and the
+[Wallet kit](/kits/wallet/). A change either kit turns down is not logged: the
+call returns `false` and the reason, so print the second return value.
+
+**`Inventory is used before Inventory.Configure`**
+
+A call reached the kit before its setup ran. Call `Inventory.Configure` in an
+`Init`, after `Data.Configure`. `Wallet is used before Wallet.Configure` means
+the same for Wallet.
+
+**`Default must name one of the containers`**
+
+`Containers` lists more than one container and `Default` is missing, or names
+none of them. Set `Default` to the container a call means when it names none.
+
+**`an item needs a name of 1 to 64 characters with no dot`**
+
+An item, container, or currency name is empty, too long, or holds a dot. A
+replicated path is separated by dots, so a name cannot hold one.
+
+**`at most 5 currencies can be tracked`**
+
+More than 5 currencies set `Track = true`. The economy dashboard takes 5.
+
+**`'Bag' is full`**
+
+The change would take the container past its `Capacity`. Capacity counts
+entries: one for each counted item, whatever its count, and one for each
+one-of-a-kind item.
+
+**`'Sword' is removed by the id of the one to remove`**
+
+`Remove` or `Move` was given the name of a one-of-a-kind item. Pass the id that
+`Inventory.Add` returned, or one read from the container's `Items`.
+
+**`'Bag' is damaged`**
+
+The saved field holds something other than the kit's own shape, from a write
+made outside the kit. The kit refuses to change it. Repair the field by hand,
+and pass `Inventory.Check` to `Validate` so it cannot be saved that way.
+
+**`a transaction for 'X' yielded, so it was undone`**
+
+The function given to `Data.Transact` yielded, so its changes were undone. Do
+the yielding work before or after the transaction.
+
+The client halves read nothing until `Inventory` and `Wallet` are listed under
+`Replicate` in `Data.Configure`.
+
 ## Studio and tooling
 
 **Edits to a module appear to have no effect**

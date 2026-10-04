@@ -257,7 +257,11 @@ export default defineConfig({
 				},
 				{
 					label: 'Kits',
-					items: [{ label: 'Trade', slug: 'kits/trade' }],
+					items: [
+						{ label: 'Inventory', slug: 'kits/inventory' },
+						{ label: 'Wallet', slug: 'kits/wallet' },
+						{ label: 'Trade', slug: 'kits/trade' },
+					],
 				},
 				{
 					label: 'Explanation',

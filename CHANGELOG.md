@@ -14,6 +14,37 @@ Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-10-05
+
+Twill 2.1 adds the Inventory and Wallet kits, and `Data.Transact`, which keeps
+several changes to a player's data together or undoes them all.
+
+### Added
+
+- `Data.Transact` makes several changes to a player's data as one. When the
+  change raises, yields, or leaves data the store's `Validate` check refuses,
+  every change is undone and the reason is returned. A purchase that spends and
+  grants inside one call cannot do only half.
+- `Data.Defer` runs an effect once a player's open transaction is kept, and
+  never when it is undone. Use it for signals and analytics that must not report
+  a change that did not stay.
+- The Inventory kit, at `Twill.Kits.Inventory`. It holds counted items and
+  one-of-a-kind items in named containers, each with its own capacity. Every
+  change is made whole or refused with a reason: a count never passes what is
+  held, a container never passes its capacity, and an item never passes the most
+  a player may own. Equipping is a move into another container.
+- The Wallet kit, at `Twill.Kits.Wallet`. It holds any number of currencies per
+  player. A spend the balance does not cover is refused, as is a total past the
+  currency's ceiling, so a balance never goes below zero and nothing earned is
+  dropped without a reason. A currency marked `Big` stays exact at any size, and
+  one marked `Track` reports each earn and spend to the Roblox economy
+  dashboard.
+- `Inventory.Stacks`, `Inventory.Uniques` and `Wallet.Kind` describe a container
+  or a currency to the Trade kit, so a trade keeps to the same capacity, limits
+  and ceilings.
+- `Inventory.Check` and `Wallet.Check` report whether saved holdings and
+  balances are well formed, for use in the `Validate` check of `Data.Configure`.
+
 ## [2.0.0] - 2026-09-26
 
 Twill 2 installs as two ModuleScripts both named `Twill`, one per side, with
@@ -982,7 +1013,8 @@ First release.
 - An automated test suite that runs on every playtest in Studio and never in
   production.
 
-[Unreleased]: https://github.com/andrian-syh/rblx-twill/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/andrian-syh/rblx-twill/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/andrian-syh/rblx-twill/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/andrian-syh/rblx-twill/compare/v1.10.0...v2.0.0
 [1.10.0]: https://github.com/andrian-syh/rblx-twill/compare/v1.9.0...v1.10.0
 [1.9.0]: https://github.com/andrian-syh/rblx-twill/compare/v1.8.0...v1.9.0

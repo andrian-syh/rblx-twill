@@ -28,7 +28,8 @@ It covers every module that can be exercised from one server, including `Bag`,
 `Signal`, `Scope`, `Loop`, `Net` and its wire format, server `Replication`,
 `Store`, `Data` migrations and sessions, `Tree`, `Tween`, `Async`, `Pool`,
 `Config`, `Shared`, `Board`, `Random`, `Token`, `Chance`, `Navigation`, the
-console's rank gate, and the rules of the Trade kit. It also carries
+console's rank gate, and the rules of the Trade, Inventory and Wallet kits. It
+also carries
 known-answer tests for the cryptographic primitives against official RFC
 vectors.
 
@@ -54,6 +55,11 @@ Through it the suite checks, with a real client:
 - The Trade kit: every ask a lone player makes is turned down with a notice. With
   a second player, in Clients and Servers mode, a whole trade runs between the
   two clients and the coins are counted on both sides.
+- The Inventory and Wallet kits: what a player holds and what they have of a
+  currency reach their own client, and the client halves change nothing. With a
+  second player, a currency is transferred between the two.
+- `Data.Transact`: a change that raises, yields or fails `Validate` is undone,
+  and an effect it deferred never runs.
 
 The declarations both halves share live in one module beside the client half,
 so the two can never disagree about a remote.

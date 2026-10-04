@@ -1,0 +1,108 @@
+---
+title: "v2.1.0 — Inventory, Wallet and transactions"
+description: "Released October 5, 2026. Twill adds the Inventory and Wallet kits, and Data.Transact keeps several changes to player data together or undoes them all"
+template: splash
+---
+
+import NewsBackLink from '../../../components/NewsBackLink.astro';
+import NewsPagination from '../../../components/NewsPagination.astro';
+
+<div class="news-article-container">
+
+<NewsBackLink />
+
+<header class="news-article-header">
+	<div class="news-article-badges">
+		<span class="news-badge-version">v2.1.0</span>
+		<span class="news-badge-date">October 5, 2026</span>
+	</div>
+	<p class="news-article-lead">
+		Twill adds the Inventory and Wallet kits, and Data.Transact keeps several changes to player data together or undoes them all.
+	</p>
+</header>
+
+This release only adds. Replace both `Twill` modules with the ones from the
+release, and no code of your own needs changes.
+
+## Changes that stay together
+
+A purchase is two changes: a spend and a grant. `Data.Transact` makes both or
+neither. When the function raises, yields, or leaves data the store's
+`Validate` check refuses, every change is undone and the reason comes back.
+
+```luau
+local bought, reason = Data.Transact(player, function()
+	assert(Wallet.Spend(player, "Coins", 250, "Shop"))
+	assert(Inventory.Add(player, "Sword"))
+end)
+```
+
+`Data.Defer` holds a signal or an analytics event until the transaction is
+kept, so nothing reports a change that did not stay. See
+[Changing several things as one](/reference/data/#changing-several-things-as-one).
+
+## The Inventory kit
+
+The [Inventory kit](/kits/inventory/) keeps what a player holds in their saved
+data, in named containers such as a bag, a bank and what is worn.
+
+- Counted items are one count each. One-of-a-kind items are held one by one,
+  each with its own id and its own data.
+- Every change is made whole or refused with a reason. A count never passes
+  what is held, a container never passes its capacity, and an item never passes
+  the most a player may own.
+- Equipping is a move into another container, so an item is in one place at a
+  time.
+
+```luau
+Inventory.Configure({
+	Items = { Wood = {}, Sword = { Unique = true } },
+	Containers = { Bag = { Capacity = 40 }, Equipped = { Capacity = 1 } },
+	Default = "Bag",
+})
+```
+
+## The Wallet kit
+
+The [Wallet kit](/kits/wallet/) keeps any number of currencies per player.
+
+- A spend the balance does not cover is refused, so a balance never goes below
+  zero.
+- A total past the currency's ceiling is refused, so nothing earned is dropped
+  without a reason.
+- A currency marked `Big` stays exact at any size.
+- A currency marked `Track` reports each earn and spend to the Roblox economy
+  dashboard, with the reason you pass as its transaction type.
+
+```luau
+Wallet.Configure({
+	Currencies = { Coins = { Track = true }, Cash = { Big = true } },
+})
+```
+
+## Kits that work with Trade
+
+`Inventory.Stacks`, `Inventory.Uniques` and `Wallet.Kind` describe a container
+or a currency to the [Trade kit](/kits/trade/). A trade made through them keeps
+to the same capacity, limits and ceilings as every other change.
+
+## No remotes in either kit
+
+Neither kit declares a remote. A client asks through a remote of your own, your
+handler decides whether the player may, and then calls the kit. The client
+halves only read what the server replicates, once `Inventory` and `Wallet` are
+listed under `Replicate` in `Data.Configure`.
+
+## Tested with two clients
+
+The suite gained checks for both kits and for transactions, including a transfer
+between two real clients. All 1413 checks pass.
+
+## Full changelog
+
+Every change in this release is listed in the
+[changelog](https://github.com/andrian-syh/rblx-twill/blob/main/CHANGELOG.md#210---2026-10-05).
+
+<NewsPagination />
+
+</div>

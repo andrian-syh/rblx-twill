@@ -135,6 +135,34 @@ When a player leaves while their data fails the check, their session is still
 released so the next server does not wait, and the data they last saved is what
 that server loads.
 
+## Changing several things as one
+
+`Transact` runs a function that changes a player's live data, and keeps either
+every change or none. The changes are undone when the function raises, when it
+yields, or when the result fails the store's `Validate` check.
+
+```luau
+local bought, reason = Data.Transact(player, function(data)
+	assert(data.Coins >= 250, "not enough coins")
+	data.Coins -= 250
+	data.Owned.Sword = true
+end)
+```
+
+Raise to undo: `assert(condition, reason)` hands the reason back as the second
+return value. A call that returns `false` and a reason, as every kit call does,
+fits inside `assert` directly.
+
+Undoing puts the data back in place. A table held before the transaction still
+points at live data afterwards.
+
+A transaction opened inside another joins it. The outer one decides whether
+everything stays, so a failure inside undoes the outer changes too.
+
+`Defer` holds an effect until the open transaction is kept. Use it for anything
+that must not report a change that did not stay, such as a signal or an
+analytics event.
+
 ## Writing to anybody
 
 `Edit` and `Reset` work on any user, wherever they are. When this server holds
@@ -316,6 +344,53 @@ answers `false`.
 This is what a Developer Product grant waits on. Granting in memory and
 answering `PurchaseGranted` before the write lands loses the purchase if the
 server stops in between.
+
+### `Data.Transact`
+
+`[Server]`
+
+Makes several changes to a player's data as one: all of them stay, or none does.
+
+```luau
+function Data.Transact<T>(player: Player, change: (data: T) -> ()): (boolean, string?)
+```
+
+**Parameters**
+
+| Name | Type | Description |
+| :--- | :--- | :--- |
+| `player` | `Player` | Whose data to change. |
+| `change` | `(data: T) -> ()` | Makes the changes on the live data. Raise to undo them all. |
+
+**Returns**
+
+`boolean` - `true` when every change was kept. `string?` - why nothing was
+kept: what was raised, `a transaction cannot yield`, the refusal from
+`Validate`, or `data is not loaded`.
+
+Throws when `player` is not a `Player` or `change` is not a function. A
+transaction copies the player's data once, so keep it to changes made at the
+pace of a player's actions. Added in v2.1.0.
+
+### `Data.Defer`
+
+`[Server]`
+
+Runs an effect once the player's open transaction is kept.
+
+```luau
+function Data.Defer(player: Player, effect: () -> ())
+```
+
+**Parameters**
+
+| Name | Type | Description |
+| :--- | :--- | :--- |
+| `player` | `Player` | Whose transaction decides. |
+| `effect` | `() -> ()` | What to do once the change is certain to stay. |
+
+With no transaction open, the effect runs at once. An effect queued by a
+transaction that is undone never runs. Added in v2.1.0.
 
 ### `Data.SaveAll`
 

@@ -28,6 +28,16 @@ export interface Release {
 
 export const releases: Release[] = [
 	{
+		version: 'v2.1.0',
+		title: 'Inventory, Wallet and transactions',
+		date: 'October 5, 2026',
+		tagline: 'Twill adds the Inventory and Wallet kits, and Data.Transact keeps several changes to player data together or undoes them all.',
+		summary:
+			'The Inventory kit holds counted and one-of-a-kind items in named containers, and the Wallet kit holds currencies that never go below zero or past their ceiling. Data.Transact makes a spend and a grant as one, so a purchase cannot do only half. No code needs changes.',
+		slug: '/news/v2-1-0/',
+		icon: 'star',
+	},
+	{
 		version: 'v2.0.0',
 		title: 'One Twill module per side',
 		date: 'September 26, 2026',
