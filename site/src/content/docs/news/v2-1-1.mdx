@@ -1,0 +1,106 @@
+---
+title: "v2.1.1 — Saves that outlast storage trouble"
+description: "Released October 6, 2026. Store keeps a key whole when storage fails, and the Trade kit checks more before a trade is agreed"
+template: splash
+---
+
+import NewsBackLink from '../../../components/NewsBackLink.astro';
+import NewsPagination from '../../../components/NewsPagination.astro';
+
+<div class="news-article-container">
+
+<NewsBackLink />
+
+<header class="news-article-header">
+	<div class="news-article-badges">
+		<span class="news-badge-version">v2.1.1</span>
+		<span class="news-badge-date">October 6, 2026</span>
+	</div>
+	<p class="news-article-lead">
+		Store keeps a key whole when storage fails, and the Trade kit checks more before a trade is agreed.
+	</p>
+</header>
+
+## Before upgrading
+
+Replace both `Twill` modules with the ones from the release. Code that worked
+on v2.1.0 needs no changes.
+
+One thing can stop a server from starting: a config that was already faulty.
+`Data.Configure` refuses a `Version` that is not a whole number, and a
+migration keyed above `Version`, which never ran. `Store.New` refuses a number
+that is not above zero, and `AssumeDead` no longer than `AutoSave`. Each
+refusal names the field.
+
+## A last write that fails is tried again
+
+When a player left while storage was failing, their last write failed and was
+not made again. The key stayed held until another server took it, and what
+they did since the last save was lost.
+
+`Store` keeps the key held and tries the last write again every `LoadRepeat`
+seconds, until it lands or another server takes the key. A player who returns
+to the same server in the meantime starts from what they had, not from what
+storage last held. See
+[When storage fails](/reference/store/#when-storage-fails).
+
+## Storage calls that cannot jam a key
+
+A thread stopped while it waited on a storage call left that key's queue
+blocked, and no later save or load of the key finished on that server. Every
+call runs on its own, finishes, and frees the key, whatever happens to the
+thread that asked.
+
+## What a save stores is fixed when it reads
+
+`Data.SaveNow` confirms a write with a `verify` function. It was given the
+data as it stood after the write returned, so a change made while the write
+was in flight read as saved. A write takes its copy of the data at the moment
+it reads the key, and `verify` is given that copy.
+
+## Values storage cannot keep
+
+A number that is not finite, text that is not valid UTF-8, or an Instance in
+a player's data made every save fail after every retry. `Store` finds such a
+value before asking storage, refuses the write the way a `Validate` refusal
+is refused, and names the field in the log. It also warns once when a key
+passes 3,000,000 of the 4,194,304 characters it may hold.
+
+## Trade checks more before a trade is agreed
+
+- `Ready` and `Confirm` carry which offers the player was last shown. The
+  server turns down one that names offers since changed, so a click made on an
+  older offer cannot agree to another one. The client half sends this itself.
+- `CanTrade` receives both offers and runs on every offer, so a game can
+  refuse by item. Roblox requires a check of `IsPaidItemTradingAllowed` before
+  a player trades a paid item, and this is where it goes. See
+  [Your own rules](/kits/trade/#your-own-rules).
+- A kind may describe what an item carries. The other player receives it as
+  `Detail` on each entry, so they see a pet's level and not only its id.
+- `Cooldown` keeps both players from trading again for a while after a trade.
+- Two players whose containers are full can swap. Both sides give up their
+  offer before either receives.
+
+## Other changes
+
+- A change sent with `Data.Edit` to a user on another server is applied once
+  when storage reports a failure for a write that landed.
+- A key taken as the server begins to close is given up at once.
+- A key written in a newer envelope format is left alone.
+- A failed storage call waits a varying time before its next try.
+
+## Tested with failures injected
+
+`Store.Mock` fails a call before or after it writes, and runs a transform
+twice, as storage does. The suite uses it to check each fault above, and ends
+with a run of random saves, leaves, returns and failures that checks nothing a
+session held is lost. All 1460 checks pass with two clients.
+
+## Full changelog
+
+Every change in this release is listed in the
+[changelog](https://github.com/andrian-syh/rblx-twill/blob/main/CHANGELOG.md#211---2026-10-06).
+
+<NewsPagination />
+
+</div>

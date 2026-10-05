@@ -33,6 +33,12 @@ also carries
 known-answer tests for the cryptographic primitives against official RFC
 vectors.
 
+`Store` is also checked with storage failing. Its stand-in store fails a call
+before or after it writes, and runs a transform twice. The suite uses those to
+check a write of unknown outcome, a last write that fails, a caller stopped
+while waiting, and a seeded run of random saves, leaves, returns and failures
+that must lose nothing a session held.
+
 ## The client half
 
 Some paths only exist with a real client on the other end. A `LocalScript`,

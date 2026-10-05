@@ -41,6 +41,13 @@ Leave both where they are. The server half finds the client half by path.
    agrees with `Confirm`.
 6. Once both agree, the server makes the swap and saves both players.
 
+`Ready` and `Confirm` carry which offers the player's client last showed. The
+server counts every change to an offer, and turns down a `Ready` or `Confirm`
+that names an older count. A player cannot lock in or agree to an offer that
+changed while their click was on its way. The client half sends the count
+itself, so your code calls `Ready` and `Confirm` with the same arguments as on
+v2.1.0. Added in v2.1.1.
+
 The server decides every step. A client only asks, and sees the result in its
 trade view. An ask the server turns down comes back as a notice in the view,
 not as an error.
@@ -56,6 +63,8 @@ cannot be swapped out at the last second.
   caught.
 - **Neither side pays with what the other brings.** Both offers are checked
   before either moves.
+- **Both sides give before either receives.** Two players whose containers are
+  full can still swap, since each offer leaves before the other arrives.
 - **The swap is tried on copies first.** Each copy must pass the store's own
   [`Validate`](/reference/data/#refusing-data-that-should-never-be-saved)
   check through [`Data.Check`](/reference/data/#datacheck). A trade that fails
@@ -114,6 +123,63 @@ they run on the same data. The swap is tried on copies first, and that trial
 only proves anything when the real run repeats it. `Named = false` makes the
 kind take no id, and `Single = true` limits each id to one.
 
+### Showing what an item carries
+
+A player's data reaches only their own client, so the other player's offer
+arrives as kind, id and amount. A kind with a `Describe` function adds what the
+item carries:
+
+```luau
+Describe = function(data, id)
+	return data.Skins[id]
+end
+```
+
+The result is sent as `Detail` on each entry under `Theirs`. Return a copy, and
+only what the other player may see. `Trade.Unique` and
+[`Inventory.Uniques`](/kits/inventory/#inventoryuniques) describe their items
+already. `Describe` must not yield, and a `Describe` that raises sends no
+detail. Added in v2.1.1.
+
+## Your own rules
+
+`CanTrade` is where a game decides who may trade what. It runs when a player
+invites, when the invite is accepted, on every offer, and again at the swap:
+
+```luau
+Trade.Configure({
+	Kinds = kinds,
+	CanTrade = function(first, second, firstGives, secondGives)
+		if not tradingOpen then
+			return false, "trading is closed for now"
+		end
+		
+		for _, entry in firstGives do
+			if entry.Kind == "Pets" and levelOf(first) < 10 then
+				return false, "pets trade from level 10"
+			end
+		end
+		
+		return true
+	end,
+})
+```
+
+`first` is the player who invited. Both offers are empty lists until a trade is
+open, and each is a copy. A rule that raises counts as a refusal. The offers,
+and the call on every offer, were added in v2.1.1.
+
+- **A switch to close trading.** Return `false` while a flag of your own is
+  set, such as a [`Config`](/reference/config/) value. Open trades are refused
+  at their next offer or at the swap.
+- **Paid items.** Roblox requires a game that lets players trade paid items,
+  or what a paid random item gave, to check `IsPaidItemTradingAllowed` from
+  `PolicyService:GetPolicyInfoForPlayerAsync` for each player. Read it once
+  when the player joins, keep the answer, treat a failed read as `false`, and
+  refuse those items in `CanTrade` for a player it is `false` for.
+- **Levels, daily limits and item locks** are checks on the players or on the
+  entries, made the same way.
+
 ## The client
 
 ```luau
@@ -132,12 +198,13 @@ The view is the only thing the client needs to draw a trade window:
 | :--- | :--- |
 | `Invites` | Invites waiting for this player, each with `From` and `Expires`. |
 | `Notice` | Why the last ask was turned down, until the next one is taken. |
-| `Session` | The open trade: `Id`, `With`, `Mine` and `Theirs`, and `ConfirmAt`. |
+| `Session` | The open trade: `Id`, `With`, `Version`, `Mine` and `Theirs`, and `ConfirmAt`. |
 | `Last` | How the last trade ended: `Outcome`, `Reason`, and `Saved`. |
 
-`Mine` and `Theirs` each hold `Entries`, `Ready` and `Confirmed`. `Expires` and
-`ConfirmAt` are on the server clock, so compare them with
-`workspace:GetServerTimeNow()`.
+`Mine` and `Theirs` each hold `Entries`, `Ready` and `Confirmed`. An entry
+under `Theirs` also holds `Detail` when its kind describes it. `Version` counts
+the changes made to either offer. `Expires` and `ConfirmAt` are on the server
+clock, so compare them with `workspace:GetServerTimeNow()`.
 
 `Outcome` is one of `completed`, `declined`, `cancelled`, `refused` or
 `failed`.
@@ -160,8 +227,9 @@ function Trade.Configure(config: Config)
 | `MaxEntries` | `number?` | 32 | The most items one offer holds, up to 32. |
 | `ConfirmDelay` | `number?` | 3 | Seconds after any change before confirming opens. |
 | `InviteSeconds` | `number?` | 30 | How long an invite waits. |
+| `Cooldown` | `number?` | 0 | Seconds after a completed trade before either player may trade again. Added in v2.1.1. |
 | `LogField` | `(string \| false)?` | `"TradeLog"` | Where each player's trade record is kept, or `false` for none. |
-| `CanTrade` | `((first: Player, second: Player) -> (boolean, string?))?` | None | Your own rule, checked at the invite, the accept and the swap. |
+| `CanTrade` | `((first: Player, second: Player, firstGives: { Entry }, secondGives: { Entry }) -> (boolean, string?))?` | None | [Your own rule](#your-own-rules), checked at the invite, the accept, every offer and the swap. |
 
 Throws on a second call, before `Data` is configured, and on a config that
 does not fit the table above. Nothing is changed by a config that throws.
@@ -212,8 +280,8 @@ The data still saves with the next write.
 | `Trade.Request(userId)` | Invite a player on this server. |
 | `Trade.Respond(userId, accept)` | Accept or decline an invite. |
 | `Trade.Offer(entries)` | Replace this player's whole offer. Each entry is `{ Kind, Id, Amount }`. |
-| `Trade.Ready(ready)` | Lock this player's offer in, or out. |
-| `Trade.Confirm()` | Agree to the trade as it stands. |
+| `Trade.Ready(ready)` | Lock this player's offer in, or out. Refused when an offer changed since the view arrived. |
+| `Trade.Confirm()` | Agree to the trade as the view shows it. |
 | `Trade.Cancel()` | Walk away from the open trade. |
 | `Trade.Get()` | Nothing; returns this player's view. |
 | `Trade.Observe(callback, owner?)` | Nothing; runs the callback on every change to the view. |

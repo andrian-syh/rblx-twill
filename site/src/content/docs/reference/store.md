@@ -51,6 +51,32 @@ too, and taking it would mean two servers reading the same wait as their turn.
 `Steal = true` skips all of it and takes the key immediately. It exists for
 recovery, not for ordinary use, and it can cost the holder unsaved changes.
 
+A server that takes its own key again, while a handle here still held changes
+that were never written, starts the new handle from a copy of those changes.
+The older handle ends. A player who leaves during storage trouble and returns
+to the same server therefore finds what they had.
+
+## When storage fails
+
+Storage does not say whether a failed write landed. Every write here is safe
+to make again, so a failed one is tried again up to `Attempts` times, waiting
+longer each time.
+
+| What fails | What the store does |
+| :--- | :--- |
+| An ordinary save | Answers `false`. The data stays held and goes with the next save. |
+| The last write of `EndSession` | Answers `false`, keeps the key held, and tries again every `LoadRepeat` seconds until it lands or another server takes the key. |
+| A write whose outcome is unknown | Writes again. A change sent with `MessageAsync` is recognised and not added twice. |
+| The caller is stopped while waiting | The call still finishes and frees the key. |
+
+A value storage cannot keep, such as a number that is not finite, text that is
+not valid UTF-8, or an Instance, is found before storage is asked. The write is
+refused the way a `Validate` refusal is, and the log names the field.
+
+A handle's `Size` holds the length of what its last write stored. The store
+warns once per handle when that passes 3,000,000 of the 4,194,304 characters a
+key may hold. `Size` was added in v2.1.1.
+
 ## Mail
 
 `MessageAsync` writes a change into the key itself rather than sending it to a
@@ -63,8 +89,9 @@ next save.
 
 ## Keys that hold something else
 
-Reading a key that holds a value this store did not write, or one whose data
-cannot be unpacked, is refused. The key is left exactly as it was,
+Reading a key that holds a value this store did not write, one written in a
+newer envelope format than this Twill knows, or one whose data cannot be
+unpacked, is refused. The key is left exactly as it was,
 `Store.OnOverwrite` fires, and `StartSessionAsync` answers `nil` without
 retrying.
 
@@ -93,7 +120,9 @@ function Store.New(name: string, template: { [string]: any }?, config: Config?):
 `Store` - The store. `Store.Mock` on it is the same store backed by memory that
 is forgotten when the server stops.
 
-Throws when the name is empty or is not text.
+Throws when the name is empty or is not text, and on a config that could not
+work: a field of the wrong type, a number that is not above zero, `Attempts`
+that is not whole, or `AssumeDead` no longer than `AutoSave`.
 
 ### `Config`
 
@@ -359,7 +388,9 @@ function Keep:EndSession(): boolean
 
 A second call answers `false` rather than writing again. When `Validate` refuses
 the data, the key is still given up, with the data it held before, and the call
-answers `false`. Yields. Throws on a key that was only read.
+answers `false`. When storage fails the write, the call answers `false`, the key
+stays held, and the store [tries again](#when-storage-fails) on its own. Yields.
+Throws on a key that was only read.
 
 ### `Keep:SetAsync`
 

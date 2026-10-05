@@ -14,6 +14,81 @@ Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-10-06
+
+Twill 2.1.1 keeps a player's key whole when storage fails, and the Trade kit
+checks more before a trade is agreed.
+
+### Added
+
+- The Trade kit takes `Ready` and `Confirm` only for the offers a player was
+  last shown. Each change to an offer is counted, the count is in the view as
+  `Session.Version`, and the client half sends it with both asks. An ask that
+  names an older count is turned down with a notice.
+- A trade kind may have a `Describe` function. What it returns is sent to the
+  other player as `Detail` on each offered entry, so they see what an item
+  carries before agreeing. `Trade.Unique` and `Inventory.Uniques` describe
+  their items already.
+- `Cooldown` in `Trade.Configure` keeps both players from trading again for a
+  number of seconds after a completed trade. It defaults to 0.
+- A handle from `Store` has `Size`, the length of what its last write stored.
+  The store warns once when a key passes 3,000,000 of the 4,194,304 characters
+  it may hold.
+- `Store.Mock` fails calls before or after they write, and runs a transform
+  twice, through `Mock.Fail`, `Mock.Rerun` and `Mock.Steady`.
+
+### Changed
+
+- `CanTrade` in `Trade.Configure` also receives both offers, and runs on every
+  offer as well as at the invite, the accept and the swap. A game can refuse by
+  item, such as a paid item for a player Roblox does not allow to trade one. A
+  rule that takes only the two players works as before.
+- `Store.New` refuses a config that could not work: a field of the wrong type,
+  a number that is not above zero, `Attempts` that is not whole, or
+  `AssumeDead` no longer than `AutoSave`. `Data.Configure` refuses a `Version`
+  that is not a whole number, and a migration keyed outside 2 to `Version`,
+  which would never run. A config with one of these faults used to be accepted
+  and throws on this release.
+- `Store` finds a value storage cannot keep before asking storage, refuses the
+  write, and names the field in the log. Each save used to fail after every
+  retry with storage's own message.
+- `Store.Mock` stores a value as storage would hand it back, holds it to the
+  size limit, and waits a frame after a write as well as before it.
+- A failed storage call waits a varying time before its next try, so servers
+  that failed together do not retry together.
+
+### Fixed
+
+- A last write that storage failed was never tried again. The key stayed held
+  until another server took it, and changes since the last save were lost.
+  `Store` tries the last write again until it lands or the key is taken.
+- A player who left while storage was failing and returned to the same server
+  got what storage last held, without the changes still unsaved on that
+  server. The returning session starts from those changes.
+- A thread stopped while waiting on a `Store` call left its key jammed, so no
+  later save or load of that key finished on that server. Every call runs on
+  its own and frees the key.
+- `Data.SaveNow` confirmed a change made after the write had read the data,
+  although that change was not stored. What a write stores is fixed when it
+  reads the data, and `verify` is given exactly that.
+- A change sent with `Data.Edit` to a user on another server was applied twice
+  when storage reported a failure for a write that had landed.
+- A key taken as the server began to close was left held, so the next server
+  waited for it. It is given up at once.
+- A key written in a newer envelope format was read as the current one and
+  written back in the older format. It is left alone, as any key the store
+  cannot read is.
+- Stored data whose version is not a number failed the load with an unrelated
+  message. The message names the cause, and the data is left as it was.
+- A trade between two players whose containers were full was refused for lack
+  of room, although the swap would have fitted. Both sides give up their offer
+  before either receives.
+- A trade whose swap was made, and whose completion then raised, was shown to
+  both players as failed. It is shown as completed, with `Saved` set to
+  `false`.
+- A reason returned by `CanTrade` that was not a string was sent to the client
+  as it was. The kit's own message is sent instead.
+
 ## [2.1.0] - 2026-10-05
 
 Twill 2.1 adds the Inventory and Wallet kits, and `Data.Transact`, which keeps
@@ -1013,7 +1088,8 @@ First release.
 - An automated test suite that runs on every playtest in Studio and never in
   production.
 
-[Unreleased]: https://github.com/andrian-syh/rblx-twill/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/andrian-syh/rblx-twill/compare/v2.1.1...HEAD
+[2.1.1]: https://github.com/andrian-syh/rblx-twill/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/andrian-syh/rblx-twill/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/andrian-syh/rblx-twill/compare/v1.10.0...v2.0.0
 [1.10.0]: https://github.com/andrian-syh/rblx-twill/compare/v1.9.0...v1.10.0

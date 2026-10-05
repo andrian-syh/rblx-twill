@@ -382,7 +382,8 @@ Throws before `Configure`, and for a container that was not configured.
 
 `[Server]`
 
-Describes a container's one-of-a-kind items to the Trade kit.
+Describes a container's one-of-a-kind items to the Trade kit. The other player
+in a trade is shown each offered item's `Id` and `Data`.
 
 ```luau
 function Inventory.Uniques(container: string?): Kind

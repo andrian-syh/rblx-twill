@@ -317,6 +317,19 @@ and the last good data stays stored. A check that raised reads
 `Validate raised an error: ...`. Until the data passes again, no later save
 lands either, so find what put it in that state.
 
+**`'X' in 'Y' was not written, and keeps what it held before: 'F' holds ..., which storage cannot keep`**
+
+The data holds a value a DataStore cannot store, at the field named. The save
+was skipped before storage was asked, and the last good data stays stored. No
+later save lands until the value is gone. Encode it with
+[`Serialize`](/reference/serialize/) or remove it.
+
+**`'X' in 'Y' holds N of the 4194304 characters a key may hold; storage refuses a write past that`**
+
+The key is past 3,000,000 characters. Saves still land, but one past the limit
+fails, and every save after it. Trim what the key holds, move part of it to a
+[branch](/reference/data/), or turn `Compress` on for the store.
+
 **`'X' in 'Y' could not be written: ...`**
 
 A save was refused, and the reason says which of the two applies: another server
@@ -782,6 +795,26 @@ same `Init`.
 A kind of your own is missing one of its three functions. Use a built-in kind,
 or supply all three.
 
+**`kind 'X' has a Describe that is not a function`**
+
+A kind's `Describe` must be a function taking the data and the id, or be left
+out.
+
+**`CanTrade errored: ...`**
+
+Your `CanTrade` rule raised. The ask is refused, and the player is told trading
+is not possible right now. Fix the rule; it should return `false` and a reason
+instead of raising.
+
+**Notice: `the offer changed; look at it again`**
+
+A `Ready` or `Confirm` reached the server after one of the offers changed. The
+player's view holds the changed offers, so they can ask again.
+
+**Notice: `wait a moment before trading again`**
+
+The player completed a trade less than `Cooldown` seconds ago.
+
 **`trade X was made, but a save has not landed yet; it goes with the next one`**
 
 The swap was made and both players' data changed, but a save did not confirm
@@ -791,8 +824,9 @@ needs undoing.
 **`trade X failed: ...`**
 
 Something raised while a trade was being completed, outside the swap itself.
-Both players are told the trade failed. When the swap had not run yet, nothing
-moved; the error names what raised.
+When the swap had not run yet, nothing moved, and both players are told the
+trade failed. When it had, the trade is shown as completed with `Saved` set to
+`false`, and the data saves with the next write. The error names what raised.
 
 **`Trade.X is client only; its server half decides trades`**
 

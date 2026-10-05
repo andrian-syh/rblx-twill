@@ -124,7 +124,7 @@ only where one is needed.
 
 ## Status
 
-**v2.1.0.** The API is stable. When a release asks you to change code, its
+**v2.1.1.** The API is stable. When a release asks you to change code, its
 entry in the
 [changelog](https://github.com/andrian-syh/rblx-twill/blob/main/CHANGELOG.md)
 opens with a Migration section that says exactly what to rewrite.

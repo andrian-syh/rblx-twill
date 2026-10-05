@@ -28,6 +28,16 @@ export interface Release {
 
 export const releases: Release[] = [
 	{
+		version: 'v2.1.1',
+		title: 'Saves that outlast storage trouble',
+		date: 'October 6, 2026',
+		tagline: 'Store keeps a key whole when storage fails, and the Trade kit checks more before a trade is agreed.',
+		summary:
+			'A last write that storage failed is tried again until it lands, and a player who returns to the same server finds what they had. Trade takes readiness and agreement only for the offers a player was shown, and shows what an offered item carries. A config that was already faulty is refused at boot.',
+		slug: '/news/v2-1-1/',
+		icon: 'file',
+	},
+	{
 		version: 'v2.1.0',
 		title: 'Inventory, Wallet and transactions',
 		date: 'October 5, 2026',
