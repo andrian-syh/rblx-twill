@@ -14,8 +14,6 @@ wins:Increment(player.UserId, 1)
 wins.OnUpdated:Connect(showTop)
 ```
 
-Added in v1.10.0.
-
 ## Reading
 
 The top of the board is read on a timer and kept, so `Top` never yields and

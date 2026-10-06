@@ -8,7 +8,7 @@ same shape as a [service](/core-guides/services/), booted by the same
 [`Lifecycle`](/reference/lifecycle/), and the two words exist only so it is
 always clear which side a module runs on.
 
-```luau title="ReplicatedStorage/Client/HudController"
+```luau title="ReplicatedStorage/Client/Controllers/HudController"
 local HudController = {}
 
 function HudController.Start()
@@ -28,7 +28,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Twill = require("@game/ReplicatedStorage/Twill")
 
-Twill.Lifecycle.Start(ReplicatedStorage:WaitForChild("Client"))
+Twill.Lifecycle.Start(ReplicatedStorage:WaitForChild("Client"):WaitForChild("Controllers"))
 ```
 
 Controllers live where a client can reach them, which means `ReplicatedStorage`
@@ -59,7 +59,7 @@ A controller never asks the server for anything. There is no such call. Values
 arrive because the server decided to publish them, and
 [`Replication`](/reference/replication/) delivers them.
 
-```luau title="ReplicatedStorage/Client/HudController"
+```luau title="ReplicatedStorage/Client/Controllers/HudController"
 local Twill = require("@game/ReplicatedStorage/Twill")
 
 local HudController = {}
@@ -131,7 +131,7 @@ Long-lived work that belongs to the session goes in `Scope.Framework()`.
 Declare the remote in a module both sides require, then call it from a
 controller.
 
-```luau title="ReplicatedStorage/Shared/Remotes"
+```luau title="ReplicatedStorage/Shared/Remotes/Shop"
 local Net = require("@game/ReplicatedStorage/Twill/Net")
 local Types = Net.Types
 
@@ -140,10 +140,10 @@ return {
 }
 ```
 
-```luau title="ReplicatedStorage/Client/ShopController"
+```luau title="ReplicatedStorage/Client/Controllers/ShopController"
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Remotes = require(ReplicatedStorage.Shared.Remotes)
+local Remotes = require(ReplicatedStorage.Shared.Remotes.Shop)
 
 local ShopController = {}
 

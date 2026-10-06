@@ -13,8 +13,6 @@ Shared.Publish("Announcements", { Text = "Double coins for an hour" })
 Shared.Subscribe("Announcements", onAnnouncement, bag)
 ```
 
-Added in v1.10.0.
-
 ## One budget per server
 
 Every message this server publishes, every topic it listens to, and every

@@ -49,7 +49,7 @@ spec reads like the instance it becomes.
 
 A `Ref` plus a subscription is the whole binding.
 
-```luau title="ReplicatedStorage/Client/HudController"
+```luau title="ReplicatedStorage/Client/Controllers/HudController"
 local Twill = require("@game/ReplicatedStorage/Twill")
 
 local HudController = {}

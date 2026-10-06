@@ -14,8 +14,6 @@ Config.Configure({ Defaults = { BossHealth = 500, HalloweenLive = false } })
 local health = Config.Get("BossHealth")
 ```
 
-Added in v1.10.0.
-
 ## Defaults that always answer
 
 Every key is declared once, with the value it falls back to. A read never yields

@@ -13,8 +13,6 @@ local sent, code = Teleport.Send(ARENA_PLACE, squad, { Reserve = true, Data = { 
 local data, reason = Teleport.Receive(player)
 ```
 
-Added in v1.10.0.
-
 ## Data that never passes through the client
 
 Teleport data travels through the client, so a player can read it and may be

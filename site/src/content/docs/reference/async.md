@@ -10,8 +10,6 @@ local finished, code = Async.Timeout(10, TeleportService.ReserveServerAsync, Tel
 local fetched, body = Async.Retry(HttpService.GetAsync, { Attempts = 3 }, HttpService, url)
 ```
 
-Added in v1.10.0.
-
 ## Answers, not promises
 
 Every function yields the calling thread and returns plain values, in the shape

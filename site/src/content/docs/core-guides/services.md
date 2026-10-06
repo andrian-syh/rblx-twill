@@ -196,7 +196,7 @@ it gets served.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Twill = require("@game/ServerScriptService/Twill")
-local Remotes = require(ReplicatedStorage.Shared.Remotes)
+local Remotes = require(ReplicatedStorage.Shared.Remotes.Shop)
 
 local ShopService = {}
 

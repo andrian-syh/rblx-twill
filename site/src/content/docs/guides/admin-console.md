@@ -28,7 +28,7 @@ Twill.Admin.Configure({
 })
 ```
 
-```luau title="ReplicatedStorage/Client/AdminController"
+```luau title="ReplicatedStorage/Client/Controllers/AdminController"
 -- Installs the GUI and binds F2. Requiring is the whole job.
 require("@game/ReplicatedStorage/Twill/Admin")
 ```

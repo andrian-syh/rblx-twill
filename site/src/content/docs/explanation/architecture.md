@@ -1,5 +1,5 @@
 ---
-title: Architecture
+title: Framework architecture
 description: How the two halves fit together, what happens during boot, and how a value reaches a client
 ---
 

@@ -14,8 +14,6 @@ Wallet is a kit: a part of Twill for one kind of game feature rather than for
 every game. It ships inside Twill and loads only when you name it. It needs
 `Data` configured, and keeps each player's balances in their saved data.
 
-Added in v2.1.0.
-
 ## Where it lives
 
 | Half | Holds |

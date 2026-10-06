@@ -268,8 +268,6 @@ function Net.GetStats(): Stats
 | `Refused` | `{ [string]: number }` | Refusals by [reason](#measuring-traffic). |
 | `Remotes` | `{ [string]: RemoteStats }` | Per remote name: `Sent` and `Received`, each with `Calls` and `Bytes`, and `Refused` by reason. |
 
-Added in v2.0.0.
-
 ### `Net.ResetStats`
 
 `[Server]` | `[Client]`
@@ -280,7 +278,7 @@ Starts every count over from now.
 function Net.ResetStats()
 ```
 
-Reset before a window of play to measure that window alone. Added in v2.0.0.
+Reset before a window of play to measure that window alone.
 
 ### `Net.Handle`
 

@@ -136,6 +136,21 @@ export default defineConfig({
 					],
 				},
 				{
+					label: 'Architecture',
+					items: [
+						{ label: 'Weave', slug: 'architecture/overview' },
+						{ label: 'Folder map', slug: 'architecture/folder-map' },
+						{ label: 'Rules', slug: 'architecture/rules' },
+						{ label: 'Project README', slug: 'architecture/project-readme' },
+						{ label: 'Add a feature', slug: 'architecture/add-a-feature' },
+						{ label: 'Check a project', slug: 'architecture/check-a-project' },
+						{ label: 'Use Weave with a sync tool', slug: 'architecture/sync-tools' },
+						{ label: 'Use Weave without Twill', slug: 'architecture/without-twill' },
+						{ label: 'Adopt Weave in an existing game', slug: 'architecture/adopt-existing' },
+						{ label: 'Decisions', slug: 'architecture/decisions' },
+					],
+				},
+				{
 					label: 'How-To Guides',
 					items: [
 						{
@@ -267,7 +282,7 @@ export default defineConfig({
 					label: 'Explanation',
 					items: [
 						{ label: 'Design principles', slug: 'explanation/design-principles' },
-						{ label: 'Architecture', slug: 'explanation/architecture' },
+						{ label: 'Framework architecture', slug: 'explanation/architecture' },
 						{ label: 'Testing and verification', slug: 'explanation/testing' },
 					],
 				},

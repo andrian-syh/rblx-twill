@@ -246,7 +246,7 @@ Try a change on a copy first, and make it for real only when the copy passes.
 A change made across two players at once, such as a trade, is the usual reason.
 
 Throws before `Configure`, on data that is not a table, and on a branch nobody
-configured. Added in v2.0.0.
+configured.
 
 ### `Data.Gate`
 
@@ -370,7 +370,7 @@ kept: what was raised, `a transaction cannot yield`, the refusal from
 
 Throws when `player` is not a `Player` or `change` is not a function. A
 transaction copies the player's data once, so keep it to changes made at the
-pace of a player's actions. Added in v2.1.0.
+pace of a player's actions.
 
 ### `Data.Defer`
 
@@ -390,7 +390,7 @@ function Data.Defer(player: Player, effect: () -> ())
 | `effect` | `() -> ()` | What to do once the change is certain to stay. |
 
 With no transaction open, the effect runs at once. An effect queued by a
-transaction that is undone never runs. Added in v2.1.0.
+transaction that is undone never runs.
 
 ### `Data.SaveAll`
 

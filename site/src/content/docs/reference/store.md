@@ -75,7 +75,7 @@ refused the way a `Validate` refusal is, and the log names the field.
 
 A handle's `Size` holds the length of what its last write stored. The store
 warns once per handle when that passes 3,000,000 of the 4,194,304 characters a
-key may hold. `Size` was added in v2.1.1.
+key may hold.
 
 ## Mail
 

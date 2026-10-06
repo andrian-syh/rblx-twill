@@ -16,8 +16,6 @@ every game. It ships inside Twill and loads only when you name it, so a game
 that never trades pays nothing for it. It needs `Data` configured, and takes
 nothing else from your game but the shape of what can be traded.
 
-Added in v2.0.0.
-
 ## Where it lives
 
 The kit has a half in each Twill module, and `Twill.Kits.Trade` reaches the
@@ -45,8 +43,7 @@ Leave both where they are. The server half finds the client half by path.
 server counts every change to an offer, and turns down a `Ready` or `Confirm`
 that names an older count. A player cannot lock in or agree to an offer that
 changed while their click was on its way. The client half sends the count
-itself, so your code calls `Ready` and `Confirm` with the same arguments as on
-v2.1.0. Added in v2.1.1.
+itself, so your code calls `Ready` and `Confirm` without it.
 
 The server decides every step. A client only asks, and sees the result in its
 trade view. An ask the server turns down comes back as a notice in the view,
@@ -139,7 +136,7 @@ The result is sent as `Detail` on each entry under `Theirs`. Return a copy, and
 only what the other player may see. `Trade.Unique` and
 [`Inventory.Uniques`](/kits/inventory/#inventoryuniques) describe their items
 already. `Describe` must not yield, and a `Describe` that raises sends no
-detail. Added in v2.1.1.
+detail.
 
 ## Your own rules
 
@@ -166,8 +163,7 @@ Trade.Configure({
 ```
 
 `first` is the player who invited. Both offers are empty lists until a trade is
-open, and each is a copy. A rule that raises counts as a refusal. The offers,
-and the call on every offer, were added in v2.1.1.
+open, and each is a copy. A rule that raises counts as a refusal.
 
 - **A switch to close trading.** Return `false` while a flag of your own is
   set, such as a [`Config`](/reference/config/) value. Open trades are refused
@@ -227,7 +223,7 @@ function Trade.Configure(config: Config)
 | `MaxEntries` | `number?` | 32 | The most items one offer holds, up to 32. |
 | `ConfirmDelay` | `number?` | 3 | Seconds after any change before confirming opens. |
 | `InviteSeconds` | `number?` | 30 | How long an invite waits. |
-| `Cooldown` | `number?` | 0 | Seconds after a completed trade before either player may trade again. Added in v2.1.1. |
+| `Cooldown` | `number?` | 0 | Seconds after a completed trade before either player may trade again. |
 | `LogField` | `(string \| false)?` | `"TradeLog"` | Where each player's trade record is kept, or `false` for none. |
 | `CanTrade` | `((first: Player, second: Player, firstGives: { Entry }, secondGives: { Entry }) -> (boolean, string?))?` | None | [Your own rule](#your-own-rules), checked at the invite, the accept, every offer and the swap. |
 

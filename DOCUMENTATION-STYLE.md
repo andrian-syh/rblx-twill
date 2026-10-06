@@ -101,6 +101,10 @@ the behaviour is conditional, name the condition.
 inform. "The path that refuses a flood is the path a flood runs down" is writing
 about the code rather than describing it.
 
+**Version notes.** "Added in v2.1.0", "since v1.5.0". A page describes the
+framework as it is. When something arrived belongs in the changelog and the
+news.
+
 **The rule of three.** Three adjectives, three parallel clauses, three items
 where two would do. It reads as rhythm rather than content.
 

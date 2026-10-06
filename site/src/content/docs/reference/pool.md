@@ -11,8 +11,6 @@ local bullet = bullets:Take(muzzle.CFrame)
 bullets:Return(bullet)
 ```
 
-Added in v1.10.0.
-
 ## Parking instead of parenting
 
 A pool clones its template ahead of need. A copy is parented once and never

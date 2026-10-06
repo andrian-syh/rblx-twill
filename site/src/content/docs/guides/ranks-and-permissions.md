@@ -126,7 +126,7 @@ means acting on a rank the player may no longer hold.
 The rank travels as a player attribute, so a controller reads it without a
 remote and without waiting.
 
-```luau title="ReplicatedStorage/Client/AdminController"
+```luau title="ReplicatedStorage/Client/Controllers/AdminController"
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 

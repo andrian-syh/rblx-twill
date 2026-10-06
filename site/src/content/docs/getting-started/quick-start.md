@@ -82,10 +82,10 @@ forgets it when you stop.
 The same `Lifecycle` runs on both sides, so your client code is discovered and
 ordered exactly the way your server code is.
 
-Add a `Folder` named `Client` inside `ReplicatedStorage`, and put a
-`ModuleScript` in it.
+Add a `Folder` named `Client` inside `ReplicatedStorage`, and a `Folder` named
+`Controllers` inside that. Put a `ModuleScript` in `Controllers`.
 
-```luau title="ReplicatedStorage/Client/HudController"
+```luau title="ReplicatedStorage/Client/Controllers/HudController"
 local HudController = {}
 
 -- Start runs after every client module has finished Init, so by here it is
@@ -104,7 +104,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Twill = require("@game/ReplicatedStorage/Twill")
 
-Twill.Lifecycle.Start(ReplicatedStorage:WaitForChild("Client"))
+Twill.Lifecycle.Start(ReplicatedStorage:WaitForChild("Client"):WaitForChild("Controllers"))
 ```
 
 Press **Play** again and `client booted` joins the output.
@@ -127,3 +127,6 @@ joined. Each side keeps its own boot list, so the two never interfere.
 The Core Guides take each piece properly:
 [Write a service](/core-guides/services/) for the server side,
 [Write a controller](/core-guides/controllers/) for the client.
+
+The folders on this page are the start of [Weave](/architecture/overview/), the
+layout Twill recommends for a whole project.
