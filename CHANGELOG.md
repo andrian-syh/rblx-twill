@@ -14,6 +14,25 @@ Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.1.2] - 2026-10-11
+
+Twill 2.1.2 lets `Tween` move the `Scale` of a `UIScale`, and refuses two
+destinations when a tween is built that used to go wrong later.
+
+### Fixed
+
+- `Tween` moves `Scale` as a property on any instance that is not a `Model`,
+  such as a `UIScale` or a `SpecialMesh`. It refused every such tween with "has
+  no scale to tween", because it read `Scale` as a model's size on every
+  instance. On a `Model`, `Scale` still goes through `ScaleTo`.
+- `Tween.new` and `Tween.Play` refuse a `Vector2`, `Vector3`, `UDim`, `UDim2`,
+  `CFrame`, `Color3` or `NumberRange` with a part that is not finite. Only a
+  `number` was checked, so building such a tween wrote a broken value to the
+  target. A part given one moved far below the world.
+- `Tween.new` and `Tween.Play` refuse a `Scale` of zero or below on a `Model`.
+  Such a tween was built, then stopped with `faulted` on the frame that reached
+  a size `ScaleTo` does not take.
+
 ## [2.1.1] - 2026-10-06
 
 Twill 2.1.1 keeps a player's key whole when storage fails, and the Trade kit
@@ -1088,7 +1107,8 @@ First release.
 - An automated test suite that runs on every playtest in Studio and never in
   production.
 
-[Unreleased]: https://github.com/andrian-syh/rblx-twill/compare/v2.1.1...HEAD
+[Unreleased]: https://github.com/andrian-syh/rblx-twill/compare/v2.1.2...HEAD
+[2.1.2]: https://github.com/andrian-syh/rblx-twill/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/andrian-syh/rblx-twill/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/andrian-syh/rblx-twill/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/andrian-syh/rblx-twill/compare/v1.10.0...v2.0.0

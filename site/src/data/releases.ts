@@ -28,6 +28,16 @@ export interface Release {
 
 export const releases: Release[] = [
 	{
+		version: 'v2.1.2',
+		title: 'Tween moves the scale of a UIScale',
+		date: 'October 11, 2026',
+		tagline: 'Tween moves Scale as a property on any instance that is not a model, and refuses two destinations it used to accept.',
+		summary:
+			'Scale on a UIScale or a SpecialMesh is tweened like any other property, where it was refused. A destination with a part that is not finite, and a model scale of zero or below, are refused when the tween is built. No code needs changes.',
+		slug: '/news/v2-1-2/',
+		icon: 'file',
+	},
+	{
 		version: 'v2.1.1',
 		title: 'Saves that outlast storage trouble',
 		date: 'October 6, 2026',

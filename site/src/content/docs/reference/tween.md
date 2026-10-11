@@ -27,6 +27,10 @@ The loop runs on `PreRender` on a client and on `PostSimulation` on a server.
 | `Pivot = cframe` | A `PVInstance`, through `PivotTo`. |
 | `Scale = 2` | A `Model`, through `ScaleTo`. |
 
+`Scale` resizes a `Model` only. On any other instance it is that instance's own
+property, so `Scale` on a `UIScale` or a `SpecialMesh` moves like
+`Transparency` does. A model's `Scale` has to end above zero.
+
 Nine types can be moved: `number`, `boolean`, `Vector2`, `Vector3`, `UDim`,
 `UDim2`, `CFrame`, `Color3`, and `NumberRange`.
 
@@ -136,9 +140,10 @@ function Tween.new(
 `Tween` - The tween, not yet playing.
 
 Throws when the target is neither an `Instance` nor a table, when no values were
-given, when a name is unknown, unwritable, or given the wrong type, when a value
-or control point is not finite, and when a server was asked to tween an
-`Instance` without `AllowServer`.
+given, when a name is unknown, unwritable, or given the wrong type, when any
+part of a value or control point is not finite, when a model's `Scale` would end
+at zero or below, and when a server was asked to tween an `Instance` without
+`AllowServer`.
 
 Every destination is checked and every write is tried once at the starting value
 while the tween is built, so a tween that would fail fails here rather than

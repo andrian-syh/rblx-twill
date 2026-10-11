@@ -1,0 +1,75 @@
+---
+title: "v2.1.2 — Tween moves the scale of a UIScale"
+description: "Released October 11, 2026. Tween moves Scale as a property on any instance that is not a model, and refuses two destinations it used to accept"
+template: splash
+---
+
+import NewsBackLink from '../../../components/NewsBackLink.astro';
+import NewsPagination from '../../../components/NewsPagination.astro';
+
+<div class="news-article-container">
+
+<NewsBackLink />
+
+<header class="news-article-header">
+	<div class="news-article-badges">
+		<span class="news-badge-version">v2.1.2</span>
+		<span class="news-badge-date">October 11, 2026</span>
+	</div>
+	<p class="news-article-lead">
+		Tween moves Scale as a property on any instance that is not a model, and refuses two destinations it used to accept.
+	</p>
+</header>
+
+## Before upgrading
+
+Replace both `Twill` modules with the ones from the release. Code that worked
+on v2.1.1 needs no changes.
+
+One thing can raise where it did not: a tween given a destination that could
+never be reached. `Tween.new` and `Tween.Play` refuse it when the tween is
+built, and the message names the value.
+
+## Scale is a property outside a model
+
+`Tween` writes `Scale` on a `Model` through `ScaleTo`. It read the name that way
+on every instance, so a tween of `Scale` on a `UIScale` was refused with "has no
+scale to tween", and a pop-in on an interface had to go through `TweenService`.
+
+`Scale` resizes a `Model` only. On any other instance it is that instance's own
+property:
+
+```lua
+Twill.Tween.Play(uiScale, { Scale = 1.2 }, { Time = 0.2, EasingStyle = "Back" })
+```
+
+The same holds for the `Scale` of a `SpecialMesh`, which is a `Vector3`. See
+[What it moves](/reference/tween/#what-it-moves).
+
+## A value with a part that is not finite
+
+A `number` that was not finite was refused. A `Vector3`, `UDim2` or `CFrame`
+holding one was not, and building the tween wrote a broken value to the target.
+A part given one moved far below the world before the tween played.
+
+Every part of a destination and of a control point is checked, for all the
+types a tween moves. The tween is refused and the target keeps its value.
+
+## A model scale of zero or below
+
+`ScaleTo` takes a number above zero. A tween of a model's `Scale` to zero was
+built, then stopped with `faulted` on the frame that reached it. It is refused
+when it is built.
+
+A curve that leaves the range zero to one, such as `Back` or `Elastic`, can
+still carry a small scale below zero on the way. Such a tween stops with
+`faulted`, as before.
+
+## Full changelog
+
+Every change in this release is listed in the
+[changelog](https://github.com/andrian-syh/rblx-twill/blob/main/CHANGELOG.md#212---2026-10-11).
+
+<NewsPagination />
+
+</div>
