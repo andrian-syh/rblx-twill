@@ -38,7 +38,7 @@ It sits in `ServerScriptService` so that it does not replicate, and outside
 
 	Fill these in for your project, and update them when they change.
 	  Architecture   Weave 1.0.0
-	  Foundation     Twill 2.1.2
+	  Foundation     Twill 2.2.0
 	  Owner          (who decides on a change to these rules)
 	  Reviewed       (the date these rules were last read against the code)
 

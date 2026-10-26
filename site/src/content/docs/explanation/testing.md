@@ -28,7 +28,8 @@ It covers every module that can be exercised from one server, including `Bag`,
 `Signal`, `Scope`, `Loop`, `Net` and its wire format, server `Replication`,
 `Store`, `Data` migrations and sessions, `Tree`, `Tween`, `Async`, `Pool`,
 `Config`, `Shared`, `Board`, `Random`, `Token`, `Chance`, `Navigation`, the
-console's rank gate, and the rules of the Trade, Inventory and Wallet kits. It
+console's rank gate, and the rules of the Trade, Inventory, Wallet and Reward
+kits. It
 also carries
 known-answer tests for the cryptographic primitives against official RFC
 vectors.
@@ -53,6 +54,10 @@ Through it the suite checks, with a real client:
   `Schema`, `Validate`, rank and a raising handler are answered as served, calls
   over the rate are dropped, and pushes arrive on both remotes.
 - `Net.GetStats`: traffic and refusals are counted against the right remote.
+- `Net` guards: a client refuses a message larger than the server admits,
+  `TryAsk` reports answered and refused questions, a call on the wrong channel is
+  refused, a call fanned out to several players arrives for each, a slow answer
+  holds up nothing, and a remote declared differently on the client stays unsent.
 - `Replication`: shared and player keys, paths, cleared keys, and a key that
   cannot be sent not holding back the rest.
 - `Lifecycle`: boot order, every `Init` before any `Start`, a failed `Init`
@@ -64,11 +69,14 @@ Through it the suite checks, with a real client:
 - The Inventory and Wallet kits: what a player holds and what they have of a
   currency reach their own client, and the client halves change nothing. With a
   second player, a currency is transferred between the two.
+- The Reward kit: a claim reaches the owner's client, and the client half
+  changes nothing.
 - `Data.Transact`: a change that raises, yields or fails `Validate` is undone,
   and an effect it deferred never runs.
 
 The declarations both halves share live in one module beside the client half,
-so the two can never disagree about a remote.
+so the two can never disagree about a remote. One remote there is declared
+differently on each side on purpose, to check that the client refuses it.
 
 ## The shape it uses
 

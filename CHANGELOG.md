@@ -14,6 +14,83 @@ Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-10-26
+
+Twill 2.2 adds the Reward kit and `Remote:TryAsk`, and the server refuses
+numbers that are not finite and text that is not UTF-8 from a client.
+
+### Migration
+
+- The server now refuses a call from a client that carries a number that is not
+  finite (NaN or either infinity) or text that is not valid UTF-8. A remote that
+  has to accept either declares that field with `Types.Unchecked(token)`, or
+  sends raw bytes as `Types.Buffer`. The client still reads whatever the server
+  sends.
+
+### Added
+
+- The Reward kit, `Twill.Kits.Reward`, for daily claims, streaks and time away.
+  A claim and its reward are kept in one `Data.Transact`, so a grant that is
+  refused leaves the day open, and asking again on a claimed day changes
+  nothing. Days are numbered from a reset hour in UTC on the server's clock.
+  Each track keeps or resets its place after a missed day, forgives the days
+  its `Grace` allows, and can be mended before the next claim at a price the
+  game sets. `Reward.Offline` hands the game the seconds a player was away,
+  once per session and held under a cap. See the
+  [Reward kit](https://andrian-syh.github.io/rblx-twill/kits/reward/) page.
+- `Remote:TryAsk`, which returns how a question ended (`Answered`, `Refused`,
+  `TimedOut` or `Unsent`) before the answer, so a refusal, a timeout and an
+  answer of `nil` can be told apart. `Ask` is unchanged.
+- `Types.Unchecked(token)`, for a field the server reads without refusing
+  non-finite numbers or text that is not UTF-8.
+- A client that declares a remote differently from the server leaves that remote
+  unsent and logs an error naming it, instead of misreading every call on it.
+
+### Changed
+
+- Sending a call no longer builds a table, a closure or a mark per call. On a
+  server, `FireClient` with flushing went from 1.30 to about 0.9 microseconds per
+  call in Studio, and the garbage per call from 389 to 20 bytes.
+- `FireClients`, `FireAllClients` and `FireAllExcept` encode a call once and copy
+  it into each player's message, unless it carries an instance.
+- An array of bounded strings, `Types.Array(Types.String(n))`, is sent as one
+  run, which writes it about 45% faster and reads it about 12% faster.
+- The codec modules run as native code where the engine allows it, which is on
+  the server. Writing and reading are 23% to 54% faster there.
+- Answers to `Ask` leave with the asker's next message, in the same frame,
+  rather than one message per answer.
+- A question runs on a reused thread, so a handler that yields holds up no other
+  call in the same message. One player may have 16 questions open at once; the
+  next is answered with `Reject` and counted as `Busy`.
+- A refusal by `Schema`, `Validate` or a failed handler is sent as a refusal that
+  carries the `Reject` values. `Ask` returns them as before; `TryAsk` reports
+  `Refused`.
+- A client's message stays under 16 KB. A single call larger than that is
+  refused at the client and counted as `Oversize`.
+
+### Fixed
+
+- `Types.TweenInfo` can be declared. It was listed but had no encoding, so a
+  remote declared with it raised "unknown type".
+- A client message between about 24 KB and 60 KB was always refused by the
+  server's byte budget, taking every call in it along, because a client split
+  messages at 60 KB while the server admits at most 24000 bytes at once.
+- A `Static` or `Enum` value read from a place that was never declared is
+  refused, where it arrived as `nil`.
+- A message the engine refuses to send costs only itself; it no longer stopped
+  the rest of that frame's sends to other players.
+
+### Security
+
+- The server refuses non-finite numbers and invalid UTF-8 from a client. A
+  negative infinity passes a check such as `balance >= price`, and invalid UTF-8
+  makes a data store save fail partway through a trade.
+- A call that arrives on the other remote than its declaration names is refused
+  and counted as `Channel`.
+- An answer has to name the remote it was asked on to reach the waiting thread.
+- A flood of refused questions no longer makes the server send one message per
+  refusal.
+
 ## [2.1.2] - 2026-10-11
 
 Twill 2.1.2 lets `Tween` move the `Scale` of a `UIScale`, and refuses two
@@ -1107,7 +1184,8 @@ First release.
 - An automated test suite that runs on every playtest in Studio and never in
   production.
 
-[Unreleased]: https://github.com/andrian-syh/rblx-twill/compare/v2.1.2...HEAD
+[Unreleased]: https://github.com/andrian-syh/rblx-twill/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/andrian-syh/rblx-twill/compare/v2.1.2...v2.2.0
 [2.1.2]: https://github.com/andrian-syh/rblx-twill/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/andrian-syh/rblx-twill/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/andrian-syh/rblx-twill/compare/v2.0.0...v2.1.0

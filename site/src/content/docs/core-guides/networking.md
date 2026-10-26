@@ -64,7 +64,16 @@ Remotes.Aim:Fire(camera.CFrame.LookVector)
 ```
 
 `Ask` always ends: with the answer, with the `Reject`, or with nothing when the
-wait runs out. It never leaves the calling thread waiting forever.
+wait runs out. It never leaves the calling thread waiting forever. Where a
+refusal and a timeout need different handling, `TryAsk` returns how the question
+ended first:
+
+```luau
+local outcome, bought, message = Remotes.BuyItem:TryAsk("sword")
+if outcome == "TimedOut" then
+	showRetry()
+end
+```
 
 A call made before the server's numbering has reached the client is held and
 sent once it does, so there is no boot-order trap. Wait explicitly only when you
@@ -89,6 +98,10 @@ declared is refused.
 
 Types are free. Declare them precisely: `Types.String(32)` rather than
 `Types.String`, `Types.NumberVarU` rather than a float.
+
+The server also refuses a number that is not finite and text that is not valid
+UTF-8, so a price of negative infinity or a name that breaks a data store save
+never reaches the handler.
 
 ### 2. Rate
 

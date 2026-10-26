@@ -28,6 +28,16 @@ export interface Release {
 
 export const releases: Release[] = [
 	{
+		version: 'v2.2.0',
+		title: 'Daily rewards and stricter networking',
+		date: 'October 26, 2026',
+		tagline: 'Twill adds the Reward kit and Remote:TryAsk, and the server refuses numbers that are not finite and text that is not UTF-8 from a client.',
+		summary:
+			'The Reward kit keeps daily claims, streaks and time away in the same write as their reward. TryAsk tells a refusal from a timeout, and sends cost less time and garbage. The changelog has a Migration section for remotes that must accept NaN or raw text.',
+		slug: '/news/v2-2-0/',
+		icon: 'star',
+	},
+	{
 		version: 'v2.1.2',
 		title: 'Tween moves the scale of a UIScale',
 		date: 'October 11, 2026',

@@ -1,0 +1,99 @@
+---
+title: "v2.2.0 — Daily rewards and stricter networking"
+description: "Released October 26, 2026. Twill adds the Reward kit and Remote:TryAsk, and the server refuses numbers that are not finite and text that is not UTF-8 from a client"
+template: splash
+---
+
+import NewsBackLink from '../../../components/NewsBackLink.astro';
+import NewsPagination from '../../../components/NewsPagination.astro';
+
+<div class="news-article-container">
+
+<NewsBackLink />
+
+<header class="news-article-header">
+	<div class="news-article-badges">
+		<span class="news-badge-version">v2.2.0</span>
+		<span class="news-badge-date">October 26, 2026</span>
+	</div>
+	<p class="news-article-lead">
+		Twill adds the Reward kit and Remote:TryAsk, and the server refuses numbers that are not finite and text that is not UTF-8 from a client.
+	</p>
+</header>
+
+## Before upgrading
+
+Replace both `Twill` modules with the ones from the release.
+
+The server now refuses a call from a client that carries a number that is not
+finite (NaN or either infinity) or text that is not valid UTF-8. Most games
+send neither and need no changes. A remote that has to accept one declares
+that field with `Types.Unchecked`, or sends raw bytes as a `Buffer`:
+
+```luau
+local payload = Net.Declare("Payload", { Types.Unchecked(Types.String) })
+```
+
+The client still reads whatever the server sends.
+
+## The Reward kit
+
+`Twill.Kits.Reward` decides when a player may be rewarded: daily claims,
+streaks, and the time a player was away. What the reward is stays with your
+game, in a `Grant` function of your own.
+
+```luau
+Reward.Configure({ Tracks = { Daily = { Rewards = { 100, 200, 400 } } }, Grant = grant })
+local claimed, reason, claim = Reward.Claim(player, "Daily")
+```
+
+A claim and its reward are kept in one `Data.Transact`. A grant that is refused
+leaves the day open, and asking again on a claimed day changes nothing. Days
+are numbered from a reset hour in UTC on the server's clock, so a player's own
+clock opens nothing. A missed day keeps or resets the streak, `Grace` forgives
+the days you allow, and `Reward.Mend` repairs a break before the next claim at
+a price your game sets. See the [Reward kit](/kits/reward/).
+
+## Telling a refusal from a timeout
+
+`Ask` returns the same values for an answer of `nil`, a refusal and a timeout.
+`Remote:TryAsk` returns how the question ended first: `Answered`, `Refused`,
+`TimedOut` or `Unsent`.
+
+```luau
+local outcome, bought, message = Remotes.BuyItem:TryAsk("sword")
+if outcome == "TimedOut" then
+	showRetry()
+end
+```
+
+A client that declares a remote differently from the server leaves that remote
+unsent and logs an error naming it, instead of misreading every call on it.
+See [`Remote:TryAsk`](/reference/net/#remotetryask).
+
+## Faster sends
+
+Sending a call no longer builds a table or a closure. On a server in Studio,
+`FireClient` went from 1.30 to about 0.9 microseconds per call, and the garbage
+per call from 389 to 20 bytes. Calls to many players are encoded once, and the
+codec runs as native code on the server, where writing and reading are 23% to
+54% faster. Answers to `Ask` leave in the asker's next message.
+
+## Fixed
+
+- `Types.TweenInfo` can be declared.
+- A client message between about 24 KB and 60 KB was always refused by the
+  server. A client's message now stays under 16 KB.
+- A `Static` or `Enum` value that was never declared is refused, where it
+  arrived as `nil`.
+- A message the engine refuses to send no longer stops the rest of that
+  frame's sends.
+
+## Full changelog
+
+Every change in this release is listed in the
+[changelog](https://github.com/andrian-syh/rblx-twill/blob/main/CHANGELOG.md#220---2026-10-26).
+
+<NewsPagination />
+
+</div>

@@ -439,11 +439,41 @@ Calls made before the wire ids arrive are held and sent once they do, and that
 hold has a ceiling. Reaching it means a client is calling a remote far ahead of
 the network being ready.
 
-**`an unreliable call was larger than one unreliable message carries, and was dropped`**
+**`a call was larger than one unreliable message carries, and was dropped`**
 
 An unreliable remote was given more than fits in a single unreliable message.
 There is no second chance for one of those, by definition. Send less, or declare
 the remote reliable.
+
+**`a call was larger than one outgoing message carries, and was dropped`**
+
+A client call took more than 16 KB on its own. The server admits a client
+message only up to its byte budget's burst, so the whole message would have been
+refused. Send less per call, or split it across calls.
+
+**`a number that is not finite`** or **`text that is not valid UTF-8`**
+
+A client sent NaN, an infinity, or text with bytes that are not UTF-8, and the
+server refused the call while reading it. From a client this is ordinarily
+somebody probing the remote. A field that has to carry such a value is declared
+with `Types.Unchecked`.
+
+**`'X' is declared differently here than on the server, so its calls would be misread; ...`**
+
+The client and the server declared the same remote name with different types.
+The client leaves that remote unsent rather than misread every call on it. Make
+both sides require the same declaration.
+
+**`'P' has more questions open than one player may for 'X'`**
+
+A player had 16 questions open on the server at once, and the next was answered
+with `Reject`. A handler that yields for long, or a client asking in a loop,
+reaches it.
+
+**`'P' is on the wrong channel for 'X'`**
+
+A call arrived on the unreliable remote for a reliable declaration, or the other
+way round. Twill's own clients never do this, so it is a modified client.
 
 **`a call this side could not read`**
 
@@ -883,6 +913,39 @@ The function given to `Data.Transact` yielded, so its changes were undone. Do
 the yielding work before or after the transaction.
 
 The client halves read nothing until `Inventory` and `Wallet` are listed under
+`Replicate` in `Data.Configure`.
+
+## Reward kit
+
+These come from the [Reward kit](/kits/reward/). A claim, mend or collection
+the kit turns down is not logged: the call returns `false` and the reason.
+
+**`Reward is used before Reward.Configure`**
+
+A call reached the kit before its setup ran. Call `Reward.Configure` in an
+`Init`, after `Data.Configure`.
+
+**`already claimed today`**
+
+The track was claimed on this day already. The next claim opens at
+`status.NextAt`. A server whose clock runs behind gives this answer too.
+
+**`there is no broken streak to mend`**
+
+The streak still holds, the track was never claimed, or the player claimed
+after the break, which ends the old streak.
+
+**`already collected this session`**
+
+`Reward.Offline` was called a second time for the same player on this server.
+Time away is collected once per session.
+
+**`the reward was not granted`**
+
+`Grant`, `Mend` or `Offline.Grant` returned something other than `true` and
+gave no reason. Return `false` and a reason, so the caller sees why.
+
+A client reads every track as never claimed until `Reward` is listed under
 `Replicate` in `Data.Configure`.
 
 ## Studio and tooling

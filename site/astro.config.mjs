@@ -275,6 +275,7 @@ export default defineConfig({
 					items: [
 						{ label: 'Inventory', slug: 'kits/inventory' },
 						{ label: 'Wallet', slug: 'kits/wallet' },
+						{ label: 'Reward', slug: 'kits/reward' },
 						{ label: 'Trade', slug: 'kits/trade' },
 					],
 				},

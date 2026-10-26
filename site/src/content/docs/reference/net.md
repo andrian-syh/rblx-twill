@@ -48,17 +48,21 @@ arguments are read.
    instances included.
 2. Still here. A player who has left is dropped without a word.
 3. Declared and served. A call naming a remote nothing serves goes no further.
-4. `MinimumRank`. Refused before spending any allowance.
-5. `Rate`. Always applied, whether or not it was asked for.
-6. `Schema`. Each rule against the argument in the same position.
-7. `Validate`. The caller's own test, last, because only they know what it costs.
+4. Channel. A call that arrives on the unreliable remote for a reliable
+   declaration, or the other way round, is refused.
+5. `MinimumRank`. Refused before spending any allowance.
+6. `Rate`. Always applied, whether or not it was asked for.
+7. Reading. The arguments are decoded under the checks in
+   [What a hostile client cannot do](#what-a-hostile-client-cannot-do).
+8. `Schema`. Each rule against the argument in the same position.
+9. `Validate`. The caller's own test, last, because only they know what it costs.
 
-Steps 1 to 5 run before the arguments are decoded. Each call carries the length
+Steps 1 to 6 run before the arguments are decoded. Each call carries the length
 of its own body, so a refused one is stepped over rather than read. That is also
 why a corrupt call costs only itself: every call behind it in the same message
 still arrives.
 
-A call refused at steps 1 to 5 was never read, so there are no arguments to hand
+A call refused at steps 1 to 6 was never read, so there are no arguments to hand
 to `Reject`. A remote that replies answers such a call without it, and `Ask`
 returns nothing.
 
@@ -87,7 +91,8 @@ declares is reported once, and calls on it are dropped locally.
 ## What a hostile client cannot do
 
 The decoder on a player's machine and the decoder on the server are the same
-code, so everything a peer sends is read under the same rules on both sides.
+code. The server adds the checks on numbers and text below, since only it reads
+from a peer it cannot trust.
 
 - A length that reaches past the message it arrived in is refused before anything
   is allocated for it.
@@ -97,6 +102,17 @@ code, so everything a peer sends is read under the same rules on both sides.
 - An answer to a question the server never asked reaches nothing.
 - A message claiming more calls than one message carries is cut off.
 - A payload larger than a message may be is dropped before it is read.
+- A number that is not finite, NaN or either infinity, is refused when the
+  server reads it, in every float type, vector, transform and `Types.Any`.
+- Text that is not valid UTF-8 is refused when the server reads it, in `String`
+  and in `Types.Any`. Raw bytes travel as `Types.Buffer`.
+- A place in a `Static` set or an `Enum` that was never declared is refused.
+
+A non-finite price passes a check such as `balance >= price` and then breaks
+the balance, and text that is not UTF-8 makes a data store save fail. That is
+why the server refuses both by default. A field that has to carry either is
+declared with [`Types.Unchecked`](#compound). The client reads what the server
+sends without these checks.
 
 ## Measuring traffic
 
@@ -135,7 +151,10 @@ Every refusal is counted under one reason:
 | `Deadline` | The handler took longer than the reply deadline. |
 | `Unreadable` | The call could not be decoded. |
 | `Unwritable` | A value could not be encoded, so the call was never sent. |
-| `Oversize` | An unreliable call was larger than one unreliable message. |
+| `Oversize` | A call was larger than one message may be: an unreliable call past 880 bytes, or a client's call past 16 KB. |
+| `Unsent` | The engine refused to send a message. |
+| `Channel` | The call arrived on the other remote than its declaration names. |
+| `Busy` | The caller already had as many questions open as one player may. |
 
 The admin console shows the same count with `twill traffic`.
 
@@ -307,6 +326,12 @@ remote that replies answers with its `Reject` rather than leaving the caller
 waiting. A handler that never returns is answered for after 10 seconds, so an
 `Ask` cannot hang on a handler that hangs.
 
+A question runs on a thread of its own, reused when its handler does not yield,
+so a handler that waits on a data store holds up no other call in the same
+message. One player may have 16 questions open at once; the next is answered
+with `Reject` and counted as `Busy`. A call that does not reply runs in order,
+inside the message.
+
 ### `Net.IsHandled`
 
 `[Server]`
@@ -353,6 +378,11 @@ Calls made in the same frame leave together as one message. `FireClient` answers
 `false` when the call could not be written, such as a value `Types.Any` cannot
 carry, and so will never arrive.
 
+A call to more than one player is encoded once and copied into each player's
+message, so its cost grows with the copies rather than with the encoding. A call
+carrying an instance is encoded per player, since an instance's place differs
+from one message to the next.
+
 ### `Remote:Ask`
 
 `[Client]`
@@ -363,6 +393,8 @@ nothing when the wait runs out.
 ```luau
 function Remote:Ask(...: any): ...any
 ```
+
+The answer travels in the caller's next message from the server, within a frame.
 
 Yields. Throws when the remote was not declared with a reply, and when this side
 is already waiting on 256 answers.
@@ -378,6 +410,32 @@ in game code, where the fact that the answer is untrusted is visible.
 The number identifying a question is the asker's own and is looked up only in the
 asker's own table, so nothing arriving from the far side can reach a thread
 waiting on an answer.
+
+### `Remote:TryAsk`
+
+`[Client]`
+
+Asks the server like `Ask`, and says how the question ended before the answer.
+
+```luau
+function Remote:TryAsk(...: any): (Outcome, ...any)
+```
+
+**Returns**
+
+`Outcome` - one of the following. `...any` - what the server answered, or its
+`Reject`.
+
+| Outcome | Meaning |
+| :--- | :--- |
+| `Answered` | The handler answered. |
+| `Refused` | A check or the handler refused, and the values are the `Reject`. A call refused before it was read carries no values. |
+| `TimedOut` | No answer came within the timeout. |
+| `Unsent` | The question never left: the remote was never numbered, or the call could not be written. |
+
+`Ask` returns the same values without the outcome, so an answer of `nil`, a
+refusal and a timeout look alike there. Use `TryAsk` where the difference
+matters. Yields, and throws as `Ask` does.
 
 ### `Remote:Connect`
 
@@ -448,8 +506,11 @@ implementation drops to zero, both infinities, and a NaN that stays a NaN.
 | `String` | `Types.String(maximum)` sets the ceiling. 65536 bytes when unset. |
 | `Buffer` | The same, for a `buffer`. |
 
-Calls are gathered into messages of up to 60 KB. A single call larger than that
-still travels, as a message of its own, so the ceiling is the field's alone.
+Calls are gathered into messages of up to 60 KB from the server, and up to 16 KB
+from a client, which stays under what the server admits in one message. A single
+call from the server larger than that still travels, as a message of its own. A
+single call from a client larger than 16 KB is refused at the client as
+`Oversize`, since the server would refuse the whole message.
 
 The ceiling is enforced on the sender, naming the field:
 
@@ -458,7 +519,8 @@ BuyItem argument 1 is 300 bytes, past its ceiling of 32
 ```
 
 Every string carries its length, so any byte is safe to send, including a zero
-byte.
+byte. The server refuses text from a client that is not valid UTF-8; send raw
+bytes as a `Buffer`, or declare the field `Types.Unchecked(Types.String)`.
 
 ### Positions and rotations
 
@@ -496,9 +558,11 @@ a CFrameRot is not a plain rotation, so it needs the full CFrame type
 | `Types.Enum(Enum.KeyCode)` | One item of one enum, sent as its place in it |
 | `Types.Static({ "alpha", "beta" })` | One of a closed set of constants |
 | `Types.Any` | A value of a shape nobody declared |
+| `Types.Unchecked(token)` | The same value, read by the server without refusing non-finite numbers or text that is not UTF-8 |
 
-An array of booleans, of one fixed-width number type, or of strings takes a path
-that sends the whole run at once. A thousand booleans is 125 bytes.
+An array of booleans, of one fixed-width number type, or of strings, bounded or
+not, takes a path that sends the whole run at once. A thousand booleans is 125
+bytes.
 
 A struct sends only its values. Both sides know the names and the order already.
 
@@ -660,13 +724,15 @@ A remote that does not reply may leave it out. A refused call there is dropped.
 | :--- | ---: |
 | Remotes per game | 65535 |
 | Calls per message | 200 |
-| Reliable message size | 60 KB |
+| Reliable message size, from the server | 60 KB |
+| Reliable message size, from a client | 16 KB |
 | Unreliable message size | 880 bytes |
 | String and buffer ceiling, unset | 65536 bytes |
 | Default rate, per player per remote | 20 per second |
 | Byte budget, per player | 8000 per second, 24000 burst |
 | Charged per message, on top of its bytes | 40 |
 | Questions waiting at once | 256 |
+| Questions open at once on the server, per player | 16 |
 | Calls held before the network is up | 64 per remote |
 | `Ask` and `Wait` default timeout | 10 seconds |
 | Reply deadline on the server | 10 seconds |

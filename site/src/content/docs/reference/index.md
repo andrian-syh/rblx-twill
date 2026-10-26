@@ -86,6 +86,7 @@ server, the client half on a client.
 | --- | --- |
 | [Inventory](/kits/inventory/) | Items a player holds, in named containers, changed whole or not at all. |
 | [Wallet](/kits/wallet/) | Currencies a player holds, which never go below zero or past their ceiling. |
+| [Reward](/kits/reward/) | Daily claims, streaks and time away, each kept in the same write as its reward. |
 | [Trade](/kits/trade/) | Trades between two players on one server that cannot duplicate or lose an item. |
 
 ## Modules with two halves
