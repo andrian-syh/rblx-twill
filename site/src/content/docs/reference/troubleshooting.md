@@ -24,6 +24,7 @@ about it.
 | --- | --- |
 | [Installation and requires](#installation-and-requires) | Missing folders, server-only modules, silent no-ops |
 | [Boot and Lifecycle](#boot-and-lifecycle) | Service discovery, `Init` and `Start`, critical failures |
+| [Core modules](#core-modules) | Your code failing inside Bag, Signal, Watch, Tween, Navigation, Error |
 | [Player data](#player-data) | Sessions, saving, offline edits, migrations |
 | [Storage](#storage) | What `Store` reports about keys and the DataStore itself |
 | [Networking](#networking) | Declarations, handlers, rates, ranks, decoding |
@@ -33,6 +34,10 @@ about it.
 | [Monetization](#monetization) | Products, passes, receipts |
 | [Leaderstats](#leaderstats) | Bindings, value objects, sorting |
 | [Filtering](#filtering) | Text filtering and its failure mode |
+| [Cross-server and configs](#cross-server-and-configs) | Messaging, memory stores, teleports, boards, configs |
+| [Trade kit](#trade-kit) | Configuration, kinds, settling a trade |
+| [Inventory and Wallet kits](#inventory-and-wallet-kits) | Configuration, containers, currencies, transactions |
+| [Reward kit](#reward-kit) | Claims, streaks, time away |
 | [Studio and tooling](#studio-and-tooling) | The Edit VM, API services, testing purchases |
 
 ## Reading Twill's output
@@ -183,20 +188,65 @@ rather than assume it exists.
 `Lifecycle.Get` was given a name that was never discovered. Usually a typo, and
 occasionally a service that failed to load earlier in the same run.
 
-**Everyone is kicked with `This server failed to start.`**
+**`refusing players: ...`**, and everyone is kicked with `This server failed to start.`
 
 A service marked `Critical` threw in `Init` or `Start`. The reason is in the
-kick message and in `Lifecycle.GetFailure()`. Players arriving afterwards are
-kicked on sight until the server is replaced.
+log line, in the kick message and in `Lifecycle.GetFailure()`. Players arriving
+afterwards are kicked on sight until the server is replaced.
 
 **`boot failed: ...` on the client, and nothing else runs**
 
 The same failure on the client, where there is nobody to kick. The client boot
 stops there.
 
+## Core modules
+
+These come from code of yours that a Twill module called and caught. The rest of
+the work carries on, and the trace after the colon points at your function.
+
+**`a cleanup failed and was stepped over: ...`** from `Twill.Bag`
+
+Something a bag closed threw while closing: a function you added, or a
+`Destroy` method. The bag closed everything else.
+
+**`a listener failed and was stepped over: ...`** from `Twill.Signal`
+
+A listener threw. Every other listener of that firing was still called.
+
+**`a firing was cut short by a fault in the dispatcher: ...`**
+
+The signal's own dispatch failed rather than a listener, so the listeners after
+that point missed this firing. Report it with the trace; it is a fault in Twill.
+
+**`a member could not be greeted and was stepped over: ...`**
+
+The function given to a `Watch` threw for one instance. That instance's bag
+was still made and closes as usual, and other instances are greeted normally.
+
+**`a tween failed while moving and was stopped: ...`**
+
+Writing a value threw mid-flight, usually because the target was destroyed or
+a property became read only. The tween ends as faulted.
+
+**`a route could not be worked out: ...`**
+
+`PathfindingService` raised while computing a route. The agent fails with
+`unreachable`.
+
+**`a route request failed: ...`** or **`an agent failed while moving and was stopped: ...`**
+
+Your `Move` or `Jump` function threw, or a route request failed in a way the
+module did not expect. A moving agent fails with `faulted`.
+
+**`could not post an error report: ...`**
+
+`Error.Install` could not post a report to its webhook. The error itself is
+still in the output above. Check the webhook address and that HTTP requests
+are enabled.
+
 ## Player data
 
-**Players are kicked with `Your saved data could not be loaded.`**
+**`could not open a session for 'X'`**, and the player is kicked with `Your saved data could not be loaded.`
 
 The session would not open. Usually the DataStore API is having trouble, or a
 migration step threw. Look for the `[Twill.Data]` lines above it.
@@ -206,7 +256,7 @@ migration step threw. Look for the `[Twill.Data]` lines above it.
 Normal when someone changes servers faster than the old session is released.
 Their branches are freed at the same moment.
 
-**Players are kicked with `This server failed to load your session.`**
+**`player gate errored for 'X': ...`**, and the player is kicked with `This server failed to load your session.`
 
 The player gate itself threw, rather than the session failing to open. If the
 gate is `Data.Gate`, the cause is above it in the log; if it is your own gate,
@@ -251,6 +301,12 @@ would have to overwrite it. Nothing was written.
 That is the truth rather than a fault: the user is not on this server, so the
 edit waits for a server that holds them. For a user who never returns, it never
 lands.
+
+**`could not post an edit for 123: ...`**, and `Data.Edit` answers `"failed"`
+
+The user's session is held by another server, and the message carrying the edit
+to it could not be sent. Nothing changed. Try again; the reason names what the
+platform refused.
 
 **`applied a queued edit to 'X'`**
 
@@ -427,11 +483,22 @@ Your handler threw. A remote that replies answers with `Reject`; one that does
 not drops the call. Either way the failure never reaches the calls behind it in
 the same message.
 
-**`'X' was declared here but the server never declared it; calls on it go nowhere`**
+**`refusal for 'X' errored: ...`**
 
-A name declared on this client that no server module declares. Calls on it are
-dropped locally rather than reaching the wire. Usually a misspelling, or a
-shared remotes module the server never requires.
+Your `Reject` threw while answering a refused or failed question. The caller is
+answered as refused, with nothing.
+
+**`a listener for 'X' errored: ...`**
+
+A function connected to the remote with `Connect` or `Once` threw. The other
+listeners still run, and so do the calls behind it in the same message.
+
+**`'X' was declared here but the server never declared it; its calls are held and never sent`**
+
+A name declared on this client that no server module had declared 30 seconds
+after the client connected. Its calls are held, up to 64, and never reach the
+wire. Usually a misspelling, or a shared remotes module the server never
+requires. Every other remote keeps working.
 
 **`'X' was called before the network was up more often than it holds`**
 
@@ -500,12 +567,6 @@ The client announces itself the first time its half of the module is required.
 If no client code ever requires `Twill.Replication`, the server has nothing to
 send to. Requiring it once anywhere in your client boot is enough.
 
-**`the server never registered replication; nothing will arrive`**
-
-The client waited for the server to declare the replication remotes and gave up.
-The server half never loaded, which usually means the server never required
-`Twill.Replication` either.
-
 **`patch arrived for 'X' before its value did; ignored`**
 
 A change arrived for a key this client has never held. Applying it would build a
@@ -530,9 +591,10 @@ and can never match.
 A step along the path is held by something that cannot be descended into.
 Nothing was written, and `SetPath` answered `false`.
 
-**`'X.Y' is not a number`**
+**`'X.Y' is not a number`** or **`'X.Y' is not a number for P`**
 
-`Increment` found something other than a number at the path. A missing value is
+`Increment`, or `IncrementFor` for player `P`, found something other than a
+number at the path. A missing value is
 fine and counts from zero; a string is not.
 
 **`validator for 'X' refused a write`** or **`validator for 'X' errored: ...`**
@@ -626,6 +688,17 @@ many attempts went unreported.
 
 `Configure` runs once, for the same reason as the other gates.
 
+**Lines such as `X banned Y from the experience permanently | ...` or `X moved the log level from Info to Debug`**
+
+The console's audit record. Every command that changes something writes who
+ran it, what it changed and why, at `Warn` so it survives the default level.
+Nothing is wrong; they are listed here only so they are not mistaken for faults.
+
+**`X could not ban Y: ...`** or **`X could not unban Y: ...`**
+
+The platform refused the ban or unban, and the console said so to the
+moderator. The reason after the colon is the platform's own.
+
 **A ban of `7d` lasts seven seconds**
 
 Not from Twill's own `moderation` command, which reads durations exactly. This
@@ -689,10 +762,12 @@ has no rank to compare.
 No `HandleProduct` was registered for that id, so the receipt is left for Roblox
 to redeliver. Register the handler and the pending purchase lands on its own.
 
-**`product 123 errored for 'X': ...`**
+**`product 123 was not granted to 'X': ...`**
 
-Your grant handler threw. The receipt is answered as not processed, so it is
-retried rather than lost.
+Your grant handler threw, yielded, or left data that fails the store's
+`Validate` check. Nothing it wrote is kept, and the receipt is answered as not
+processed, so it is retried rather than lost. A handler that yields fails on
+every retry: move the slow work into `Data.Defer`.
 
 **`purchase 123 was not confirmed saved; Roblox will retry it`**
 
@@ -773,6 +848,17 @@ The server already holds as many subscriptions as its player count allows. Close
 subscriptions you no longer need; each one is released when its owner bag
 closes.
 
+**`not listening to 'X': ...`** with any other reason
+
+Subscribing failed after its retries, usually because the subscribe request
+allowance for the minute was spent or the platform was unavailable.
+`Shared.Subscribe` answered `nil`; call it again later.
+
+**`a listener on 'X' failed and was stepped over: ...`**
+
+Your `Subscribe` callback threw for one message. The subscription stays open
+and the next message is delivered as usual.
+
 **`'X' in 'Y' was not written: ...`** from `Twill.Shared`
 
 A memory store write failed after its retries. A reason naming
@@ -785,6 +871,12 @@ A teleport failed after its retries, or the platform turned a player down for a
 reason waiting cannot fix. `Teleport.OnFailed` fires for each player, with the
 `Enum.TeleportResult`.
 
+**`a server of X could not be reserved: ...`**
+
+A send with `Reserve = true` could not reserve a server of that place after its
+retries, so nobody was sent. `Teleport.Send` answered `false` and
+`"a server could not be reserved"`.
+
 **`'P' arrived carrying data, but Token is not configured to read it`**
 
 The destination place never called `Token.Configure`. Every place in the
@@ -795,11 +887,39 @@ experience that receives data needs the same secret.
 A leaderboard write failed. The change stays queued, merged with anything asked
 for since, and goes again on the next flush.
 
+**`'X' could not be read; the last read stands: ...`**
+
+A leaderboard read failed. `Top` keeps answering the previous read, and the
+next timed read tries again.
+
+**`N board(s) were still being written when this server closed`**
+
+The 25 seconds the server gives boards on shutdown ran out while a write was
+still under way. The line above it names each board's lost changes, when
+any were left.
+
+**`3 change(s) to 'X' were not written before the deadline and are lost`**
+
+The server closed, or the board was destroyed, and those changes could still not
+be written after 25 seconds of retries: storage kept failing, or the ordered
+write budget was spent. Write less often with a larger `Flush`, or keep fewer
+boards.
+
 **`configs could not be loaded (...); defaults stand in while this keeps trying`**
 
 Experience configs are unreachable, usually because the place is not published
 or configs have never been created. Every key reads its default until they
 arrive.
+
+**`configs for 'P' could not be loaded (...); they read the shared ones`**
+
+The per-player configs for `P` could not be fetched, so that player reads the
+values every player shares, including any experiment they would have been in.
+
+**`configs could not be refreshed: ...`**
+
+A newer set of configs was announced but could not be taken in. The values
+already held stay in force until the next update succeeds.
 
 **`'X' was delivered as a string but its default is a number; the default is used`**
 
@@ -967,6 +1087,13 @@ put the connection in a [`Scope`](/reference/scope/) bag.
 Enable Studio Access to API Services under Game Settings, Security.
 Without it Studio cannot reach a DataStore, so `Data` runs on stand-in stores
 and every session starts from the template.
+
+**`a transform cannot yield; storage refuses one that does`**
+
+A stand-in store ran a transform that waited. Real storage refuses the same
+transform, so this is caught in Studio rather than on a live server. Most often
+it is a `Validate` function that calls something which yields. Make it finish
+without waiting.
 
 **`Discord refuses requests from Roblox game servers ...`**
 

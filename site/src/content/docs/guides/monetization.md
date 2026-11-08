@@ -75,11 +75,15 @@ Twill.Monetization.HandleProduct(1234569, function(player, data)
 end)
 ```
 
-:::caution[Keep handlers free of anything that can hang]
-A handler that yields on something slow holds up the receipt. Write the reward
-into `data` and return. Anything else that has to happen belongs elsewhere,
-started from a hook that is allowed to take its time.
+:::caution[A handler must not yield]
+A handler runs inside `Data.Transact`, so a handler that yields is undone and
+the receipt is left for Roblox to retry, where it fails the same way. Write the
+reward into `data` and return. Queue anything slow with `Data.Defer`, which runs
+once the reward is kept.
 :::
+
+A handler that throws keeps nothing it wrote, so a reward granted halfway is
+never saved and then paid again on the retry.
 
 ## Check a pass
 

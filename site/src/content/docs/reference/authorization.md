@@ -50,7 +50,8 @@ while a slower answer is worked out. `Resolve` may yield; until it returns, the
 player holds what `Users` or `Default` gave them.
 
 A `Resolve` answering anything but a number leaves the rank as it stands, which
-is how it declines to decide.
+is how it declines to decide. Once `SetRank` has given a player a rank, a
+`Resolve` still working for them leaves that rank alone.
 
 ## Reading a rank
 
@@ -188,6 +189,24 @@ back in `Resolve`.
 The [`rank` command](/reference/admin/#rank) reaches this from the console,
 under guards this function does not impose on its own. Calling `SetRank` in your
 own code has no such guards, so do not route a player's request into it.
+
+### `Authorization.GetUserRank`
+
+`[Server]`
+
+Returns the rank the `Users` table names for a user, whether or not they are on
+this server.
+
+```luau
+function Authorization.GetUserRank(userId: number): number?
+```
+
+**Returns**
+
+`number?` - The named rank, or `nil` when `Users` does not name that user.
+
+Throws when the id is not a number. A rank that only `Resolve` decides, such as
+one read from a group, needs the player and is unknown while they are away.
 
 ### `Authorization.GetGroupStanding`
 

@@ -22,7 +22,8 @@ default while none have arrived.
 
 A delivered value is kept only when it is the same type as its default. A config
 published as text for a key whose default is a number reads the default, and the
-mismatch is logged once.
+mismatch is logged once for each value delivered. A table is compared by
+identity, so a mismatched table value is logged again on every refresh.
 
 A key read before it was declared is an error, so a misspelt key is found at
 once rather than quietly reading nothing. Table values are frozen; copy one

@@ -164,7 +164,7 @@ return ShopController
 A remote declared on the client is given its number by the server, and that
 arrives a moment later. A call made before then is held and sent once it does,
 so a controller does not have to be careful about when it fires. Use
-`Net.OnReady` when you want to know the moment it happens.
+`Net.OnReady` when you want to know the moment the client is connected.
 
 ## What a controller must never decide
 

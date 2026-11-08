@@ -14,6 +14,107 @@ Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-11-08
+
+This release fixes the findings of a full code and documentation audit: a
+purchase that could pay twice, a moderation gap, lost leaderboard writes, and
+sixteen smaller defects, and brings the reference pages back in line with the
+code.
+
+### Migration
+
+- A `Monetization.HandleProduct` handler must not yield. It now runs inside
+  `Data.Transact`, so a handler that yields is undone, and its receipt fails
+  again on every retry. Move slow work into `Data.Defer`, which runs once the
+  reward is kept.
+
+### Added
+
+- `Authorization.GetUserRank(userId)` returns the rank the `Users` table names
+  for a user, whether or not that user is on this server.
+
+### Changed
+
+- On a client, `Net.IsReady`, `Net.OnReady` and `Net.AwaitReady` now report
+  that the client is connected. They no longer wait for every declared remote
+  to be numbered, so a remote the server never declares holds up nothing else.
+  Calls on a remote not yet numbered are still held and sent once it is.
+- The warning for a remote only the client declares now reads `its calls are
+  held and never sent`, which is what happens to them.
+- The `Monetization` failure log now reads `product 123 was not granted to 'X':
+  <reason>` and covers a handler that threw, yielded, or left data that fails
+  `Validate`.
+
+### Fixed
+
+- A product handler that threw partway through kept what it had written, and
+  Roblox's retry paid the reward again. A handler that yielded could save the
+  reward without the record of the purchase, so the player was paid again on
+  their next visit. The reward and the record are now kept together or not at
+  all.
+- A board closing with the server, or destroyed, while a timed write was under
+  way stopped at once and lost every change made during that write. It now
+  waits for that write, keeps writing until nothing is waiting or 25 seconds
+  pass, and logs an `Error` with the number of changes lost.
+- A client that declared a remote the server never declares, before the network
+  came up, received no replicated state for the whole session. Replication now
+  asks for its first view on its own remote alone.
+- A navigation agent stopped in the same moment it was given a goal, or while
+  it waited for a new route after a blockage, still walked to that goal after
+  `Cancelled` had fired.
+- A `Signal:Wait` with a timeout, woken by `DisconnectAll` or `Destroy`, was
+  woken a second time when the timeout ran out. A thread waiting on something
+  else by then resumed early with no values, and a thread in `task.wait` raised
+  an error.
+- A `Signal` listener that disconnected and reconnected the listener after it,
+  during a firing, ended that firing early, so the listeners after it were not
+  called.
+- `Replication.Mutate` and `MutateFor`, on a key with a validator, kept an
+  in-place edit the validator refused, and the next write sent it. The
+  transform now works on a copy for such a key.
+- A rank given with `Authorization.SetRank` while a slow `Resolve` was still
+  running was overwritten when `Resolve` returned.
+- `Serialize.FindUnstorable` passed a table key that was not valid UTF-8, so
+  `Data.Edit` accepted it and the save failed later. Such a key is now reported
+  as `a key that is not valid UTF-8`.
+- A call to a player from a `PlayerAdded` listener that ran before Net's own
+  was dropped. Net now creates a player's outgoing buffers on first use.
+- `Bag:Remove`, given the object rather than its key, left the key pointing at
+  the closed object, so `Bag:Get` still returned it.
+- `Scope.Alive` for a character whose humanoid had already died stayed open
+  until the character was removed. It now closes at the end of the frame.
+- A `NumberRange` tween with an overshooting easing, such as `Back` or
+  `Elastic`, could build a range whose minimum passed its maximum and stop as
+  faulted. The two ends are now kept in order.
+- `Format.Abbreviate(999.999)` returned `1000.00`. A fraction that rounds to a
+  thousand now moves to the next tier, `1.00K`.
+- `Data.Configure` with a branch named `main` raised, yet left Data marked as
+  configured with no store, so a corrected second call was refused. The name is
+  now checked before anything is kept.
+- `Serialize.FindUnstorable` on a table that contains itself ended in a stack
+  overflow. It now reports `a table that contains itself`, so `Data.Edit`
+  refuses the write.
+- `Format.Digits` given text that is not digits raised an unrelated
+  `string.format` error. It now raises `Format.Digits expects a string of
+  digits`.
+- `Store.Mock` accepted a transform that yields, so a `Validate` that waits
+  passed in Studio and failed against real storage. The stand-in store now
+  refuses it, as storage does.
+- Reference pages that disagreed with the code are corrected: the Log error
+  handler example, Schema messages and byte lengths, BigNumber division by
+  zero, Net readiness, Replication subscriptions, Navigation's queue, Tween
+  `DelayTime`, Lifecycle hook threading, Shared limits and errors, `Validate`
+  in Data and Store, the cost of `Replicate`, Limit and Config notes.
+  Troubleshooting now lists every message Twill logs.
+
+### Security
+
+- The `moderation` command let a moderator kick, ban or unban a user of equal
+  or higher rank who was not on the same server, including the owner, across
+  the whole experience. A user who is away is now checked at the rank the
+  `Users` table names for them. A rank only `Resolve` decides is still unknown
+  while that user is away; list owners and administrators in `Users`.
+
 ## [2.2.0] - 2026-10-26
 
 Twill 2.2 adds the Reward kit and `Remote:TryAsk`, and the server refuses
@@ -1184,7 +1285,8 @@ First release.
 - An automated test suite that runs on every playtest in Studio and never in
   production.
 
-[Unreleased]: https://github.com/andrian-syh/rblx-twill/compare/v2.2.0...HEAD
+[Unreleased]: https://github.com/andrian-syh/rblx-twill/compare/v2.3.0...HEAD
+[2.3.0]: https://github.com/andrian-syh/rblx-twill/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/andrian-syh/rblx-twill/compare/v2.1.2...v2.2.0
 [2.1.2]: https://github.com/andrian-syh/rblx-twill/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/andrian-syh/rblx-twill/compare/v2.1.0...v2.1.1

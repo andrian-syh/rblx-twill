@@ -172,9 +172,11 @@ on its own thread in addition to the normal output, so it may yield.
 
 **Example**
 
+On the server, passing every failure to the other servers of the experience:
+
 ```luau
 Log.SetErrorHandler(function(scope: string, ...: any)
-	AnalyticsService:LogCustomEvent(Players.LocalPlayer, scope, ...)
+	Shared.Publish("Errors", { Scope = scope, Text = tostring((...)) })
 end)
 ```
 

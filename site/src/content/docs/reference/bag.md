@@ -137,7 +137,8 @@ function Bag:Once(signal: any, callback: (...any) -> ()): any
 ```
 
 The entry leaves the bag when it fires, so a bag holding many one-shot listeners
-does not grow.
+does not grow. A `Task` or `Delay` entry stays until the bag closes, even after
+its thread has finished, so a long-lived bag given one per event grows.
 
 ### `Bag:Task`
 
@@ -212,8 +213,9 @@ Closes one entry now and lets it out, leaving the rest of the bag alone.
 function Bag:Remove(what: any): boolean
 ```
 
-Takes the key it was named with, or the object itself. Answers `false` when the
-bag was not holding it.
+Takes the key it was named with, or the object itself. Removing by the object
+also forgets the key it was added under. Answers `false` when the bag was not
+holding it.
 
 ### `Bag:Release`
 

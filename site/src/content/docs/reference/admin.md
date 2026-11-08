@@ -223,9 +223,12 @@ ban record, enforces the duration, and answers rejoin attempts, so nothing is
 stored here to fall out of step.
 
 What Twill adds is the part the platform does not do: refusing to let a moderator
-act on themselves or on anyone present who ranks as high as they do, and naming
-exactly who was acted on. Lifting a ban answers to the same check as applying
-one.
+act on themselves or on anyone who ranks as high as they do, and naming exactly
+who was acted on. Lifting a ban answers to the same check as applying one. A
+user on this server is checked at the rank they hold. A user who is away is
+checked at the rank the `Users` table names for them, so list owners and
+administrators there. A rank only `Resolve` decides is unknown for someone who
+is away, and such a user can be acted on by anyone allowed to run the command.
 
 Durations are read exactly. `7d` is seven days and `1h30m` is ninety minutes.
 Anything unrecognised is refused rather than guessed. Cmdr's own `duration` type

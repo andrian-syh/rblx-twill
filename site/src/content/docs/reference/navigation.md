@@ -51,8 +51,10 @@ otherwise:
 Twill.Navigation.SetBudget(8)
 ```
 
-Nothing is dropped by the queue. A waiting agent keeps walking whatever route it
-already had.
+Nothing is dropped by the queue. An agent waiting for a new route after a
+blockage keeps walking the route it already had. An agent given a new goal stops
+following its old route until the new one arrives, and `Stop` takes an agent out
+of the queue.
 
 ## A goal is answered against the ground
 

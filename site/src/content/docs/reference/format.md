@@ -47,6 +47,9 @@ given a value that is not a number, or a number that is NaN or infinite.
 `Abbreviate` and `Digits` throw when `places` is present and is not a whole
 number of zero or more.
 
+`Digits` throws when `digits` is anything but digits, with an optional leading
+minus sign.
+
 ## API
 
 ### `Format.Time`
@@ -127,7 +130,8 @@ function Format.Abbreviate(value: number, places: number?): string
 `string` - The shortened number, such as `1.23M`.
 
 Below 1000 a whole number is left alone, so a count of a few does not read as a
-decimal, and a fraction is written to `places`.
+decimal, and a fraction is written to `places`. A fraction that rounds to 1000
+at those places, such as `999.999`, is shown as `1.00K`.
 
 ### `Format.Digits`
 

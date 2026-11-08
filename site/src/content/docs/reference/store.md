@@ -118,7 +118,8 @@ function Store.New(name: string, template: { [string]: any }?, config: Config?):
 **Returns**
 
 `Store` - The store. `Store.Mock` on it is the same store backed by memory that
-is forgotten when the server stops.
+is forgotten when the server stops. Like storage, it refuses a transform that
+yields, so a `Validate` that waits fails in Studio rather than on a live server.
 
 Throws when the name is empty or is not text, and on a config that could not
 work: a field of the wrong type, a number that is not above zero, `Attempts`
@@ -140,7 +141,7 @@ Every field is optional and falls back to the default.
 | `Attempts` | `4` | Tries per storage call before it is reported failed. |
 | `Compress` | `false` | Whether the data travels packed. |
 | `Messaging` | `true` | Whether a holder listens for a request to release. |
-| `Validate` | none | A check `(data) -> (boolean, string?)` every write must pass. |
+| `Validate` | none | A check `(data) -> (boolean, string?)` every write must pass. Runs inside the storage write: must not yield, may run more than once. |
 
 Packing multiplies what fits under the key size ceiling and makes the stored
 value unreadable in the DataStore browser and in Open Cloud.

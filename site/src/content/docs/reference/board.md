@@ -33,8 +33,11 @@ board writes them together on a timer, one write per entry.
 - A write that fails is kept and merged with anything asked for since. A `Set`
   asked for since the failure wins.
 
-Whatever is still waiting is written when the server closes, for up to 25
-seconds, and in the background when the board is destroyed.
+Whatever is still waiting is written when the server closes, and in the
+background when the board is destroyed. Either way the board waits for a write
+already under way, then keeps writing, including changes made meanwhile, until
+nothing waits or 25 seconds pass. A change still waiting then is lost, and an
+`Error` says how many.
 
 Values are whole numbers below 2^53 in size, because ordered data stores hold
 nothing else.

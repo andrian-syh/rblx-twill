@@ -84,6 +84,10 @@ function MyService.OnPlayerReady(player, data, bag)
 end
 ```
 
+For one player, the hooks run one after another on one thread, so a hook that
+yields holds back every later service's hook for that player. Start slow work
+with `task.spawn`, or put it in the bag.
+
 Leaving runs in reverse boot order, so a service reads what it depends on before
 that dependency has unwound. A player still held by the gate is skipped, though
 their bag still closes.

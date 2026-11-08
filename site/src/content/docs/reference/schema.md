@@ -23,7 +23,7 @@ later entries constrain it.
 
 ```luau
 "string"                          -- any string
-{ "string", 1, 20 }               -- between 1 and 20 characters
+{ "string", 1, 20 }               -- between 1 and 20 bytes
 { "number", 0, 100 }              -- between 0 and 100
 { "integer", 1 }                  -- whole, at least 1
 { "enum", "red", "green" }        -- one of these values
@@ -36,7 +36,7 @@ later entries constrain it.
 | :--- | :--- |
 | `number` | A low and a high, both optional. |
 | `integer` | The same, and the value must be whole. |
-| `string` | A low and a high, applied to its length. |
+| `string` | A low and a high, applied to its length in bytes, so `"café"` is 5. |
 | `enum` | The values listed after it. |
 | `array` | The rule every element must satisfy. |
 | `object` | A table of field names to rules. |
@@ -118,8 +118,10 @@ The position is `value` at the top level, and a path below it: `value.Coins`,
 
 | Reason | Raised by |
 | :--- | :--- |
-| `value should be a number` | Wrong type, or a whole number rule given a fraction. |
-| `value should be a real number` | NaN or infinity. |
+| `value should be a number` | A `number` rule given another type. |
+| `value should be a real number` | A `number` rule given NaN or infinity. |
+| `value should be a whole number` | An `integer` rule given another type, or a fraction. |
+| `value should be a real whole number` | An `integer` rule given NaN or infinity. |
 | `value is below the allowed minimum` | Under the low bound. |
 | `value is above the allowed maximum` | Over the high bound. |
 | `value is too short` | A string under its length bound. |

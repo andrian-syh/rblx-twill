@@ -100,13 +100,15 @@ function Serialize.FindUnstorable(value: any, path: string?): (string?, string?)
 
 `string?` - What made it unstorable.
 
-Clean means storable as it stands, without encoding. Six faults are reported:
+Clean means storable as it stands, without encoding. Eight faults are reported:
 
 | Reported as | Raised by |
 | :--- | :--- |
 | The type name, such as `Vector3` | A value a DataStore cannot hold. Encode it. |
 | `not a finite number` | NaN or infinity. Neither is valid JSON. |
 | `text that is not valid UTF-8` | A string a DataStore rejects. |
+| `a key that is not valid UTF-8` | A key a DataStore rejects. The path names the table holding it. |
+| `a table that contains itself` | A loop, which JSON cannot hold. One table reached along two separate branches is not a loop and passes. |
 | `both named and numbered keys` | `{ 1, 2, Name = "x" }` encodes to `[1,2]`. The string key is lost with no error. |
 | `gaps in its numbering` | `{ [1] = "a", [3] = "b" }` comes back with string keys. |
 | `an index that is not a whole number from one` | A fractional or zero-based index. |

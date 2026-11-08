@@ -28,6 +28,16 @@ export interface Release {
 
 export const releases: Release[] = [
 	{
+		version: 'v2.3.0',
+		title: 'Purchases paid once and moderation across servers',
+		date: 'November 8, 2026',
+		tagline: "Twill keeps a purchase's reward and its record together, checks moderation against players on other servers, and finishes leaderboard writes before it closes.",
+		summary:
+			'A product reward and the record of its purchase are now kept together or not at all, and moderation checks an absent user through the new Authorization.GetUserRank. Leaderboards finish their writes at shutdown, and sixteen smaller defects are fixed. The changelog has a Migration section for product handlers that yield.',
+		slug: '/news/v2-3-0/',
+		icon: 'star',
+	},
+	{
 		version: 'v2.2.0',
 		title: 'Daily rewards and stricter networking',
 		date: 'October 26, 2026',

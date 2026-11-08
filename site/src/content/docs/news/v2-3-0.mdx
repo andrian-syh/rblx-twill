@@ -1,0 +1,99 @@
+---
+title: "v2.3.0 — Purchases paid once and moderation across servers"
+description: "Released November 8, 2026. Twill keeps a purchase's reward and its record together, checks moderation against players on other servers, and finishes leaderboard writes before it closes"
+template: splash
+---
+
+import NewsBackLink from '../../../components/NewsBackLink.astro';
+import NewsPagination from '../../../components/NewsPagination.astro';
+
+<div class="news-article-container">
+
+<NewsBackLink />
+
+<header class="news-article-header">
+	<div class="news-article-badges">
+		<span class="news-badge-version">v2.3.0</span>
+		<span class="news-badge-date">November 8, 2026</span>
+	</div>
+	<p class="news-article-lead">
+		Twill keeps a purchase's reward and its record together, checks moderation against players on other servers, and finishes leaderboard writes before it closes.
+	</p>
+</header>
+
+## Before upgrading
+
+Replace both `Twill` modules with the ones from the release.
+
+A `Monetization.HandleProduct` handler must not yield. It now runs inside
+`Data.Transact`, so a handler that yields is undone and its receipt fails again
+on every retry. Write the reward into `data` and return, and queue anything
+slow with `Data.Defer`:
+
+```luau
+Monetization.HandleProduct(COINS_PRODUCT, function(player, data)
+	data.Coins += 100
+	Data.Defer(player, function()
+		announce(player)
+	end)
+end)
+```
+
+On a client, `Net.IsReady`, `Net.OnReady` and `Net.AwaitReady` now mean the
+client is connected. Calls on a remote that is not numbered yet are still held
+and sent once it is.
+
+`Store.Mock` now refuses a transform that yields, as storage does. A `Validate`
+that waits fails in Studio rather than on a live server.
+
+## A purchase is paid once
+
+A product handler that threw partway through kept what it had written, and
+Roblox's retry paid the reward again. A handler that yielded could save the
+reward without the record of the purchase. The reward and the record are now
+kept together or not at all, and the failure log names the product, the player
+and the reason. See [Monetization](/reference/monetization/).
+
+## Moderation across servers
+
+The `moderation` command let a moderator kick, ban or unban a user of equal or
+higher rank who was on another server, including the owner. A user who is away
+is now checked at the rank the `Users` table names for them, through the new
+`Authorization.GetUserRank`:
+
+```luau
+local rank = Authorization.GetUserRank(123456)
+```
+
+A rank only `Resolve` decides is unknown while that user is away, so list
+owners and administrators in `Users`. See
+[`Authorization.GetUserRank`](/reference/authorization/#authorizationgetuserrank).
+
+## Leaderboards keep their writes
+
+A board closing with the server, or destroyed, while a timed write was under
+way lost every change made during that write. It now waits for that write,
+keeps writing until nothing is waiting or 25 seconds pass, and logs an error
+with the number of changes lost. See [Board](/reference/board/).
+
+## Other fixes
+
+- A client that declared a remote the server never declares received no
+  replicated state for the whole session.
+- A navigation agent stopped while it waited for a route still walked to its
+  goal.
+- A `Signal:Wait` with a timeout could wake its thread a second time.
+- `Replication.Mutate` kept an edit its validator refused.
+- `Serialize.FindUnstorable` now names a key that is not valid UTF-8 and a
+  table that contains itself, so `Data.Edit` refuses them before the save.
+- Every message Twill logs now has an entry in
+  [Troubleshooting](/reference/troubleshooting/).
+
+## Full changelog
+
+Every change in this release is listed in the
+[changelog](https://github.com/andrian-syh/rblx-twill/blob/main/CHANGELOG.md#230---2026-11-08).
+
+<NewsPagination />
+
+</div>

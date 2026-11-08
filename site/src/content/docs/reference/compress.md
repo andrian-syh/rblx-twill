@@ -15,8 +15,8 @@ local original = Compress.Decode(packed)
 What comes out is text, so it survives every transport that carries JSON:
 DataStores, MessagingService, MemoryStore, attributes, remotes.
 
-Underneath, a serializer turns the value into bytes and an entropy coder shrinks
-them, both of them Twill's own. Their output is not valid UTF-8 and is refused
+Underneath, a serializer turns the value into bytes and a dictionary coder
+(LZW) shrinks them, both of them Twill's own. Their output is not valid UTF-8 and is refused
 by every one of those transports, which is the trap this module exists to close.
 
 Roblox values are handled natively, so [`Serialize`](/reference/serialize/) is

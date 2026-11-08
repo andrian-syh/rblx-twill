@@ -112,6 +112,10 @@ function Limit.PerPlayer(rate: number, burst: number?): Allowance
 
 Throws when the rate is not a number above zero.
 
+Create each allowance once, when its module loads. Every one is kept for the
+life of the server and visited whenever a player leaves, so one created per
+round or per object is never let go.
+
 ### `Limit.Throttle`
 
 `[Server]` | `[Client]`
@@ -134,6 +138,9 @@ function Limit.Throttle(interval: number): Throttle
 quiet.
 
 Throws when the interval is not a number above zero.
+
+Like an allowance, a throttle is kept for the life of the server, so create
+each one once.
 
 ### `Bucket:Take`
 

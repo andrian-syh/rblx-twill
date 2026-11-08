@@ -117,6 +117,9 @@ A branch cannot be named `main`.
 `Validate` is a check the data must pass before any save. A save it refuses is
 skipped, the last good data stays stored, and the refusal is logged.
 
+It runs inside the storage write, so it must not yield and may run more than
+once for one save. One that yields counts as an error, and the save is skipped.
+
 ```luau
 Data.Configure({
 	Store = "PlayerData",
@@ -595,6 +598,12 @@ end, bag)
 ```
 
 A field left out of `Replicate` never leaves the server.
+
+On every interval the view is rebuilt for each player and compared in full with
+what that player was last sent, so the cost grows with the size of the
+replicated fields. Keep large tables out of `Replicate`. On the server,
+`Replication.OnChanged("Data")` fires on every interval, whether or not
+anything changed.
 
 ## Limits
 

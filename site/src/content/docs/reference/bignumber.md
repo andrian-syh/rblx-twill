@@ -34,12 +34,12 @@ that make an arbitrary-precision integer survive a DataStore:
 
 1. The metatable is reattached for each operation. A metatable does not survive a
    DataStore round-trip, and a value loaded back would otherwise be inert.
-2. Results are copied into fresh tables. AptInt pools limb arrays, and a pooled
-   array reused underneath saved player data would corrupt it in a way nothing
-   reports.
+2. Results are copied into fresh tables. AptInt can hand back one of its inputs
+   or share limb arrays between values, and an array shared with saved player
+   data would change it in a way nothing reports.
 
-These are functions, not operators. A stored value has no metatable, so `a + b`
-fails on anything loaded from a DataStore. Calling functions is the shape that
+These are functions, not operators. A value loaded from a DataStore has no
+metatable, so `a + b` fails on it. Calling functions is the shape that
 works in every case, including the first read after a join.
 
 ## Reading and writing one from the console
@@ -58,7 +58,8 @@ promoted without the mark, since nothing else could have been meant.
 
 ## API
 
-No function changes its operands. Each returns a fresh value.
+No function changes the amount an operand holds. Each returns a fresh value. An
+operand loaded without its metatable gets it back, which a DataStore ignores.
 
 Every function taking one or two amounts throws when handed anything that is not
 shaped like one, naming itself and the offending type.
@@ -166,6 +167,9 @@ function BigNumber.Divide(left: BigNumber, right: BigNumber): (BigNumber, BigNum
 
 `BigNumber` - What was left over.
 
+Dividing by zero answers zero and a remainder of zero rather than throwing.
+Check the divisor first wherever it can be zero.
+
 The division is whole, and the remainder is handed back alongside rather than
 dropped.
 
@@ -182,6 +186,7 @@ function BigNumber.Modulo(left: BigNumber, right: BigNumber): BigNumber
 **Returns**
 
 `BigNumber` - The remainder alone, for callers that do not want the division.
+Zero when the divisor is zero.
 
 ### `BigNumber.Power`
 

@@ -21,7 +21,7 @@ it, and disconnect nothing by hand. Every bag is a [`Bag`](/reference/bag/), so
 | `Player` | That player leaves. |
 | `Character` | The character is removed, which is at respawn rather than at death. |
 | `Alive` | The humanoid dies, or the character is removed. |
-| `Framework` | The server stops. Holds Twill's own connections. |
+| `Framework` | The server stops, or the client leaves. Holds Twill's own connections. |
 
 `Character` and `Alive` differ by one death. A healthbar belongs in `Character`,
 because it should survive the death that fills it in. A sprint loop belongs in
@@ -98,7 +98,8 @@ function Scope.Alive(character: Model): Bag
 
 Waits for the humanoid when the character has none yet. Also closes when the
 character bag closes, so a character removed without dying does not leave this
-one open.
+one open. Asked for after the humanoid has died, the bag closes at the end of
+the frame.
 
 Throws when given anything but a `Model`.
 

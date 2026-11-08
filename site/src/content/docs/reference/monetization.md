@@ -49,7 +49,7 @@ safe.
 | The buyer is not on this server | Nothing. |
 | No handler is registered for the product | A `Warn` naming the product. |
 | Their data has not loaded | Nothing. |
-| The handler threw | An `Error` naming the product and the player. |
+| The handler threw or yielded, or its result failed `Validate` | An `Error` naming the product, the player and the reason. |
 | The save was not confirmed within 30 seconds | A `Warn` naming the purchase. |
 
 A grant that succeeds is written at `Info`.
@@ -96,6 +96,12 @@ saying so.
 
 The handler writes the reward into `data` and nothing else. Saving it, recording
 it, and answering the receipt are not its concern.
+
+The handler runs inside [`Data.Transact`](/reference/data/#datatransact), so the
+reward and the record of the purchase are kept together or not at all. A
+handler that throws, yields, or leaves data that fails `Validate` keeps nothing
+it wrote. Queue anything slow with `Data.Defer`, which runs once the reward is
+kept.
 
 ### `Monetization.Process`
 

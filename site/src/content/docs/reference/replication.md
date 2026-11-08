@@ -129,6 +129,10 @@ Replaces a shared key with whatever the given function returns.
 function Replication.Mutate<T>(key: string, transform: (current: T?) -> T)
 ```
 
+A key with a validator hands the transform a copy, so a result the validator
+refuses leaves the published value as it was. A key without one hands over the
+published value itself. `MutateFor` behaves the same way.
+
 ### Server: player keys
 
 #### `Replication.SetFor`
@@ -301,8 +305,7 @@ function Replication.Subscribe<T>(full: string, callback: (value: T?) -> (), own
 
 **Returns**
 
-`Subscription` - Carries `Disconnect` and `Destroy`, so a bag holds it like
-anything else.
+`Subscription` - Carries `Disconnect`, so a bag holds it like anything else.
 
 The current value arrives once at the moment of subscribing, if there already is
 one. A subscription to a path is woken only when that path actually moved, not

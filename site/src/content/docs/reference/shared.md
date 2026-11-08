@@ -20,12 +20,15 @@ memory store request it makes is counted here. Twill's own traffic, such as the
 release requests `Store` sends, is counted against the same allowance as the
 game's.
 
-| Allowance | Per minute, per server |
+| Allowance | Per server |
 | :--- | :--- |
 | Messages published | 600 + 240 × players |
 | Subscribe requests | 240 |
 | Subscriptions held at once | 20 + 8 × players |
 | Memory store request units | 100 + 120 × players |
+
+Every row is a per-minute allowance except subscriptions held at once, which is
+a count.
 
 Messaging limits are the platform's own, per server. The memory store quota
 belongs to the whole experience, and no server can see what the others spend,
@@ -99,6 +102,10 @@ function Shared.Map(name: string): SharedMap
 
 Throws on a name longer than 128 characters.
 
+Every method of the handle throws on a key that is empty, is not text, or is
+longer than 128 characters. `Set` and `Update` also throw on an expiry that is
+not a whole number of seconds from 1 to 3888000.
+
 ### `SharedMap:Get`
 
 ```luau
@@ -140,8 +147,9 @@ function SharedMap:Update(key: string, transform: (current: any) -> any, expiry:
 
 `any` - What the key holds afterwards, or why the request failed. Yields.
 
-The transform returns `nil` to leave the key unchanged. It costs at least 2
-request units.
+The transform returns `nil` to leave the key unchanged. It may run more than
+once when another server changes the key at the same moment, and it must not
+yield. An update costs at least 2 request units.
 
 ### `SharedMap:Remove`
 

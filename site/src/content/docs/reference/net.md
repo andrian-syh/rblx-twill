@@ -72,21 +72,26 @@ unreported.
 
 ## Firing before the network is up
 
-The server hands out the numbers, so it is ready as soon as it has declared. A
-client becomes ready once that numbering reaches it, a moment later.
+The server hands out the numbers. A client learns each number a moment after the
+server declares that remote.
 
 Declaring never waits. A call made before the number arrives is held and sent
 once it does, up to 64 calls per remote, after which the oldest is dropped with a
 line naming the remote.
 
+Each side is ready once it is connected: the server at once, a client once the
+transport remotes have reached it. Readiness does not wait for every number, so
+a remote the server never declares holds up nothing else.
+
 ```luau
 Net.OnReady(function()
-	-- everything declared here knows its number
+	-- this side is connected; calls on a remote not yet numbered are held
 end)
 ```
 
 An unreliable call is not held. A name declared on a client that the server never
-declares is reported once, and calls on it are dropped locally.
+declares is reported once, 30 seconds after the client connects, and its calls
+are held and never sent.
 
 ## What a hostile client cannot do
 
@@ -232,7 +237,8 @@ finished declaring.
 
 `[Server]` | `[Client]`
 
-Reports whether this side knows the number for every remote it declared.
+Reports whether this side is connected, so a call is sent rather than held. A
+remote may still be waiting for its number.
 
 ```luau
 function Net.IsReady(): boolean

@@ -139,6 +139,11 @@ function Tween.new(
 
 `Tween` - The tween, not yet playing.
 
+A tween left without an owner stays in the framework's bag until it is
+destroyed, or until an `Instance` target is destroyed. A table target never is,
+so code that builds tweens on tables in a loop passes an owner or calls
+`Destroy`. `Tween.Play` lets itself go when it finishes.
+
 Throws when the target is neither an `Instance` nor a table, when no values were
 given, when a name is unknown, unwritable, or given the wrong type, when any
 part of a value or control point is not finite, when a model's `Scale` would end
@@ -190,7 +195,7 @@ export type Options = {
 | `Time` | 1 | Seconds one round takes. Finite and above zero. |
 | `EasingStyle` | `"Quad"` | A style name, or a curve of your own taking and returning a number. |
 | `EasingDirection` | `"Out"` | `In`, `Out`, `InOut`, or `OutIn`. |
-| `DelayTime` | 0 | Seconds to wait before the first move. Finite, zero or more. |
+| `DelayTime` | 0 | Seconds to wait before each round, as the engine's `TweenInfo` does. Finite, zero or more. |
 | `RepeatCount` | 0 | Extra rounds after the first. Below zero repeats forever. Finite. |
 | `Reverses` | `false` | Whether a round travels back before it counts as done. |
 | `FPS` | every frame | Write no more often than this many times a second. Finite and above zero. |
